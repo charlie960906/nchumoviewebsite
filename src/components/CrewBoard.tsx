@@ -15,10 +15,29 @@ export default function CrewBoard({ groups }: { groups: CrewBoardGroup[] }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [member, setMember] = useState<CrewCard | null>(null);
   const [shown, setShown] = useState(false);
+  // 即時讀到的 Gravatar About Me：string＝最新內容，null＝已無個人檔案；未列入＝沿用建置時的版本
+  const [live, setLive] = useState<Record<string, string | null>>({});
+  const requested = useRef(new Set<string>());
+
+  /** 點開時向 Gravatar 讀取最新 About Me（每位成員每次載入頁面只讀一次；失敗或超過頻率限制時保留建置版本）。 */
+  const refreshAbout = (p: CrewCard) => {
+    if (!p.hash || requested.current.has(p.key)) return;
+    requested.current.add(p.key);
+    fetch(`https://api.gravatar.com/v3/profiles/${p.hash}`, { cache: "no-store" })
+      .then(async (res) => {
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error(String(res.status));
+        const data = (await res.json()) as { description?: string };
+        return data.description?.trim() || null;
+      })
+      .then((about) => setLive((prev) => ({ ...prev, [p.key]: about })))
+      .catch(() => requested.current.delete(p.key));
+  };
 
   const open = (p: CrewCard, el: HTMLElement) => {
     triggerRef.current = el;
     setMember(p);
+    refreshAbout(p);
     const d = dialogRef.current;
     if (d && !d.open) d.showModal();
     // 每次點開成員都從面板頂部開始，不沿用上一位成員的捲動位置
@@ -103,7 +122,14 @@ export default function CrewBoard({ groups }: { groups: CrewBoardGroup[] }) {
             shown ? "translate-x-0 translate-y-0" : "translate-y-full md:translate-x-[-100%] md:translate-y-0",
           ].join(" ")}
         >
-          {member && <Detail key={member.key} p={member} onClose={close} />}
+          {member && (
+            <Detail
+              key={member.key}
+              p={member}
+              about={member.key in live ? live[member.key] ?? undefined : member.about}
+              onClose={close}
+            />
+          )}
         </div>
       </dialog>
     </>
@@ -138,7 +164,7 @@ function Avatar({ p, className = "", eager }: { p: CrewCard; className?: string;
   );
 }
 
-function Detail({ p, onClose }: { p: CrewCard; onClose: () => void }) {
+function Detail({ p, about, onClose }: { p: CrewCard; about?: string; onClose: () => void }) {
   return (
     <>
       <div className="sticky top-0 z-10 flex justify-end bg-night-2/85 p-3 backdrop-blur md:p-4">
@@ -166,8 +192,8 @@ function Detail({ p, onClose }: { p: CrewCard; onClose: () => void }) {
           <p id="crew-dialog-about" className="eyebrow">
             About me
           </p>
-          {p.about ? (
-            <p className="mt-3 whitespace-pre-line text-[15px] leading-[1.9] text-mist/90">{p.about}</p>
+          {about ? (
+            <p className="mt-3 whitespace-pre-line text-[15px] leading-[1.9] text-mist/90">{about}</p>
           ) : (
             <p className="mt-3 text-[15px] leading-[1.9] text-dim">
               這位工人十分安靜，連一段文采都沒留下，只在電影節中留下了光影交錯的回憶。

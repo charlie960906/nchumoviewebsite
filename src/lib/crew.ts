@@ -12,7 +12,8 @@ import { getStaff } from "@/lib/staff";
  * - role：職稱（選填，例如「部長」），顯示在姓名下方；未填時以部門名稱代替。
  * - echo：對應 staff.ts 中「波紋的音像」黑膠的 id（選填）。填了之後，點開成員的詳細資料
  *   最下方會出現他的黑膠與歌名，點擊跳轉到 /interactive/echoes/{echo} 故事頁。
- * - 「關於我」取自成員 Gravatar 個人檔案的 About Me，於建置時抓取。
+ * - 「關於我」取自成員 Gravatar 個人檔案的 About Me：建置時先抓一份寫進頁面，
+ *   訪客點開成員時，瀏覽器會再向 Gravatar 讀取最新內容替換（失敗時保留建置時的版本）。
  *
  * ⚠ 這個檔案只能由 Server Component 匯入（"server-only" 會擋下誤用），避免信箱進入前端 bundle。
  */
@@ -156,6 +157,8 @@ export type CrewCard = {
   sub?: string;
   title: string;
   avatar?: string;
+  /** Gravatar 的 email SHA-256（頭像網址本來就公開含有它），供前端即時讀取個人檔案 */
+  hash?: string;
   about?: string;
   echo?: { id: string; songTitle: string; songArtist: string; accentColor: string; vinylCover?: string };
 };
@@ -174,6 +177,7 @@ export async function getCrewBoard(): Promise<CrewBoardGroup[]> {
             sub: [p.role, p.nick].filter(Boolean).join(" · ") || undefined,
             title: [g.dept, p.role].filter(Boolean).join(" · "),
             avatar: gravatarUrl(p.email),
+            hash: p.email?.trim() ? emailHash(p.email) : undefined,
             about: await gravatarAbout(p.email),
             echo: s && {
               id: s.id,
