@@ -1,0 +1,1240 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>展區地圖 - 3D/2D 展覽互動導覽</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- OrbitControls for Three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <!-- Tween.js for Smooth Camera Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+        .map-2d-node:active {
+            transform: scale(0.95);
+        }
+        /* Style adjustments for custom 2D SVG map elements */
+        .stall-box {
+            transition: all 0.15s ease;
+            cursor: pointer;
+        }
+        .stall-box:hover {
+            filter: brightness(1.15);
+            transform: translateY(-1px);
+        }
+        /* Glass panel CSS utility */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .glass-modal {
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+            .svg-hit { cursor: pointer; transition: filter .15s; }
+        .svg-hit:hover { filter: brightness(1.15); }
+            html, body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
+        #canvas-container canvas { touch-action: none; display: block; }
+        header { top: max(0.75rem, env(safe-area-inset-top)) !important; left: max(0.75rem, env(safe-area-inset-left)) !important; right: max(0.75rem, env(safe-area-inset-right)) !important; }
+        #info-modal { padding-bottom: max(1.25rem, env(safe-area-inset-bottom)); }
+        #modal-body { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+        .filter-btn { height: 2.5rem; border: 1px solid rgba(255, 255, 255, 0.08); }
+        /* Filter bar: swipe sideways only, scrollbar hidden */
+        .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }
+        #filters-panel .filter-btn { flex: 0 0 auto; padding: 0 0.875rem; font-size: 0.875rem; line-height: 1; white-space: nowrap; }
+        #filters-panel .filter-btn:first-child { margin-left: auto; }
+        #filters-panel .filter-btn:last-child { margin-right: auto; }
+        .sheet-handle { touch-action: none; }
+        /* Desktop & tablet (>=768px): detail panel slides in from the left, no dimmed/blurred backdrop, map stays interactive */
+        @media (min-width: 768px) {
+            #info-modal-backdrop { background: transparent !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; opacity: 1 !important; pointer-events: none !important; padding: 0 !important; }
+            #info-modal { position: fixed !important; left: max(1rem, env(safe-area-inset-left)); top: 5.5rem; width: min(24rem, calc(100vw - 2rem)); max-width: none !important; max-height: calc(100dvh - 6.5rem) !important; border-radius: 1.5rem !important; background: rgba(15, 23, 42, 0.97); -webkit-backdrop-filter: none; backdrop-filter: none; pointer-events: none; transform: translateX(-130%) !important; transition: transform .35s cubic-bezier(.2, .8, .2, 1); }
+            #info-modal.is-open { transform: translateX(0) !important; pointer-events: auto; }
+        }
+        @media (min-width: 768px) and (max-width: 1023px) {
+            #info-modal { top: 9rem; max-height: calc(100dvh - 10rem) !important; }
+        }
+        /* Phone: bottom sheet pops up from the bottom with a slight spring */
+        @media (max-width: 767px) {
+            #info-modal { transition: transform .45s cubic-bezier(.22, 1.15, .36, 1), height .3s ease; height: 46dvh; max-height: 90dvh !important; }
+            #info-modal:not(.is-expanded) #modal-body { overflow-y: hidden; }
+            #info-modal-backdrop { background: transparent !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; pointer-events: none !important; }
+            #info-modal { pointer-events: none; }
+            #info-modal.is-open { pointer-events: auto; }
+        }
+        @media (pointer: coarse) {
+            #close-modal-btn { width: 44px; height: 44px; }
+            #view-mode-btn, #toggle-search-btn { min-height: 44px; }
+            #search-input { font-size: 16px; min-height: 44px; }
+            .glass-panel { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+        }
+    </style>
+</head>
+<body class="text-slate-100 h-screen w-screen relative overflow-hidden bg-slate-950" style="height:100dvh">
+
+    <!-- 3D WebGL Canvas Container -->
+    <div id="canvas-container" class="w-full h-full absolute inset-0 cursor-grab active:cursor-grabbing"></div>
+
+    <!-- UI Overlay Header -->
+    <header class="absolute top-3 left-3 right-3 md:top-4 md:left-6 md:right-6 z-20 flex flex-wrap lg:flex-nowrap items-center gap-2 pointer-events-none">
+        <div class="contents">
+            <!-- Title Card -->
+            <div class="glass-panel px-3.5 py-2.5 rounded-2xl flex items-center space-x-2.5 pointer-events-auto shadow-2xl shrink-0 basis-full md:basis-auto order-1">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white text-lg shadow-md shrink-0">
+                    <i class="fa-solid fa-map"></i>
+                </div>
+                <div class="min-w-0">
+                    <h1 class="font-bold text-base md:text-lg leading-tight tracking-wide text-white truncate">展區地圖</h1>
+                </div>
+            </div>
+
+            <!-- Mode Switcher & Search Toggle -->
+            <div class="flex items-center space-x-2 pointer-events-auto order-3 md:order-5 lg:order-4 shrink-0">
+                <!-- 2D / 3D Switcher Button -->
+                <button id="view-mode-btn" class="glass-panel px-3 h-12 rounded-2xl text-xs font-semibold text-blue-400 hover:text-white hover:bg-blue-600 transition shadow-xl flex items-center space-x-1.5 active:scale-95">
+                    <i class="fa-solid fa-layer-group text-sm" id="view-mode-icon"></i>
+                    <span id="view-mode-text">切換 2D</span>
+                </button>
+
+                <!-- Search Toggle Button (Mobile) -->
+                <button id="toggle-search-btn" class="glass-panel p-2.5 rounded-2xl text-slate-200 shadow-xl active:scale-95 transition flex items-center justify-center w-12 h-12 shrink-0 md:hidden">
+                    <i class="fa-solid fa-magnifying-glass text-base"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Search (own panel; phone: opened by the magnifier button) -->
+        <div id="controls-panel" class="py-1 items-center pointer-events-auto hidden md:flex order-4 md:order-2 w-full md:w-auto md:flex-1 min-w-0">
+            <div class="relative flex-1 min-w-[120px]">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input id="search-input" type="text" placeholder="搜尋攤位 1-22、表演、電影..."
+                    class="w-full bg-slate-900/85 border border-slate-600/70 shadow-lg shadow-black/30 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition">
+                <!-- Autocomplete Dropdown -->
+                <div id="search-results" class="hidden absolute left-0 right-0 top-full mt-2 glass-modal rounded-2xl overflow-hidden shadow-2xl max-h-56 overflow-y-auto z-50 divide-y divide-slate-800"></div>
+            </div>
+        </div>
+
+        <div class="hidden md:block lg:hidden basis-full h-0 order-3"></div>
+
+        <!-- Category filters (own panel; phone/tablet: row below title/search/switcher, desktop: same row) -->
+        <div id="filters-panel" class="flex justify-center pointer-events-none order-2 md:order-4 lg:order-3 flex-1 lg:flex-none min-w-0">
+            <div class="glass-panel rounded-2xl p-1 h-12 shadow-2xl flex items-center gap-1 overflow-x-auto overflow-y-hidden no-scrollbar max-w-full w-full lg:w-auto pointer-events-auto" style="touch-action: pan-x; overscroll-behavior: contain;">
+                <button class="filter-btn active shrink-0 px-3 py-1.5 text-xs rounded-xl font-medium bg-blue-600 text-white transition active:scale-95" data-category="all" title="全部" aria-label="全部">ALL</button>
+                <button class="filter-btn shrink-0 px-3 py-1.5 text-xs rounded-xl font-medium bg-slate-800/90 text-slate-300 hover:bg-slate-700 active:scale-95 transition" data-category="market" title="市集 (1-22)" aria-label="市集 (1-22)">🛍️</button>
+                <button class="filter-btn shrink-0 px-3 py-1.5 text-xs rounded-xl font-medium bg-slate-800/90 text-slate-300 hover:bg-slate-700 active:scale-95 transition" data-category="stage" title="表演" aria-label="表演">🎤</button>
+                <button class="filter-btn shrink-0 px-3 py-1.5 text-xs rounded-xl font-medium bg-slate-800/90 text-slate-300 hover:bg-slate-700 active:scale-95 transition" data-category="movie" title="電影放映" aria-label="電影放映">🎬</button>
+                <button class="filter-btn shrink-0 px-3 py-1.5 text-xs rounded-xl font-medium bg-slate-800/90 text-slate-300 hover:bg-slate-700 active:scale-95 transition" data-category="exhibition" title="展覽與服務" aria-label="展覽與服務">💁🏻🖼️</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Floating Quick Controls -->
+    <div class="absolute bottom-5 right-4 z-20 flex flex-col space-y-2.5 pointer-events-auto" style="bottom:max(1.25rem,env(safe-area-inset-bottom));right:max(1rem,env(safe-area-inset-right))">
+        <button id="btn-zoom-in" title="放大" class="glass-panel w-11 h-11 rounded-2xl flex items-center justify-center text-slate-200 shadow-xl active:scale-90 transition active:bg-blue-600">
+            <i class="fa-solid fa-plus text-sm"></i>
+        </button>
+        <button id="btn-zoom-out" title="縮小" class="glass-panel w-11 h-11 rounded-2xl flex items-center justify-center text-slate-200 shadow-xl active:scale-90 transition active:bg-blue-600">
+            <i class="fa-solid fa-minus text-sm"></i>
+        </button>
+        <button id="btn-reset-cam" title="重置視角" class="glass-panel w-11 h-11 rounded-2xl flex items-center justify-center text-blue-400 shadow-xl active:scale-90 transition active:bg-blue-600 active:text-white">
+            <i class="fa-solid fa-rotate-left text-sm"></i>
+        </button>
+    </div>
+
+    <!-- Hover Tooltip -->
+    <div id="tooltip" style="display:none" class="fixed left-1/2 -translate-x-1/2 z-30 pointer-events-none glass-panel px-3 py-1.5 rounded-xl text-xs font-semibold text-white shadow-xl flex items-center space-x-2 border-slate-600">
+        <i id="tooltip-icon" class="fa-solid fa-location-dot text-blue-400"></i>
+        <span id="tooltip-text">名稱</span>
+    </div>
+
+    <!-- Mobile-First Bottom Sheet / Modal Popup -->
+    <div id="info-modal-backdrop" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 flex items-end md:items-center justify-center p-0 md:p-4">
+        <div id="info-modal" class="bottom-sheet glass-modal w-full md:max-w-lg rounded-t-3xl md:rounded-3xl p-5 md:p-6 shadow-2xl relative transform translate-y-full md:translate-y-0 md:scale-95 transition-transform duration-300 max-h-[80vh] md:max-h-[85vh] flex flex-col">
+            <div id="sheet-handle" class="sheet-handle md:hidden -mt-2 pt-2 pb-3 -mx-5"><div class="w-12 h-1.5 bg-slate-600/80 rounded-full mx-auto"></div></div>
+
+            <div class="flex items-start justify-between border-b border-slate-700/60 pb-3 mb-3">
+                <div class="flex items-center space-x-3">
+                    <div id="modal-badge-icon" class="w-11 h-11 rounded-2xl bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center text-xl shrink-0">
+                        <i class="fa-solid fa-store"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <span id="modal-category" class="text-[10px] uppercase tracking-wider font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20">分類</span>
+                        <h2 id="modal-title" class="text-base md:text-lg font-bold text-white mt-0.5 truncate">標題</h2>
+                    </div>
+                </div>
+                <button id="close-modal-btn" class="w-9 h-9 rounded-full bg-slate-800/90 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition shrink-0 active:scale-90">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div id="modal-body" class="overflow-y-auto pr-1 flex-1 text-xs md:text-sm text-slate-300 space-y-3.5 no-scrollbar"></div>
+
+        </div>
+    </div>
+
+    <!-- Main Logic JavaScript -->
+    <script>
+        // --- Data Definitions ---
+        const MARKET_DATA = {};
+        const marketItems = [
+            { id: 1, name: "手作陶藝坊", owner: "陶心工作室", category: "文創手作", items: "手作茶杯、花器、陶藝裝飾品", price: "NT$ 250 - 1,200" },
+            { id: 2, name: "皮藝工坊", owner: "革調革藝", category: "皮革配件", items: "手工皮夾、鑰匙圈、皮帶", price: "NT$ 350 - 2,500" },
+            { id: 3, name: "植感生活", owner: "綠意小品", category: "多肉植栽", items: "多肉植物、微景觀苔療瓶", price: "NT$ 100 - 680" },
+            { id: 4, name: "獨立冊店", owner: "紙墨獨立社", category: "獨立出版", items: "原創插畫Zine、明信片、貼紙", price: "NT$ 50 - 450" },
+            { id: 5, name: "復古飾品特調", owner: "時光寶盒", category: "飾品配件", items: "黃銅首飾、復古耳環、耳夾", price: "NT$ 200 - 850" },
+            { id: 6, name: "芳香療癒所", owner: "香氣美學", category: "香氛洗沐", items: "精油大豆蠟燭、手工香皂", price: "NT$ 180 - 750" },
+            { id: 7, name: "木雕刻工坊", owner: "木心手作", category: "木雕工藝", items: "原木餐具、小木偶、木質杯墊", price: "NT$ 150 - 900" },
+            { id: 8, name: "毛線編織小屋", owner: "織光工作室", category: "編織手作", items: "編織包、手作毛線花束", price: "NT$ 120 - 800" },
+            { id: 9, name: "手作烘焙餅乾", owner: "甜心烘焙坊", category: "輕食甜點", items: "美式軟餅乾、手工曲奇", price: "NT$ 60 - 280" },
+            { id: 10, name: "精品冷萃咖啡", owner: "角落咖啡館", category: "特色飲品", items: "單品冷萃咖啡、燕麥奶拿鐵", price: "NT$ 90 - 160" },
+            { id: 11, name: "古著選品店", owner: "Vintage Market", category: "古著服飾", items: "美式古著T恤、復古夾克", price: "NT$ 450 - 1,800" },
+            { id: 12, name: "布藝手作包", owner: "好布好飾", category: "布藝雜貨", items: "帆布袋、飲料提袋、零錢包", price: "NT$ 150 - 550" },
+            { id: 13, name: "自然農法果乾", owner: "果香大地", category: "在地農特產", items: "無添加烘焙芒果乾、芭樂乾", price: "NT$ 120 - 350" },
+            { id: 14, name: "印度 Henna 彩繪", owner: "印記藝術", category: "人體彩繪", items: "印度草本 Henna 身體彩繪", price: "NT$ 200 - 600" },
+            { id: 15, name: "水晶能量礦石", owner: "晶采生活", category: "水晶礦石", items: "原礦水晶、手鍊、消磁石", price: "NT$ 300 - 2,200" },
+            { id: 16, name: "寵物文創選品", owner: "毛孩趴趴走", category: "寵物用品", items: "寵物領巾、手作寵物零食", price: "NT$ 100 - 450" },
+            { id: 17, name: "銀飾金工現場", owner: "金工流光", category: "金工銀飾", items: "925純銀戒指、刻字項鍊", price: "NT$ 680 - 2,800" },
+            { id: 18, name: "日式精釀啤酒", owner: "微醺夏日", category: "精釀啤酒", items: "水果精釀啤酒、生啤酒", price: "NT$ 150 - 220" },
+            { id: 19, name: "乾燥花藝設計", owner: "花語小築", category: "花藝設計", items: "乾燥花束、玻璃花罩、浮游花", price: "NT$ 250 - 1,200" },
+            { id: 20, name: "原創貼紙紙膠帶", owner: "喵星人繪畫", category: "文具貼紙", items: "防水貼紙、手帳膠帶、明信片", price: "NT$ 40 - 250" },
+            { id: 21, name: "現場似顏繪", owner: "畫筆漫遊", category: "現場繪畫", items: "個人/情侶/寵物 Q版似顏繪", price: "NT$ 300 - 800" },
+            { id: 22, name: "有機草本花茶", owner: "草本養生", category: "養生茶飲", items: "洋甘菊薄荷茶、玫瑰果茶包", price: "NT$ 180 - 450" }
+        ];
+
+        marketItems.forEach(item => { MARKET_DATA[item.id] = item; });
+
+        const MOVIE_DATA = {
+            title: "電影放映",
+            desc: "坐在舒適的大豆袋沙發上，享受星空下的光影盛宴。",
+            todayMovies: [
+                { time: "3/19 18:30 ~ 20:30", name: "美國女孩", tag: "", duration: "", desc: "" },
+                { time: "3/20 18:30 ~ 20:30", name: "琳達！琳達！", tag: "", duration: "", desc: "" }
+            ]
+        };
+
+        const STAGE_DATA = {
+            title: "表演",
+            desc: "現場音樂演奏、舞蹈表演與互動交流重鎮。",
+            schedule: [
+                { time: "3/19 17:10 ~ 17:30", performer: "", event: "表演演出" },
+                { time: "3/19 17:30 ~ 17:50", performer: "", event: "表演演出" },
+                { time: "3/20 16:00 ~ 17:30", performer: "", event: "表演演出" }
+            ]
+        };
+
+        const ZONE_DATA = {
+            "concept_left_a": { name: "展區:傍", cat: "概念展區 - 左帳篷", desc: "展區比較像是找尋自己的定位，背負著理想與期待透過人與人之間的拉扯，還在找尋的過程，像是一個問號的開頭。" },
+            "concept_left_b": { name: "展區:佮", cat: "概念展區 - 左帳篷", desc: "這個展區比較像是已經找到結果，知道自己的定位。" },
+            "concept_right_a": { name: "展區:佗", cat: "概念展區 - 右帳篷", desc: "這個展區是結果，已經找到自己的歸屬，理解自己和土地的連結。" },
+            "concept_right_b": { name: "展區:佇", cat: "概念展區 - 右帳篷", desc: "這個展區也是比較偏向提問的部分，開始找尋自己與土地的連結，找尋自己的由來，探索的過程。" },
+            "movie_view": { name: "電影觀展", cat: "展覽主題區", desc: "歷年國際電影節得獎作品海報展與微電影體驗區。" },
+            "pr": { name: "公關", cat: "行政服務", desc: "媒體接待、貴賓簽到與品牌合作洽談專區。" },
+            "service": { name: "服務台", cat: "行政服務", desc: "提供大會地圖手冊、遺失物招領、醫護諮詢與廣播服務。" },
+            "global": { name: "國際處", cat: "國際交流", desc: "全球姐妹校交流成果展示與海外留學諮詢服務。" },
+            "ipc": { name: "國際志工/IPC", cat: "國際交流", desc: "國際志工服務經驗分享、多國語言導覽服務與文創互動體驗。" },
+            "truss": { name: "Truss版", cat: "品牌展示", desc: "大型金屬 Truss 燈架搭建的品牌贊助廠商牆與主視覺打卡牆。" }
+        };
+
+        // --- Shared layout (single source of truth for 3D scene AND 2D plan; x right, z down in top view) ---
+        const LAYOUT = (() => {
+            const stalls = [];
+            for (let i = 1; i <= 8; i++) stalls.push({ id: i, x: -17, z: -10.5 + (i - 1) * 3.1 });
+            for (let i = 9; i <= 22; i++) stalls.push({ id: i, x: -13.5 + (i - 9) * 2.25, z: 12, rot: true });
+            const stage = { x: 0, z: 1, w: 8, d: 5 };
+            // Two identical concept tents, each cut in half (A | B), rotated to face the stage
+            const tents = [{ key: 'left', x: -11, z: -10.5 }, { key: 'right', x: 11, z: -10.5 }];
+            tents.forEach(t => { t.ry = Math.atan2(stage.x - t.x, stage.z - t.z); });
+            return {
+                stalls, stage, tents,
+                movie: { x: 0, z: -11, w: 11.6, d: 0.6 },
+                boothX: 17,
+                booths: [
+                    { id: "movie_view", z: -7.5, label: "電影觀展" }, { id: "pr", z: -4.5, label: "公關" },
+                    { id: "service", z: -1.5, label: "服務台" }, { id: "global", z: 1.5, label: "國際處" },
+                    { id: "ipc", z: 4.5, label: "國際志工/IPC" }
+                ],
+                truss: { x: 17, z: 8.5 },
+                trees: [[-21, -15], [21, -15], [-21, 15], [21, 15]]
+            };
+        })();
+        const TENT_HALF = { w: 3.6, d: 3.0 };   // each half (zone A or zone B) is the same tent size
+        const AWNING = 2.12;                    // stall awning footprint seen from above
+
+        const IS_TOUCH = window.matchMedia("(pointer: coarse)").matches;
+        // --- Three.js Global Variables ---
+        let scene, camera, renderer, controls;
+        let interactiveObjects = [];
+        let billboardSprites = []; // Always faces camera
+        let is2DMode = false;
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        const PALETTE = {
+            floor: 0x1e293b,
+            wood: 0x854d0e,
+            woodDark: 0x573406,
+            awningRed: 0xef4444,
+            awningOrange: 0xf59e0b,
+            awningBlue: 0x3b82f6,
+            awningGreen: 0x10b981,
+            stage: 0x8b5cf6,
+            stageWood: 0x7c3aed,
+            movie: 0x2563eb,
+            glass: 0x38bdf8,
+            boothRight: 0x0ea5e9,
+            truss: 0x334155,
+            metal: 0x64748b
+        };
+
+        function init() {
+            const container = document.getElementById('canvas-container');
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0f172a);
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 32, 38);
+
+            const isMobile = window.innerWidth < 768;
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.75 : 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.07;
+            controls.maxPolarAngle = Math.PI / 2 - 0.05;
+            controls.minDistance = 8;
+            controls.maxDistance = 75;
+            controls.target.set(0, 0, 2);
+            controls.rotateSpeed = IS_TOUCH ? 0.7 : 1;
+            controls.screenSpacePanning = true;
+            if (THREE.TOUCH) controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
+
+            raycaster.params.Line.threshold = 0.5;
+
+            setupLights();
+            buildExhibitionMap();
+
+            window.addEventListener('resize', onWindowResize);
+
+            // Unified pointer handling: a tap = one finger/mouse, short, little movement (drag/pinch never selects)
+            let tap = null;
+            container.addEventListener('pointerdown', (e) => {
+                // second finger (pinch/rotate) is never a tap; a fresh primary pointer always starts a new one
+                tap = e.isPrimary ? { x: e.clientX, y: e.clientY, t: performance.now(), touch: e.pointerType !== 'mouse' } : null;
+            });
+            container.addEventListener('pointermove', (e) => {
+                if (tap && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) > (tap.touch ? 14 : 6)) tap = null;
+                if (e.pointerType === 'mouse') onMouseMove(e);
+            });
+            container.addEventListener('pointerup', (e) => {
+                if (e.isPrimary && tap && performance.now() - tap.t < 900) handlePointerSelection(e.clientX, e.clientY, tap.touch);
+                tap = null;
+            });
+            container.addEventListener('pointercancel', () => { tap = null; });
+            window.addEventListener('orientationchange', () => setTimeout(onWindowResize, 250));
+
+            setupUI();
+            animate();
+        }
+
+        // --- Create Floating Sprite Labels (Camera Following) ---
+        function createFloatingLabel(text, x, y, z, bgColor = "#0ea5e9", textColor = "#ffffff", sw = 3.6, sh = 1.3) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 90;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = bgColor;
+            ctx.beginPath();
+            ctx.roundRect(8, 8, canvas.width - 16, canvas.height - 16, 20);
+            ctx.fill();
+
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = "rgba(255,255,255,0.7)";
+            ctx.stroke();
+
+            ctx.fillStyle = textColor;
+            ctx.font = 'bold 34px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture, depthTest: false, depthWrite: false });
+            const sprite = new THREE.Sprite(spriteMaterial);
+
+            sprite.position.set(x, y, z);
+            sprite.scale.set(sw, sh, 1);
+            sprite.renderOrder = 999; // Always render on top
+
+            scene.add(sprite);
+            billboardSprites.push(sprite);
+            return sprite;
+        }
+
+        function setupLights() {
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.75);
+            dirLight.position.set(25, 40, 20);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = IS_TOUCH ? 1024 : 2048;
+            dirLight.shadow.mapSize.height = IS_TOUCH ? 1024 : 2048;
+            scene.add(dirLight);
+        }
+
+        // --- Build Floor Plane & Map Structures ---
+        function buildExhibitionMap() {
+            // Ground Floor Plane
+            const groundGeo = new THREE.PlaneGeometry(46, 34);
+            const groundMat = new THREE.MeshStandardMaterial({ color: PALETTE.floor, roughness: 0.8 });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = 0;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            buildMarketStalls();
+            buildPerformanceStage();
+            buildMovieScreening();
+            buildConceptExhibitions();
+            buildRightSideBooths();
+            buildEnvironment();
+        }
+
+        function buildMarketStalls() {
+            LAYOUT.stalls.forEach(t => createDetailedStallMesh(t.x, 0, t.z, t.id, !!t.rot));
+        }
+
+        function createDetailedStallMesh(x, y, z, id, rotateHorizontal) {
+            const stallGroup = new THREE.Group();
+            stallGroup.position.set(x, y, z);
+
+            if (rotateHorizontal) stallGroup.rotation.y = Math.PI / 2;
+            else stallGroup.userData.viewDir = new THREE.Vector3(1, 0, 0);   // left column (1-8): view from the venue side
+
+            // Wooden Counter
+            const counterMat = new THREE.MeshStandardMaterial({ color: PALETTE.wood, roughness: 0.7 });
+            const table = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.9, 1.3), counterMat);
+            table.position.set(0, 0.45, 0);
+            table.castShadow = true;
+            table.receiveShadow = true;
+            stallGroup.add(table);
+
+            // Counter top surface trim
+            const trimMat = new THREE.MeshStandardMaterial({ color: PALETTE.woodDark });
+            const trim = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.1, 1.4), trimMat);
+            trim.position.set(0, 0.95, 0);
+            stallGroup.add(trim);
+
+            // Miniature display props on table (boxes, trays)
+            const propMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.5 });
+            const propBox = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.3, 0.4), propMat);
+            propBox.position.set(-0.4, 1.1, 0);
+            stallGroup.add(propBox);
+
+            const propBox2 = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.25, 0.4), new THREE.MeshStandardMaterial({ color: 0x38bdf8 }));
+            propBox2.position.set(0.4, 1.08, -0.2);
+            stallGroup.add(propBox2);
+
+            // 4 Support Pillars
+            const pillarMat = new THREE.MeshStandardMaterial({ color: PALETTE.metal, metalness: 0.6 });
+            [-0.8, 0.8].forEach(px => {
+                [-0.5, 0.5].forEach(pz => {
+                    const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.2), pillarMat);
+                    pillar.position.set(px, 1.1, pz);
+                    stallGroup.add(pillar);
+                });
+            });
+
+            // Striped Awning Roof
+            let awningColor = PALETTE.awningRed;
+            if (id % 4 === 1) awningColor = PALETTE.awningRed;
+            else if (id % 4 === 2) awningColor = PALETTE.awningOrange;
+            else if (id % 4 === 3) awningColor = PALETTE.awningBlue;
+            else awningColor = PALETTE.awningGreen;
+
+            const awningMat = new THREE.MeshStandardMaterial({ color: awningColor, roughness: 0.4 });
+            const awning = new THREE.Mesh(new THREE.ConeGeometry(1.5, 0.8, 4), awningMat);
+            awning.position.set(0, 2.4, 0);
+            awning.rotation.y = Math.PI / 4;
+            stallGroup.add(awning);
+
+            // Hit mesh for raycasting
+            const hitMesh = new THREE.Mesh(
+                new THREE.BoxGeometry(2.1, 3.0, 2.1),
+                new THREE.MeshBasicMaterial({ visible: false })
+            );
+            hitMesh.position.y = 1.5;
+
+            const stallInfo = MARKET_DATA[id];
+            hitMesh.userData = {
+                id: id,
+                type: 'market',
+                title: `攤位 ${id} - ${stallInfo.name}`,
+                data: stallInfo,
+                meshGroup: stallGroup
+            };
+
+            stallGroup.add(hitMesh);
+            interactiveObjects.push(hitMesh);
+            scene.add(stallGroup);
+        }
+
+        function buildPerformanceStage() {
+            const stageGroup = new THREE.Group();
+            stageGroup.position.set(LAYOUT.stage.x, 0, LAYOUT.stage.z);
+
+            // Elevated Platform
+            const platformMat = new THREE.MeshStandardMaterial({ color: PALETTE.stage, roughness: 0.5 });
+            const platform = new THREE.Mesh(new THREE.BoxGeometry(8, 0.8, 5), platformMat);
+            platform.position.y = 0.4;
+            platform.castShadow = true;
+            platform.receiveShadow = true;
+            stageGroup.add(platform);
+
+            // Wooden stage floor inlay
+            const stageFloor = new THREE.Mesh(
+                new THREE.BoxGeometry(7.4, 0.85, 4.4),
+                new THREE.MeshStandardMaterial({ color: PALETTE.stageWood, roughness: 0.6 })
+            );
+            stageFloor.position.set(0, 0.42, 0);
+            stageGroup.add(stageFloor);
+
+            // Stage Backdrop Truss & Speakers
+            const trussMat = new THREE.MeshStandardMaterial({ color: PALETTE.truss, metalness: 0.7 });
+            [-3.6, 3.6].forEach(tx => {
+                const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 3.5), trussMat);
+                pole.position.set(tx, 2.5, -2.2);
+                stageGroup.add(pole);
+
+                // Speaker Cabinets
+                const speaker = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.2, 0.6), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
+                speaker.position.set(tx, 2.2, -1.8);
+                stageGroup.add(speaker);
+            });
+
+            const topTruss = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.25, 0.25), trussMat);
+            topTruss.position.set(0, 4.25, -2.2);
+            stageGroup.add(topTruss);
+
+            // Floating Billboard Label
+            createFloatingLabel("表演", 0, 5.2, 1, "#8b5cf6");
+
+            const hitMesh = new THREE.Mesh(
+                new THREE.BoxGeometry(8, 4.5, 5),
+                new THREE.MeshBasicMaterial({ visible: false })
+            );
+            hitMesh.position.y = 2.0;
+            hitMesh.userData = {
+                type: 'stage',
+                title: STAGE_DATA.title,
+                data: STAGE_DATA,
+                meshGroup: stageGroup
+            };
+
+            stageGroup.add(hitMesh);
+            interactiveObjects.push(hitMesh);
+            scene.add(stageGroup);
+        }
+
+        function buildMovieScreening() {
+            const movieGroup = new THREE.Group();
+            movieGroup.position.set(LAYOUT.movie.x, 0, LAYOUT.movie.z);
+
+            // Screen Frame Structure
+            const frameMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.5 });
+            const screenFrame = new THREE.Mesh(new THREE.BoxGeometry(11.6, 5.2, 0.6), frameMat);
+            screenFrame.position.y = 3.0;
+            screenFrame.castShadow = true;
+            movieGroup.add(screenFrame);
+
+            // Glowing Screen Surface
+            const screenMat = new THREE.MeshBasicMaterial({ color: 0x93c5fd });
+            const screenSurface = new THREE.Mesh(new THREE.PlaneGeometry(10.8, 4.4), screenMat);
+            screenSurface.position.set(0, 3.0, 0.32);
+            movieGroup.add(screenSurface);
+
+            // Projector (放映機) on a small stand, facing the screen
+            const standMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.4, roughness: 0.5 });
+            const stand = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.7), standMat);
+            stand.position.set(0, 0.45, 3.5);
+            stand.castShadow = true;
+            movieGroup.add(stand);
+
+            const projBody = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.35, 0.8), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4 }));
+            projBody.position.set(0, 1.08, 3.5);
+            projBody.castShadow = true;
+            movieGroup.add(projBody);
+
+            const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.3, 20), new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.6, roughness: 0.2 }));
+            lens.rotation.x = Math.PI / 2;
+            lens.position.set(0, 1.08, 3.0);
+            movieGroup.add(lens);
+
+            const lensGlow = new THREE.Mesh(new THREE.CircleGeometry(0.12, 20), new THREE.MeshBasicMaterial({ color: 0x93c5fd }));
+            lensGlow.position.set(0, 1.08, 2.84);
+            movieGroup.add(lensGlow);
+
+            const projLed = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.04, 0.12), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
+            projLed.position.set(0.4, 1.27, 3.6);
+            movieGroup.add(projLed);
+
+            // Floating Billboard Label
+            createFloatingLabel("電影放映", 0, 6.5, -11, "#2563eb");
+
+            const hitMesh = new THREE.Mesh(
+                new THREE.BoxGeometry(11.6, 5.8, 4.25),
+                new THREE.MeshBasicMaterial({ visible: false })
+            );
+            hitMesh.position.set(0, 2.8, 1.825);
+            hitMesh.userData = {
+                type: 'movie',
+                title: MOVIE_DATA.title,
+                data: MOVIE_DATA,
+                meshGroup: movieGroup
+            };
+
+            movieGroup.add(hitMesh);
+            interactiveObjects.push(hitMesh);
+            scene.add(movieGroup);
+        }
+
+        function buildConceptExhibitions() {
+            LAYOUT.tents.forEach(createConceptTent);
+        }
+
+        // One tent = two identical halves (A | B) split by a centre wall, whole tent angled toward the stage
+        function createConceptTent(tent) {
+            const tentGroup = new THREE.Group();
+            tentGroup.position.set(tent.x, 0, tent.z);
+            tentGroup.rotation.y = tent.ry;
+            const W = TENT_HALF.w, D = TENT_HALF.d;
+            const glassMat = new THREE.MeshPhysicalMaterial({ color: PALETTE.glass, transparent: true, opacity: 0.55, transmission: 0.85, roughness: 0.1 });
+            const roofMat = new THREE.MeshStandardMaterial({ color: 0x0284c7 });
+            const halves = [], hitList = [];
+
+            [['a', -W / 2], ['b', W / 2]].forEach(([k, lx]) => {
+                const half = new THREE.Group();
+                half.position.set(lx, 0, 0);
+                half.userData.viewDir = new THREE.Vector3(Math.sin(tent.ry), 0, Math.cos(tent.ry));   // tent front faces the stage
+
+                const roof = new THREE.Mesh(new THREE.BoxGeometry(W, 0.35, D), roofMat);
+                roof.position.y = 2.8; roof.castShadow = true; half.add(roof);
+                const walls = new THREE.Mesh(new THREE.BoxGeometry(W - 0.2, 2.4, D - 0.2), glassMat);
+                walls.position.y = 1.3; half.add(walls);
+
+                const pedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, 0.9, 16), new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 }));
+                pedestal.position.set(0, 0.45, 0); half.add(pedestal);
+                const artifact = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.8, roughness: 0.2 }));
+                artifact.position.set(0, 1.1, 0); half.add(artifact);
+
+                const zoneInfo = ZONE_DATA[`concept_${tent.key}_${k}`];
+                const hitMesh = new THREE.Mesh(new THREE.BoxGeometry(W, 3.5, D), new THREE.MeshBasicMaterial({ visible: false }));
+                hitMesh.position.y = 1.75;
+                hitMesh.userData = { type: 'zone', title: zoneInfo.name, data: zoneInfo, meshGroup: half };
+                half.add(hitMesh);
+                interactiveObjects.push(hitMesh);
+                hitList.push(hitMesh);
+                tentGroup.add(half);
+                halves.push([half, zoneInfo.name]);
+            });
+
+            // Centre dividing wall between A and B
+            const divider = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.6, D - 0.1), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4 }));
+            divider.position.set(0, 1.3, 0);
+            divider.castShadow = true;
+            tentGroup.add(divider);
+            tentDividers.push({ mesh: divider, hits: hitList });
+
+            scene.add(tentGroup);
+            tentGroup.updateMatrixWorld(true);
+            halves.forEach(([half, label]) => {
+                const p = new THREE.Vector3();
+                half.getWorldPosition(p);
+                createFloatingLabel(label, p.x, 4.6, p.z, "#0284c7", "#ffffff", 3.2, 1.15);
+            });
+        }
+
+        function buildRightSideBooths() {
+            const rightBooths = LAYOUT.booths;
+
+            rightBooths.forEach(b => {
+                const boothGroup = new THREE.Group();
+                boothGroup.position.set(LAYOUT.boothX, 0, b.z);
+                boothGroup.userData.viewDir = new THREE.Vector3(-1, 0, 0);   // right-hand column: view it from the venue side
+
+                // Detailed Service Counter
+                const boothMat = new THREE.MeshStandardMaterial({ color: PALETTE.boothRight, roughness: 0.5 });
+                const desk = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.1, 2.0), boothMat);
+                desk.position.y = 0.55;
+                desk.castShadow = true;
+                boothGroup.add(desk);
+
+                const canopy = new THREE.Mesh(
+                    new THREE.BoxGeometry(2.2, 0.2, 2.2),
+                    new THREE.MeshStandardMaterial({ color: 0x0284c7 })
+                );
+                canopy.position.y = 2.4;
+                boothGroup.add(canopy);
+
+                [-0.9, 0.9].forEach(px => {
+                    [-0.9, 0.9].forEach(pz => {
+                        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.4), new THREE.MeshStandardMaterial({ color: PALETTE.metal }));
+                        post.position.set(px, 1.2, pz);
+                        boothGroup.add(post);
+                    });
+                });
+
+                // Floating Billboard Label
+                createFloatingLabel(b.label, LAYOUT.boothX, 3.6, b.z, "#0284c7");
+
+                const zoneInfo = ZONE_DATA[b.id];
+                const hitMesh = new THREE.Mesh(
+                    new THREE.BoxGeometry(2.2, 2.8, 2.2),
+                    new THREE.MeshBasicMaterial({ visible: false })
+                );
+                hitMesh.position.y = 1.4;
+                hitMesh.userData = {
+                    type: 'zone',
+                    title: zoneInfo ? zoneInfo.name : b.label,
+                    data: zoneInfo || { desc: b.label },
+                    meshGroup: boothGroup
+                };
+
+                boothGroup.add(hitMesh);
+                interactiveObjects.push(hitMesh);
+                scene.add(boothGroup);
+            });
+
+            // Truss版 - Placed right below 國際志工/IPC in the right side column
+            const trussGroup = new THREE.Group();
+            trussGroup.position.set(LAYOUT.truss.x, 0, LAYOUT.truss.z);
+            // Face inwards towards the center of the exhibition venue
+            trussGroup.rotation.y = -Math.PI / 2;
+            trussGroup.userData.viewDir = new THREE.Vector3(-1, 0, 0);
+
+            const trussMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.8, roughness: 0.3 });
+            const trussWall = new THREE.Mesh(new THREE.BoxGeometry(2.8, 3.2, 0.8), trussMat);
+            trussWall.position.y = 1.6;
+            trussWall.castShadow = true;
+            trussGroup.add(trussWall);
+
+            const banner = new THREE.Mesh(
+                new THREE.BoxGeometry(2.4, 2.6, 0.1),
+                new THREE.MeshStandardMaterial({ color: 0x2563eb })
+            );
+            banner.position.set(0, 1.6, 0.42);
+            trussGroup.add(banner);
+
+            createFloatingLabel("Truss版", LAYOUT.truss.x, 4.4, LAYOUT.truss.z, "#1e3a8a");
+
+            const trussInfo = ZONE_DATA.truss;
+            const trussHit = new THREE.Mesh(
+                new THREE.BoxGeometry(2.8, 4.0, 0.8),
+                new THREE.MeshBasicMaterial({ visible: false })
+            );
+            trussHit.position.y = 2.0;
+            trussHit.userData = {
+                type: 'zone',
+                title: trussInfo.name,
+                data: trussInfo,
+                meshGroup: trussGroup
+            };
+
+            trussGroup.add(trussHit);
+            interactiveObjects.push(trussHit);
+            scene.add(trussGroup);
+        }
+
+        function buildEnvironment() {
+            const treePositions = LAYOUT.trees;
+            treePositions.forEach(([tx, tz]) => {
+                const tree = new THREE.Group();
+                tree.position.set(tx, 0, tz);
+
+                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 1.8), new THREE.MeshStandardMaterial({ color: 0x78350f }));
+                trunk.position.y = 0.9;
+                tree.add(trunk);
+
+                const leaves = new THREE.Mesh(new THREE.ConeGeometry(1.2, 2.5, 5), new THREE.MeshStandardMaterial({ color: 0x10b981, flatShading: true }));
+                leaves.position.y = 2.5;
+                tree.add(leaves);
+
+                scene.add(tree);
+            });
+        }
+
+        // --- 2D / 3D Mode Switcher: the same 3D layer is flattened and viewed straight from above ---
+        const VIEW_2D = { x: 0, y: 46, z: 0.01 };
+        const flat = { k: 1 };
+        const spriteBaseY = new Map();
+
+        function applyFlatten(k) {
+            flat.k = k;
+            scene.children.forEach(o => { if (o.isGroup) o.scale.y = k; });
+            billboardSprites.forEach(s => {
+                if (!spriteBaseY.has(s)) spriteBaseY.set(s, s.position.y);
+                s.position.y = Math.max(0.6, spriteBaseY.get(s) * k);
+            });
+        }
+
+        function toggle2D3DView() {
+            is2DMode = !is2DMode;
+            document.getElementById('view-mode-text').innerText = is2DMode ? "切換 3D" : "切換 2D";
+            document.getElementById('view-mode-icon').className = is2DMode ? "fa-solid fa-cube text-sm" : "fa-solid fa-layer-group text-sm";
+            controls.enableRotate = !is2DMode;
+            if (THREE.TOUCH) controls.touches.ONE = is2DMode ? THREE.TOUCH.PAN : THREE.TOUCH.ROTATE;
+            controls.mouseButtons.LEFT = is2DMode ? THREE.MOUSE.PAN : THREE.MOUSE.ROTATE;
+            new TWEEN.Tween({ k: flat.k })
+                .to({ k: is2DMode ? 0.04 : 1 }, 800)
+                .easing(TWEEN.Easing.Cubic.InOut)
+                .onUpdate(o => applyFlatten(o.k))
+                .start();
+            resetCameraView();
+        }
+
+        function trigger2DNode(key) {
+            if (key === 'movie') {
+                openModal({ type: 'movie', title: MOVIE_DATA.title, data: MOVIE_DATA });
+            } else if (key === 'stage') {
+                openModal({ type: 'stage', title: STAGE_DATA.title, data: STAGE_DATA });
+            } else if (ZONE_DATA[key]) {
+                const zone = ZONE_DATA[key];
+                openModal({ type: 'zone', title: zone.name, data: zone });
+            }
+        }
+
+        // --- Pointer Interaction & Camera Helpers ---
+        function handlePointerSelection(clientX, clientY, touch) {
+            // Touch: also probe a few points around the fingertip so small stalls are easy to hit
+            const offs = touch ? [[0, 0], [16, 0], [-16, 0], [0, 16], [0, -16]] : [[0, 0]];
+            for (const [dx, dy] of offs) {
+                mouse.x = ((clientX + dx) / window.innerWidth) * 2 - 1;
+                mouse.y = -((clientY + dy) / window.innerHeight) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+                const hits = raycaster.intersectObjects(pickables(), false);
+                if (hits.length > 0) {
+                    if (navigator.vibrate) navigator.vibrate(15);
+                    focusCameraOnObject(hits[0].object.userData.meshGroup);
+                    openModal(hits[0].object.userData);
+                    return;
+                }
+            }
+            closeModal();
+        }
+
+        function focusCameraOnObject(meshGroup) {
+            const targetPos = new THREE.Vector3();
+            meshGroup.getWorldPosition(targetPos);
+
+            const dir = meshGroup.userData.viewDir || new THREE.Vector3(0, 0, 1);   // side of the object to look at
+            const cameraOffset = is2DMode ? new THREE.Vector3(0, 24, 0.01) : new THREE.Vector3(dir.x * 17, 14, dir.z * 17);
+            const newCamPos = targetPos.clone().add(cameraOffset);
+
+            new TWEEN.Tween(camera.position)
+                .to(newCamPos, 800)
+                .easing(TWEEN.Easing.Cubic.Out)
+                .start();
+
+            new TWEEN.Tween(controls.target)
+                .to(targetPos, 800)
+                .easing(TWEEN.Easing.Cubic.Out)
+                .onUpdate(() => controls.update())
+                .start();
+        }
+
+        function resetCameraView() {
+            new TWEEN.Tween(camera.position)
+                .to(is2DMode ? VIEW_2D : { x: 0, y: 32, z: 38 }, 900)
+                .easing(TWEEN.Easing.Cubic.Out)
+                .start();
+
+            new TWEEN.Tween(controls.target)
+                .to(is2DMode ? { x: 0, y: 0, z: 0 } : { x: 0, y: 0, z: 2 }, 900)
+                .easing(TWEEN.Easing.Cubic.Out)
+                .onUpdate(() => controls.update())
+                .start();
+        }
+
+        // --- Modal Popups ---
+        function openModal(data) {
+            const backdrop = document.getElementById('info-modal-backdrop');
+            const modal = document.getElementById('info-modal');
+            const titleEl = document.getElementById('modal-title');
+            const catEl = document.getElementById('modal-category');
+            const bodyEl = document.getElementById('modal-body');
+            const iconEl = document.getElementById('modal-badge-icon');
+
+            titleEl.innerText = data.title;
+
+            if (data.type === 'market') {
+                catEl.innerText = `市集攤位 #${data.id} • ${data.data.category}`;
+                iconEl.innerHTML = `<i class="fa-solid fa-store"></i>`;
+                bodyEl.innerHTML = `
+                    <div class="bg-slate-800/70 p-3.5 rounded-2xl border border-slate-700/60 space-y-2.5">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-slate-400">品牌 / 賣家</span>
+                            <span class="font-semibold text-emerald-400 text-xs md:text-sm">${data.data.owner}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-slate-400">商品單價</span>
+                            <span class="font-medium text-amber-400 text-xs md:text-sm">${data.data.price}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">主要販售內容</h4>
+                        <p class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-slate-200 leading-relaxed">${data.data.items}</p>
+                    </div>
+                `;
+            } else if (data.type === 'stage') {
+                catEl.innerText = '表演時間表';
+                iconEl.innerHTML = `<i class="fa-solid fa-music"></i>`;
+                let scheduleHTML = data.data.schedule.map(item => `
+                    <div class="flex items-center justify-between p-3 bg-slate-800/60 rounded-xl border border-slate-700/50">
+                        <div>
+                            <span class="text-[11px] text-purple-400 font-mono font-semibold block">${item.time}</span>
+                            <h5 class="text-xs md:text-sm font-bold text-white mt-0.5">${item.event}</h5>
+                        </div>
+                        ${item.performer ? `<span class="text-[10px] md:text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded-lg border border-purple-500/30 shrink-0 ml-2">${item.performer}</span>` : ''}
+                    </div>
+                `).join('');
+
+                bodyEl.innerHTML = `<p class="text-xs text-slate-300 mb-2">${data.data.desc}</p><div class="space-y-2">${scheduleHTML}</div>`;
+            } else if (data.type === 'movie') {
+                catEl.innerText = '電影放映時間表';
+                iconEl.innerHTML = `<i class="fa-solid fa-film"></i>`;
+                let moviesHTML = data.data.todayMovies.map(m => `
+                    <div class="p-3 bg-slate-800/60 rounded-2xl border border-slate-700/60 space-y-1.5">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-[11px] text-blue-400 font-mono font-semibold">${m.time}${m.duration ? ` (${m.duration})` : ''}</span>
+                                <h4 class="text-xs md:text-sm font-bold text-white mt-0.5">${m.name}</h4>
+                            </div>
+                            ${m.tag ? `<span class="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded border border-blue-500/30 shrink-0 ml-2">${m.tag}</span>` : ''}
+                        </div>
+                        ${m.desc ? `<p class="text-[11px] text-slate-300 leading-relaxed">${m.desc}</p>` : ''}
+                    </div>
+                `).join('');
+
+                bodyEl.innerHTML = `<p class="text-xs text-slate-300 mb-2">${data.data.desc}</p><div class="space-y-2.5">${moviesHTML}</div>`;
+            } else if (data.type === 'zone') {
+                catEl.innerText = data.data.cat || '展區介紹';
+                iconEl.innerHTML = `<i class="fa-solid fa-compass"></i>`;
+                bodyEl.innerHTML = `
+                    <div class="bg-slate-800/60 p-3.5 rounded-2xl border border-slate-700/60">
+                        <p class="text-xs md:text-sm text-slate-200 leading-relaxed">${data.data.desc}</p>
+                    </div>
+                `;
+            }
+
+            sheetExpanded = false;
+            modal.classList.remove('is-expanded');
+            modal.style.height = '';
+            document.getElementById('modal-body').scrollTop = 0;
+            backdrop.classList.remove('opacity-0', 'pointer-events-none');
+            modal.classList.add('is-open');
+            setPanelShift(true);
+            modal.classList.remove('translate-y-full', 'scale-95');
+            modal.classList.add('translate-y-0', 'scale-100');
+        }
+
+// Shift the 3D view (right on desktop/tablet, up on phone) so the focused object isn't hidden behind the panel/sheet
+        let sheetExpanded = false;
+        function sheetHeights() {
+            const H = window.innerHeight, sheet = document.getElementById('info-modal'), body = document.getElementById('modal-body');
+            const collapsed = H * 0.46;
+            const needed = sheet.offsetHeight + (body.scrollHeight - body.clientHeight) + 4;   // height that shows all content
+            return { collapsed, expanded: Math.max(collapsed, Math.min(needed, H * 0.85)) };
+        }
+        function setSheetExpanded(on) {
+            const sheet = document.getElementById('info-modal'), { collapsed, expanded } = sheetHeights();
+            sheetExpanded = on && expanded > collapsed + 6;
+            sheet.classList.toggle('is-expanded', sheetExpanded);
+            sheet.style.height = sheetExpanded ? expanded + 'px' : '';
+            setPanelShift(true, sheetExpanded ? expanded : collapsed);
+        }
+        const viewShift = { v: 0, y: 0 };
+        function setPanelShift(open, sheetH) {
+            const wide = window.matchMedia('(min-width: 768px)').matches;
+            let shiftY = 0;
+            if (open && !wide) {   // centre of the map area between the header and the top of the sheet
+                const H = window.innerHeight;
+                const top = document.querySelector('header').getBoundingClientRect().bottom;
+                const bottom = H - (sheetH || document.getElementById('info-modal').offsetHeight);
+                shiftY = H / 2 - (top + bottom) / 2;
+            }
+            new TWEEN.Tween(viewShift)
+                .to({ v: open && wide ? Math.min(384, window.innerWidth - 32) / 2 + 8 : 0, y: shiftY }, 600)
+                .easing(TWEEN.Easing.Cubic.Out).start();
+        }
+
+        function closeModal() {
+            const backdrop = document.getElementById('info-modal-backdrop');
+            const modal = document.getElementById('info-modal');
+            backdrop.classList.add('opacity-0', 'pointer-events-none');
+            modal.classList.remove('is-open');
+            setPanelShift(false);
+            modal.classList.remove('translate-y-0', 'scale-100');
+            modal.classList.add('translate-y-full', 'scale-95');
+        }
+
+        // --- Search & category filter (dims non-matching objects in 3D / 2D, lists matches, jumps to selection) ---
+        const tentDividers = [];   // centre walls: lit only while at least one half of the tent is lit
+        const filterState = { cat: 'all', q: '' };
+        const CAT_OF = { market: 'market', stage: 'stage', movie: 'movie', zone: 'exhibition' };
+        const norm = s => String(s == null ? '' : s).toLowerCase().replace(/\s+/g, '');
+        const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        const pickables = () => interactiveObjects.filter(o => !o.userData.dimmed);
+
+        function entrySearchText(ud) {
+            const d = ud.data || {};
+            if (ud.type === 'market') return norm([ud.title, d.name, d.owner, d.category, d.items, '攤位' + ud.id].join(' '));
+            if (ud.type === 'stage') return norm([ud.title, d.desc, ...d.schedule.map(s => (s.performer || '') + s.event + s.time)].join(' '));
+            if (ud.type === 'movie') return norm([ud.title, d.desc, ...d.todayMovies.map(m => m.name + (m.tag || '') + m.time)].join(' '));
+            return norm([ud.title, ud.title.replace('展覽', ''), d.name, d.cat, d.desc].join(' '));
+        }
+
+        function entryMatches(ud) {
+            if (filterState.cat !== 'all' && CAT_OF[ud.type] !== filterState.cat) return false;
+            const q = norm(filterState.q);
+            if (!q) return true;
+            const m = q.match(/^(?:攤位|#|no\.?)?(\d+)$/);
+            if (m) return ud.type === 'market' && String(ud.id).startsWith(m[1]);
+            if (ud._text === undefined) ud._text = entrySearchText(ud);
+            return ud._text.includes(q);
+        }
+
+        function setGroupDim(group, dim) {
+            group.traverse(o => {
+                if (!o.isMesh || o.userData.type) return;   // skip invisible hit boxes
+                if (!o.userData._m) {
+                    o.userData._m = o.material;
+                    o.userData._d = o.material.clone();
+                    o.userData._d.transparent = true;
+                    o.userData._d.opacity = 0.1;
+                    o.userData._d.depthWrite = false;
+                }
+                o.material = dim ? o.userData._d : o.userData._m;
+            });
+        }
+
+        function applyFilters() {
+            scene.updateMatrixWorld(true);
+            interactiveObjects.forEach(o => {
+                const dim = !entryMatches(o.userData);
+                o.userData.dimmed = dim;
+                setGroupDim(o.userData.meshGroup, dim);
+            });
+            tentDividers.forEach(t => setGroupDim(t.mesh, t.hits.every(o => o.userData.dimmed)));
+            const wp = new THREE.Vector3();
+            billboardSprites.forEach(sp => {
+                if (!sp.userData.owner) {   // label belongs to the nearest interactive object
+                    let best = null, bd = Infinity;
+                    interactiveObjects.forEach(o => {
+                        o.userData.meshGroup.getWorldPosition(wp);
+                        const d = Math.hypot(wp.x - sp.position.x, wp.z - sp.position.z);
+                        if (d < bd) { bd = d; best = o; }
+                    });
+                    sp.userData.owner = best;
+                }
+                sp.material.opacity = sp.userData.owner.userData.dimmed ? 0.1 : 1;
+            });
+        }
+
+        function renderSearchResults() {
+            const box = document.getElementById('search-results');
+            if (!norm(filterState.q)) { box.classList.add('hidden'); box._items = []; return; }
+            const list = interactiveObjects.map(o => o.userData).filter(entryMatches);
+            const shown = list.slice(0, 8);
+            box._items = shown;
+            const sub = ud => ud.type === 'market' ? ud.data.category : ud.type === 'stage' ? '表演' : ud.type === 'movie' ? '電影放映' : (ud.data.cat || '展區');
+            box.innerHTML = list.length
+                ? `<div class="px-3 py-1.5 text-[11px] text-slate-400">找到 ${list.length} 項${list.length > shown.length ? '（顯示前 8 項）' : ''}</div>` +
+                  shown.map((ud, i) => `<button data-i="${i}" class="w-full text-left px-3 py-2.5 min-h-[44px] hover:bg-slate-800 active:bg-slate-700 flex items-center justify-between gap-2"><span class="text-xs font-semibold text-white truncate">${esc(ud.title)}</span><span class="text-[10px] text-slate-400 shrink-0">${esc(sub(ud))}</span></button>`).join('')
+                : `<div class="px-3 py-3 text-xs text-slate-400">找不到符合「${esc(filterState.q)}」的項目</div>`;
+            box.classList.remove('hidden');
+        }
+
+        function selectEntry(ud) {
+            if (!ud) return;
+            document.getElementById('search-results').classList.add('hidden');
+            document.getElementById('search-input').blur();
+            focusCameraOnObject(ud.meshGroup);
+            openModal(ud);
+        }
+
+        function initSearchFilter() {
+            const input = document.getElementById('search-input'), box = document.getElementById('search-results');
+            const refresh = () => { filterState.q = input.value; applyFilters(); renderSearchResults(); };
+            input.addEventListener('input', refresh);
+            input.addEventListener('focus', renderSearchResults);
+            input.addEventListener('keydown', e => {
+                if (e.key === 'Enter') { e.preventDefault(); selectEntry((box._items || [])[0]); }
+                else if (e.key === 'Escape') { input.value = ''; refresh(); input.blur(); }
+            });
+            box.addEventListener('click', e => {
+                const b = e.target.closest('button[data-i]');
+                if (b) selectEntry(box._items[+b.dataset.i]);
+            });
+            document.addEventListener('pointerdown', e => {
+                if (!e.target.closest('#search-results') && e.target.id !== 'search-input') box.classList.add('hidden');
+            });
+            const btns = document.querySelectorAll('.filter-btn');
+            btns.forEach(btn => btn.addEventListener('click', () => {
+                filterState.cat = btn.dataset.category;
+                btns.forEach(b => {
+                    const on = b === btn;
+                    b.classList.toggle('bg-blue-600', on); b.classList.toggle('text-white', on);
+                    b.classList.toggle('bg-slate-800/90', !on); b.classList.toggle('text-slate-300', !on);
+                });
+                applyFilters(); renderSearchResults();
+            }));
+        }
+
+        function setupUI() {
+            initSearchFilter();
+            document.getElementById('view-mode-btn').addEventListener('click', toggle2D3DView);
+            document.getElementById('close-modal-btn').addEventListener('click', closeModal);
+            // Phone bottom sheet: swipe up = expand to show everything, swipe down = collapse, swipe down again = close
+            const sheet = document.getElementById('info-modal'), sheetBody = document.getElementById('modal-body');
+            let g = null;
+            sheet.addEventListener('touchstart', (e) => {
+                if (window.innerWidth >= 768 || e.touches.length !== 1) { g = null; return; }
+                const inBody = !!e.target.closest('#modal-body');
+                if (sheetExpanded && inBody && sheetBody.scrollTop > 0) { g = null; return; }   // let the body scroll
+                g = { y: e.touches[0].clientY, h0: sheet.offsetHeight, downOnly: sheetExpanded && inBody, ...sheetHeights() };
+                sheet.style.transition = 'none';
+            }, { passive: true });
+            sheet.addEventListener('touchmove', (e) => {
+                if (!g) return;
+                const dy = e.touches[0].clientY - g.y;
+                if (dy > 0) sheet.style.transform = `translateY(${dy}px)`;
+                else if (!g.downOnly && !sheetExpanded) sheet.style.height = Math.min(g.expanded, g.h0 - dy) + 'px';
+            }, { passive: true });
+            const endSheetDrag = (e) => {
+                if (!g) return;
+                const dy = (e.changedTouches ? e.changedTouches[0].clientY : g.y) - g.y, d = g;
+                g = null;
+                sheet.style.transition = ''; sheet.style.transform = '';
+                if (dy < -50 && !d.downOnly) setSheetExpanded(true);
+                else if (dy > 220) closeModal();
+                else if (dy > 70) { if (sheetExpanded) setSheetExpanded(false); else closeModal(); }
+                else setSheetExpanded(sheetExpanded);
+            };
+            sheet.addEventListener('touchend', endSheetDrag, { passive: true });
+            sheet.addEventListener('touchcancel', endSheetDrag, { passive: true });
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+            document.getElementById('info-modal-backdrop').addEventListener('click', (e) => {
+                if (e.target.id === 'info-modal-backdrop') closeModal();
+            });
+
+            document.getElementById('btn-zoom-in').addEventListener('click', () => zoomCamera(-8));
+            document.getElementById('btn-zoom-out').addEventListener('click', () => zoomCamera(8));
+            document.getElementById('btn-reset-cam').addEventListener('click', resetCameraView);
+
+            document.getElementById('toggle-search-btn').addEventListener('click', () => {
+                const panel = document.getElementById('controls-panel');
+                panel.classList.toggle('hidden');
+                panel.classList.toggle('flex');
+                if (!panel.classList.contains('hidden')) document.getElementById('search-input').focus();
+            });
+        }
+
+        function trigger2DStall(id) {
+            const item = MARKET_DATA[id];
+            if (item) {
+                openModal({
+                    type: 'market',
+                    id: id,
+                    title: `攤位 ${id} - ${item.name}`,
+                    data: item
+                });
+            }
+        }
+
+        function zoomCamera(delta) {
+            const dir = new THREE.Vector3().subVectors(camera.position, controls.target).normalize();
+            const targetPos = camera.position.clone().addScaledVector(dir, delta);
+            new TWEEN.Tween(camera.position)
+                .to(targetPos, 400)
+                .easing(TWEEN.Easing.Cubic.Out)
+                .start();
+        }
+
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(pickables(), false);
+
+            const tooltip = document.getElementById('tooltip');
+            const tooltipText = document.getElementById('tooltip-text');
+
+            if (intersects.length > 0 && window.innerWidth >= 768) {
+                const hitObj = intersects[0].object;
+                tooltip.style.top = (document.querySelector('header').getBoundingClientRect().bottom + 10) + 'px';
+                tooltipText.innerText = hitObj.userData.title;
+                tooltip.style.display = 'flex';
+            } else {
+                tooltip.style.display = 'none';
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            TWEEN.update();
+            if (Math.abs(viewShift.v) > 0.5 || Math.abs(viewShift.y) > 0.5) camera.setViewOffset(window.innerWidth, window.innerHeight, -viewShift.v, viewShift.y, window.innerWidth, window.innerHeight);
+            else if (camera.view && camera.view.enabled) camera.clearViewOffset();
+            controls.update();
+            const tg = controls.target, cx = THREE.MathUtils.clamp(tg.x, -26, 26), cz = THREE.MathUtils.clamp(tg.z, -20, 20);
+            if (cx !== tg.x || cz !== tg.z) { camera.position.x += cx - tg.x; camera.position.z += cz - tg.z; tg.x = cx; tg.z = cz; }
+
+            // Always orient billboard labels towards the camera view
+            billboardSprites.forEach(sprite => {
+                sprite.quaternion.copy(camera.quaternion);
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        window.onload = function() {
+            init();
+        };
+    </script>
+</body>
+</html>
