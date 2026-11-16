@@ -54,6 +54,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "if (window.location.hostname === 'nchumoviefestival.hyjdevelop.com') window.location.replace('https://nchufilmfestival.ripple.hyjdevelop.com' + window.location.pathname + window.location.search + window.location.hash);",
+          }}
+        />
         {/* 僅在 JS 可用時啟用進場動畫的隱藏狀態，確保無 JS／爬蟲仍看得到全部內容 */}
         <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
       </head>

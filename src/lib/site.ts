@@ -5,7 +5,7 @@ import { THEME, THEME_CHAR } from "./theme";
  * 之後資訊有更動（例如講座確定、場地公布），只需要改這裡。
  */
 export const site = {
-  url: (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, ""),
+  url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://nchufilmfestival.ripple.hyjdevelop.com").replace(/\/$/, ""),
   year: 2027,
   themeChar: THEME_CHAR,
   themeEn: "Ripple",
