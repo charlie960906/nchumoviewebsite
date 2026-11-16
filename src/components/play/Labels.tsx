@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { RefreshCw } from "lucide-react";
 import { relationLabels } from "@/lib/content";
 import ShareCardButton from "./ShareCardButton";
@@ -66,7 +66,7 @@ export default function Labels() {
                   const on = picked.includes(l);
                   const full = !on && picked.length >= MAX;
                   return (
-                    <motion.button
+                    <m.button
                       key={l}
                       type="button"
                       aria-pressed={on}
@@ -79,7 +79,7 @@ export default function Labels() {
                       }`}
                     >
                       {l}
-                    </motion.button>
+                    </m.button>
                   );
                 })}
               </div>
@@ -94,14 +94,14 @@ export default function Labels() {
       <div aria-live="polite">
         <AnimatePresence mode="wait">
           {done && picked.length > 0 ? (
-            <motion.div key="card" initial={{ opacity: 0, y: 24, rotate: -2 }} animate={{ opacity: 1, y: 0, rotate: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}>
+            <m.div key="card" initial={{ opacity: 0, y: 24, rotate: -2 }} animate={{ opacity: 1, y: 0, rotate: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}>
               <div className="card relative overflow-hidden p-7 text-center" style={{ background: "radial-gradient(80% 70% at 50% 30%, rgba(56,189,248,.2), transparent), #0f2238" }}>
                 <p className="eyebrow">關係名片</p>
                 <p className="mt-5 font-serif text-3xl font-bold">我佮{name}</p>
                 <p className="mt-1 text-sm text-dim">{rel}</p>
                 <ul className="mt-6 flex flex-wrap justify-center gap-2">
                   {picked.map((l, i) => (
-                    <motion.li
+                    <m.li
                       key={l}
                       initial={{ opacity: 0, scale: 1.4, rotate: 8 }}
                       animate={{ opacity: 1, scale: 1, rotate: [-3, 2, -1][i] }}
@@ -109,7 +109,7 @@ export default function Labels() {
                       className="rounded-lg bg-glow px-3.5 py-2 text-sm font-bold text-night"
                     >
                       {l}
-                    </motion.li>
+                    </m.li>
                   ))}
                 </ul>
                 <p className="prose-poem mt-7 text-sm text-mist">「佮」是和、與——是終於能說出「我佮你」的那個時刻。</p>
@@ -124,15 +124,15 @@ export default function Labels() {
                   重貼
                 </button>
               </div>
-            </motion.div>
+            </m.div>
           ) : (
-            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="card grid min-h-[280px] place-items-center border-dashed p-8 text-center text-dim">
+            <m.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="card grid min-h-[280px] place-items-center border-dashed p-8 text-center text-dim">
               <p>
                 選好標籤後，
                 <br />
                 你們的關係名片會出現在這裡。
               </p>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>

@@ -17,7 +17,7 @@ export const site = {
   },
   tagline: "願你在漂泊裡仍能晤見流光",
   description:
-    `2027 興大國際星空電影節「${THEME}」將於 2027 年 3 月 19 日（五）至 3 月 20 日（六）在國立中興大學登場。兩晚星空下的草地放映、市集展覽、現場演出與映後講座，免費入場，透過 Luma 線上預先報名。`,
+    `2027 興大國際星空電影節「${THEME}」將於 2027 年 3 月 19 日（五）至 3 月 20 日（六）在國立中興大學登場。兩晚星空下的草地放映、市集展覽、現場演出與映後講座，免費入場、不需報名，當天直接到場即可。`,
   keywords: [
     "興大電影節",
     "星空電影節",
@@ -68,8 +68,12 @@ export const site = {
       logoH: 235,
     },
   ],
-  /** 聯絡方式待團隊提供；留空時頁面顯示「即將公布」。 */
-  contact: { email: "", instagram: "", facebook: "" },
+  contact: {
+    email: "",
+    instagram: "https://www.instagram.com/nchu_intuitive_observer/?hl=zh-tw",
+    threads: "https://www.threads.com/@nchu_intuitive_observer",
+    facebook: "",
+  },
   /** 《美國女孩》映後 QA 事前提問表單（例如 Google 表單）；留空時顯示即將開放。 */
   qaFormUrl: "",
   /** 前導短片（YouTube embed 網址）；留空時顯示預留區。 */
@@ -103,17 +107,36 @@ export const nav: readonly NavItem[] = [
   },
 ];
 
-/** 頁尾 Sitemap：不在上方導覽列、但仍需要入口的頁面補在這裡。 */
-export const footerNav: readonly NavLink[] = [
-  { href: "/", label: "首頁" },
-  { href: "/themes", label: "展區介紹" },
-  { href: "/themes/siu", label: "展區：泅 Siû" },
-  { href: "/themes/gia", label: "展區：涯 Giâ" },
-  { href: "/program", label: "活動與市集" },
-  { href: "/guide", label: "現場指引" },
-  { href: "/team", label: "團隊成員" },
-  { href: "/about", label: "關於電影節" },
-  { href: "/interactive", label: "線上互動館" },
+export type NavGroup = { title: string; titleEn: string; links: readonly NavLink[] };
+
+/** 頁尾網頁導覽：依主題分組，包含上方導覽列沒有直接入口的頁面（活動提醒、線上互動館）。 */
+export const footerNav: readonly NavGroup[] = [
+  {
+    title: "展區介紹",
+    titleEn: "Exhibitions",
+    links: [
+      { href: "/themes", label: "策展理念" },
+      { href: "/themes/siu", label: "泅 Siû" },
+      { href: "/themes/gia", label: "涯 Giâ" },
+    ],
+  },
+  {
+    title: "參與活動",
+    titleEn: "Visit",
+    links: [
+      { href: "/program", label: "活動與市集" },
+      { href: "/guide", label: "現場指引" },
+      { href: "/interactive", label: "線上互動館" },
+    ],
+  },
+  {
+    title: "關於",
+    titleEn: "About",
+    links: [
+      { href: "/about", label: "關於電影節" },
+      { href: "/team", label: "團隊成員" },
+    ],
+  },
 ];
 
 export function abs(path = "/") {

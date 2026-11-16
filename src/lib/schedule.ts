@@ -56,7 +56,3 @@ export function dayOf(key: Session["day"]) {
 export function iso(day: Session["day"], time: string) {
   return `${dayOf(day).date}T${time}:00+08:00`;
 }
-
-export function sessionsOf(day: Session["day"]) {
-  return sessions.filter((s) => s.day === day);
-}

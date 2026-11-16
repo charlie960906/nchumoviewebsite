@@ -9,6 +9,7 @@ import Footer from "@/components/Footer";
 import JsonLd from "@/components/JsonLd";
 import RevealObserver from "@/components/RevealObserver";
 import ScrollToTop from "@/components/ScrollToTop";
+import MotionProvider from "@/components/MotionProvider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const notoSans = Noto_Sans_TC({ weight: ["400", "500", "700"], variable: "--font-noto-sans", display: "swap", preload: false });
@@ -63,16 +64,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           跳到主要內容
         </a>
-        <Header />
-        <main id="main" className="flex-1">
-          {children}
-        </main>
-        <Footer />
+        <MotionProvider>
+          <Header />
+          <main id="main" className="flex-1">
+            {children}
+          </main>
+          <Footer />
+        </MotionProvider>
         <ScrollToTop />
         <RevealObserver />
         <JsonLd data={[organizationLd, websiteLd]} />
-        {/* Luma Checkout：站內彈窗報名，無需跳轉 */}
-        <Script id="luma-checkout" src={site.luma.script} strategy="afterInteractive" />
+        {/* Luma Checkout：站內彈窗訂閱活動提醒，無需跳轉 */}
+        <Script id="luma-checkout" src={site.luma.script} strategy="lazyOnload" />
       </body>
     </html>
   );

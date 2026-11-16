@@ -9,7 +9,9 @@ import { getStaff } from "@/lib/staff";
  * - email：成員登入 Gravatar 的信箱。只在建置時於伺服器端雜湊成 SHA-256，
  *   不會出現在輸出的 HTML 或 JS 中。留空或該信箱沒有 Gravatar 時，顯示姓名縮寫方塊。
  * - nick：暱稱／英文名（選填），顯示在姓名下方。
- * - role：職稱（選填，例如「部長」），顯示在姓名下方；未填時以部門名稱代替。
+ * - role：職稱（選填，例如「部長」），顯示在姓名下方。
+ * - team：部門底下的組別（選填，例如「宣傳組」）。同組成員會在部門內以小標題分組，
+ *   沒有 team 的成員（例如部長）排在最前面。
  * - echo：對應 staff.ts 中「波紋的音像」黑膠的 id（選填）。填了之後，點開成員的詳細資料
  *   最下方會出現他的黑膠與歌名，點擊跳轉到 /interactive/echoes/{echo} 故事頁。
  * - 「關於我」取自成員 Gravatar 個人檔案的 About Me：建置時先抓一份寫進頁面，
@@ -17,7 +19,7 @@ import { getStaff } from "@/lib/staff";
  *
  * ⚠ 這個檔案只能由 Server Component 匯入（"server-only" 會擋下誤用），避免信箱進入前端 bundle。
  */
-export type CrewMember = { name: string; nick?: string; role?: string; email?: string; echo?: string };
+export type CrewMember = { name: string; nick?: string; role?: string; team?: string; email?: string; echo?: string };
 export type CrewGroup = { id: string; dept: string; en: string; desc: string; members: CrewMember[] };
 
 const m = (name: string, extra: Omit<CrewMember, "name"> = {}): CrewMember => ({ name, ...extra });
@@ -27,7 +29,7 @@ export const crew: CrewGroup[] = [
     id: "lead",
     dept: "召部",
     en: "Directors",
-    desc: "統籌整個電影節的核心，協調各部運作、制定方向，讓兩個夜晚如期發生。",
+    desc: "統籌整個電影節的核心團隊，負責協調各組運作、制定方向。\n電影節的領航者，確保整體活動順利進行並達成目標。",
     members: [
       m("洪愛佳", { email: "aijia0603@gmail.com" }),
       m("林鈊渘", { email: "koala082700@gmail.com" }),
@@ -52,7 +54,7 @@ export const crew: CrewGroup[] = [
     id: "curation",
     dept: "策展部",
     en: "Curatorial",
-    desc: "選片、規劃展區與活動內容，把「泅」與「涯」的主題化為可以走進去的空間。",
+    desc: "規劃展區、展品與活動內容，\n把主題化為可以看得見、摸得到的內容。",
     members: [
       m("邱婕", { email: "julie0905852735@gmail.com" }),
       m("洪培恩", { email: "a0909524151@gmail.com" }),
@@ -78,22 +80,22 @@ export const crew: CrewGroup[] = [
     en: "Marketing",
     desc: "經營社群與宣傳、聯繫合作夥伴，讓更多人知道這場星空下的電影節。",
     members: [
-      m("張允昊", { email: "haochang.yh@gmail.com" }),
-      m("黃欣恬", { email: "huangst2016@gmail.com" }),
-      m("楊子詰", { email: "benjaminyang96@gmail.com" }),
-      m("洪千筑", { email: "cherry242293@gmail.com" }),
-      m("吳多恩", { email: "wu0821317@gmail.com" }),
-      m("王靖茵", { email: "wendy.supernove@gmail.com" }),
-      m("陳紹恩", { email: "shaoen0715@gmail.com" }),
-      m("謝函蓉", { email: "kakakahsieh@gmail.com" }),
-      m("葉芷瑜", { email: "ginayeh1127@gmail.com" }),
+      m("張允昊", { role: "部長", email: "haochang.yh@gmail.com" }),
+      m("黃欣恬", { role: "部長", email: "huangst2016@gmail.com" }),
+      m("楊子詰", { team: "宣傳組", email: "benjaminyang96@gmail.com" }),
+      m("洪千筑", { team: "宣傳組", email: "cherry242293@gmail.com" }),
+      m("吳多恩", { team: "宣傳組", email: "wu0821317@gmail.com" }),
+      m("王靖茵", { team: "宣傳組", email: "wendy.supernove@gmail.com" }),
+      m("陳紹恩", { team: "影紀組", email: "shaoen0715@gmail.com" }),
+      m("謝函蓉", { team: "影紀組", email: "kakakahsieh@gmail.com" }),
+      m("葉芷瑜", { team: "影紀組", email: "ginayeh1127@gmail.com" }),
     ],
   },
   {
     id: "design",
     dept: "設計部",
     en: "Design",
-    desc: "從主視覺到每一張海報與指標，替電影節定下它的樣子。",
+    desc: "從主視覺、貼文、海報以及周邊，替電影節定下它的樣子。",
     members: [
       m("王姿立", { email: "wangtzuli@smail.nchu.edu.tw" }),
       m("吳鈞涵", { email: "junhanwu514@gmail.com" }),
@@ -121,8 +123,6 @@ export const crew: CrewGroup[] = [
     ],
   },
 ];
-
-export const crewCount = crew.reduce((n, g) => n + g.members.length, 0);
 
 /** Gravatar 頭像網址；d=blank 讓沒有 Gravatar 的信箱回傳透明圖，露出底下的縮寫方塊。 */
 export function gravatarUrl(email: string | undefined, size = 320): string | undefined {
@@ -155,6 +155,7 @@ export type CrewCard = {
   key: string;
   name: string;
   sub?: string;
+  team?: string;
   title: string;
   avatar?: string;
   /** Gravatar 的 email SHA-256（頭像網址本來就公開含有它），供前端即時讀取個人檔案 */
@@ -175,7 +176,8 @@ export async function getCrewBoard(): Promise<CrewBoardGroup[]> {
             key: `${g.id}-${i}`,
             name: p.name,
             sub: [p.role, p.nick].filter(Boolean).join(" · ") || undefined,
-            title: [g.dept, p.role].filter(Boolean).join(" · "),
+            team: p.team,
+            title: [g.dept, p.team, p.role].filter(Boolean).join(" · "),
             avatar: gravatarUrl(p.email),
             hash: p.email?.trim() ? emailHash(p.email) : undefined,
             about: await gravatarAbout(p.email),

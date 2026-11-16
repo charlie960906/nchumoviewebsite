@@ -32,13 +32,13 @@ export default function InteractivePage() {
 
       <section className="container-x">
         <Link href="/interactive/echoes" className="card card-hover reveal group relative block overflow-hidden p-7 md:p-12">
-          <div aria-hidden className="absolute -right-28 top-1/2 h-[420px] w-[420px] -translate-y-1/2 opacity-90 md:right-6">
+          <div aria-hidden className="absolute -right-44 top-1/2 h-80 w-80 -translate-y-1/2 opacity-35 sm:-right-28 sm:h-[420px] sm:w-[420px] sm:opacity-50 md:-right-40 md:opacity-90 lg:right-6">
             <div className="h-full w-full animate-spin-slow rounded-full bg-[repeating-radial-gradient(circle,#06080c_0,#06080c_2px,#161f2e_3px,#06080c_4px)] shadow-[0_0_120px_rgba(56,189,248,.3)]">
               <div className="absolute inset-[32%] rounded-full bg-gradient-to-br from-moon via-glow to-night" />
               <div className="absolute inset-[48.5%] rounded-full bg-night" />
             </div>
           </div>
-          <div className="relative max-w-md">
+          <div className="relative max-w-md md:max-w-sm lg:max-w-md">
             <span className="tag tag-glow">核心體驗</span>
             <Disc3 aria-hidden className="mt-5 text-glow" size={30} />
             <h2 className="mt-3 font-serif text-4xl font-bold md:text-5xl">波紋的音像</h2>

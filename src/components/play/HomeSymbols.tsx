@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { RefreshCw } from "lucide-react";
 import { homeSymbols } from "@/lib/content";
 import ShareCardButton from "./ShareCardButton";
@@ -52,7 +52,7 @@ export default function HomeSymbols() {
           </span>
           <AnimatePresence>
             {chosen.map((c, i) => (
-              <motion.span
+              <m.span
                 key={c.id}
                 aria-hidden
                 initial={{ opacity: 0, scale: 0.3, left: "50%", top: "50%" }}
@@ -62,14 +62,14 @@ export default function HomeSymbols() {
                 className="absolute -translate-x-1/2 -translate-y-1/2 text-5xl drop-shadow-[0_4px_16px_rgba(0,0,0,.5)] md:text-6xl"
               >
                 {c.glyph}
-              </motion.span>
+              </m.span>
             ))}
           </AnimatePresence>
         </div>
 
         <div aria-live="polite" className="mx-auto mt-5 max-w-[420px] text-center">
           {complete ? (
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <m.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
               <p className="prose-poem text-lg text-moon">{sentence}</p>
               <div className="mt-5 flex flex-wrap items-start justify-center gap-3">
                 <ShareCardButton
@@ -87,7 +87,7 @@ export default function HomeSymbols() {
                   重拼
                 </button>
               </div>
-            </motion.div>
+            </m.div>
           ) : (
             <p className="text-sm text-dim">
               還差 <span className="font-mono text-glow">{MAX - chosen.length}</span> 個符號
@@ -110,7 +110,7 @@ export default function HomeSymbols() {
             const on = picked.includes(s.id);
             const full = !on && picked.length >= MAX;
             return (
-              <motion.button
+              <m.button
                 key={s.id}
                 type="button"
                 aria-pressed={on}
@@ -125,7 +125,7 @@ export default function HomeSymbols() {
                   {s.glyph}
                 </span>
                 <span className="text-xs text-mist">{s.label}</span>
-              </motion.button>
+              </m.button>
             );
           })}
         </div>

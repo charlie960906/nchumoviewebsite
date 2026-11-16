@@ -25,7 +25,7 @@ export default function ProgramPage() {
       <PageHero
         eyebrow="Program"
         title="活動與市集"
-        summary={`${site.name}為期兩天：3 月 19 日（五）15:00–22:00、3 月 20 日（六）14:00–23:00。每晚 18:30 於星空下放映一部電影，下午起有市集、展覽、快閃遊戲與現場演出。所有場次免費，透過 Luma 一次報名即可。`}
+        summary={`${site.name}為期兩天：3 月 19 日（五）15:00–22:00、3 月 20 日（六）14:00–23:00。每晚 18:30 於星空下放映一部電影，下午起有市集、展覽、快閃遊戲與現場演出。所有場次免費且不需報名，當天直接到場即可。`}
       >
         <LumaButton source="program" />
         <AddToCalendar />

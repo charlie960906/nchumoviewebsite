@@ -31,7 +31,7 @@ export default function SuccessRipple({ size = 168, color = "#10B981" }: { size?
       ref={ref}
       type="button"
       onClick={() => setRun((n) => n + 1)}
-      aria-label="重播報名成功動畫"
+      aria-label="重播訂閱成功動畫"
       className="relative mx-auto grid shrink-0 place-items-center rounded-full"
       style={{ width: size, height: size }}
     >

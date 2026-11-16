@@ -11,20 +11,21 @@ export default function PageHero({
   children?: React.ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden">
+    // 與首頁一致：-mt-16 / pt-16 抵銷 sticky Header 高度，讓 Hero 佔滿整個視窗並垂直置中
+    <section className="relative -mt-16 mb-12 flex min-h-[100svh] items-center overflow-hidden pt-16 md:mb-16">
       <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-40 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-tide/20 blur-3xl" />
+        <div className="absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-tide/20 blur-3xl" />
       </div>
-      <div className="container-x relative pb-12 pt-10 md:pb-16 md:pt-16">
+      <div className="container-x relative w-full py-10 text-center">
         <p className="eyebrow reveal">{eyebrow}</p>
         <h1 className="reveal mt-3 font-serif text-[32px] font-bold tracking-wide md:text-[44px]" style={{ "--d": "60ms" } as React.CSSProperties}>
           {title}
         </h1>
-        <p className="reveal mt-5 max-w-2xl text-[17px] text-mist/90" style={{ "--d": "120ms" } as React.CSSProperties}>
+        <p className="reveal mx-auto mt-5 max-w-2xl text-[17px] text-mist/90" style={{ "--d": "120ms" } as React.CSSProperties}>
           {summary}
         </p>
         {children && (
-          <div className="reveal mt-7 flex flex-wrap gap-3" style={{ "--d": "180ms" } as React.CSSProperties}>
+          <div className="reveal mx-auto mt-7 flex max-w-sm flex-col justify-center gap-2.5 sm:max-w-none sm:flex-row sm:flex-wrap sm:gap-3" style={{ "--d": "180ms" } as React.CSSProperties}>
             {children}
           </div>
         )}

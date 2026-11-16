@@ -1,7 +1,7 @@
 import { site } from "./site";
 import { THEME } from "./theme";
 
-/* ───────────── FAQ（關於頁與首頁共用，同時輸出 FAQPage JSON-LD） ───────────── */
+/* ───────────── FAQ（僅首頁使用，同時輸出 FAQPage JSON-LD） ───────────── */
 
 export const faqs: { q: string; a: string }[] = [
   {
@@ -17,8 +17,8 @@ export const faqs: { q: string; a: string }[] = [
     a: `${site.venue.name}（${site.venue.address}）。場內動線與攤位位置請見「現場指引」頁的互動地圖。`,
   },
   {
-    q: "要怎麼報名？需要費用嗎？",
-    a: "活動免費入場，請透過 Luma 線上預先報名：在本站任一「立即報名」按鈕完成 RSVP，報名成功後會收到 Email 與個人 QR Code，入場時出示即可。",
+    q: "需要報名嗎？需要費用嗎？",
+    a: "不需要報名，也不用費用，活動當天直接到現場即可；電影放映、電影演講會與電影賞析都不必報名。若想收到活動提醒與最新消息，可以透過本站的「訂閱活動提醒」按鈕在 Luma 留下 Email，我們會在活動前寄送提醒與電子報。",
   },
   {
     q: "會放映哪些電影？",

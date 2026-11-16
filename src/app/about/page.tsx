@@ -4,16 +4,15 @@ import Link from "next/link";
 import { ArrowRight, AtSign, Mail } from "lucide-react";
 import { site } from "@/lib/site";
 import { THEME } from "@/lib/theme";
-import { breadcrumbLd, faqLd } from "@/lib/jsonld";
+import { breadcrumbLd } from "@/lib/jsonld";
 import PageHero from "@/components/PageHero";
 import SectionHeading from "@/components/SectionHeading";
-import Faq from "@/components/Faq";
 import LumaButton from "@/components/LumaButton";
 import JsonLd from "@/components/JsonLd";
 
 export const metadata: Metadata = {
-  title: "關於電影節｜主辦單位與常見問題",
-  description: `關於 2027 興大國際星空電影節「${THEME}」：由國立中興大學國際事務處主辦，2027 年 3 月 19–20 日於國立中興大學舉行的戶外電影節。主題理念、主辦單位、聯絡方式與常見問題。`,
+  title: "關於電影節｜主題理念與主辦單位",
+  description: `關於 2027 興大國際星空電影節「${THEME}」：由國立中興大學國際事務處主辦，2027 年 3 月 19–20 日於國立中興大學舉行的戶外電影節。主題理念、主辦單位與聯絡方式。`,
   alternates: { canonical: "/about" },
 };
 
@@ -23,11 +22,11 @@ export default function AboutPage() {
 
   return (
     <>
-      <JsonLd data={[faqLd, breadcrumbLd([{ name: "關於電影節", path: "/about" }])]} />
+      <JsonLd data={[breadcrumbLd([{ name: "關於電影節", path: "/about" }])]} />
       <PageHero
         eyebrow="About"
         title="關於電影節"
-        summary={`${site.fullName}是由國立中興大學國際事務處主辦的戶外電影節，於 2027 年 3 月 19 日（五）至 20 日（六）在國立中興大學舉行。兩晚星空下的草地放映之外，還有市集、概念展覽、現場演出與映後講座，免費入場，透過 Luma 報名。`}
+        summary={`${site.fullName}是由國立中興大學國際事務處主辦的戶外電影節，於 2027 年 3 月 19 日（五）至 20 日（六）在國立中興大學舉行。兩晚星空下的草地放映之外，還有市集、概念展覽、現場演出與映後講座，免費入場，不需報名，當天直接到場即可。`}
       >
         <LumaButton source="about" />
       </PageHero>
@@ -57,7 +56,7 @@ export default function AboutPage() {
               ["日期", "2027 年 3 月 19 日（五）– 20 日（六）"],
               ["地點", `${site.venue.name}｜${site.venue.address}`],
               ["費用", "免費入場"],
-              ["報名方式", "Luma 線上預先報名"],
+              ["報名方式", "免報名，直接到場（可在 Luma 訂閱活動提醒）"],
             ].map(([k, v]) => (
               <div key={k} className="border-b border-white/10 pb-4 last:border-0 last:pb-0">
                 <dt className="text-xs tracking-widest text-dim">{k}</dt>
@@ -147,13 +146,6 @@ export default function AboutPage() {
               聯繫主辦單位。
             </p>
           )}
-        </div>
-      </section>
-
-      <section aria-labelledby="faq-h" className="container-x mt-24">
-        <SectionHeading id="faq-h" eyebrow="FAQ" title="常見問題" />
-        <div className="mt-8 max-w-3xl">
-          <Faq />
         </div>
       </section>
     </>

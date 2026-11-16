@@ -77,30 +77,40 @@ export default function CrewBoard({ groups }: { groups: CrewBoardGroup[] }) {
             <p className="eyebrow">
               {g.en} · {g.members.length}
             </p>
-            <h3
+            <h2
               id={`crew-${g.id}-h`}
               className="mt-2 bg-gradient-to-br from-moon via-mist to-glow bg-clip-text font-serif text-[40px] font-bold leading-tight tracking-wide text-transparent md:text-[56px]"
             >
               {g.dept}
-            </h3>
-            <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-mist/80 md:text-base">{g.desc}</p>
+            </h2>
+            <p className="mt-3 max-w-2xl whitespace-pre-line text-[15px] leading-relaxed text-mist/80 md:text-base">{g.desc}</p>
           </div>
-          <ul className="mt-8 grid grid-cols-3 gap-x-3 gap-y-7 sm:gap-x-4 md:grid-cols-4 md:gap-x-6 lg:grid-cols-5 xl:grid-cols-6">
-            {g.members.map((p, i) => (
-              <li key={p.key} className="reveal" style={{ "--d": `${(i % 6) * 60}ms` } as React.CSSProperties}>
-                <button
-                  type="button"
-                  aria-haspopup="dialog"
-                  onClick={(e) => open(p, e.currentTarget)}
-                  className="group flex w-full flex-col items-center rounded-xl text-center outline-none focus-visible:ring-2 focus-visible:ring-glow focus-visible:ring-offset-4 focus-visible:ring-offset-night"
-                >
-                  <Avatar p={p} className="w-full max-w-40 transition-[transform,border-color] duration-300 group-hover:-translate-y-1 group-hover:border-glow/45" />
-                  <span className="mt-2.5 text-[15px] font-bold tracking-wide text-moon sm:mt-3 sm:text-[17px]">{p.name}</span>
-                  {p.sub && <span className="mt-0.5 text-sm text-dim">{p.sub}</span>}
-                </button>
-              </li>
-            ))}
-          </ul>
+          {splitTeams(g.members).map((block) => (
+            <div key={block.team ?? "_"} className={block.team ? "mt-12" : ""}>
+              {block.team && (
+                <h3 className="reveal flex items-baseline gap-3 border-b border-white/10 pb-3 font-serif text-2xl font-bold tracking-wide text-moon">
+                  {block.team}
+                  <span className="font-sans text-xs font-normal tracking-widest text-dim">{block.members.length} 人</span>
+                </h3>
+              )}
+              <ul className="mt-8 grid grid-cols-3 gap-x-3 gap-y-7 sm:gap-x-4 md:grid-cols-4 md:gap-x-6 lg:grid-cols-5 xl:grid-cols-6">
+                {block.members.map((p, i) => (
+                  <li key={p.key} className="reveal" style={{ "--d": `${(i % 6) * 60}ms` } as React.CSSProperties}>
+                    <button
+                      type="button"
+                      aria-haspopup="dialog"
+                      onClick={(e) => open(p, e.currentTarget)}
+                      className="group flex w-full flex-col items-center rounded-xl text-center outline-none focus-visible:ring-2 focus-visible:ring-glow focus-visible:ring-offset-4 focus-visible:ring-offset-night"
+                    >
+                      <Avatar p={p} className="w-full max-w-40 transition-[transform,border-color] duration-300 group-hover:-translate-y-1 group-hover:border-glow/45" />
+                      <span className="mt-2.5 text-[15px] font-bold tracking-wide text-moon sm:mt-3 sm:text-[17px]">{p.name}</span>
+                      {p.sub && <span className="mt-0.5 text-sm text-dim">{p.sub}</span>}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </section>
       ))}
 
@@ -134,6 +144,17 @@ export default function CrewBoard({ groups }: { groups: CrewBoardGroup[] }) {
       </dialog>
     </>
   );
+}
+
+/** 依組別分段：沒有組別的成員（例如部長）在最前，其餘依第一次出現的順序。 */
+function splitTeams(members: CrewCard[]) {
+  const blocks: { team?: string; members: CrewCard[] }[] = [];
+  for (const p of members) {
+    let b = blocks.find((x) => x.team === p.team);
+    if (!b) blocks.push((b = { team: p.team, members: [] }));
+    b.members.push(p);
+  }
+  return blocks.sort((a, b) => Number(!!a.team) - Number(!!b.team));
 }
 
 function Avatar({ p, className = "", eager }: { p: CrewCard; className?: string; eager?: boolean }) {

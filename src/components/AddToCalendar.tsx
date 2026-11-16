@@ -13,9 +13,10 @@ export default function AddToCalendar({
   compact?: boolean;
   className?: string;
 }) {
-  const cls = compact ? "btn btn-ghost btn-sm" : "btn btn-ghost";
+  // 手機：兩顆按鈕各佔半寬並排（縮小左右內距以免溢出）；sm 以上回到一般 inline 排列
+  const cls = compact ? "btn btn-ghost btn-sm" : "btn btn-ghost max-sm:px-2 max-sm:text-sm";
   return (
-    <div className={`flex flex-wrap gap-2 ${className}`}>
+    <div className={`grid grid-cols-2 gap-2 sm:flex sm:flex-wrap ${className}`}>
       <a href={googleCalUrl(event)} target="_blank" rel="noopener" className={cls} aria-label={`將「${event.title}」加入 Google 行事曆`}>
         <CalendarPlus aria-hidden size={compact ? 15 : 18} />
         Google 行事曆

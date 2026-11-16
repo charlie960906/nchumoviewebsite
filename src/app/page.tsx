@@ -12,6 +12,7 @@ import MapEmbed from "@/components/MapEmbed";
 import Faq from "@/components/Faq";
 import JsonLd from "@/components/JsonLd";
 import SectionHeading from "@/components/SectionHeading";
+import AsciiKoi from "@/components/AsciiKoi";
 
 const d = (ms: number) => ({ "--d": `${ms}ms` }) as React.CSSProperties;
 
@@ -20,7 +21,7 @@ const states = [
     key: "固",
     en: "Solid",
     title: "留在原地的",
-    text: "穩定、沉靜，如家與土地。時刻表、地圖與報名資訊，是你隨時可以回來確認的岸。",
+    text: "穩定、沉靜，如家與土地。時刻表、地圖與到場資訊，是你隨時可以回來確認的岸。",
     href: "/program",
     cta: "看時間表",
   },
@@ -53,45 +54,44 @@ export default function Home() {
       <section className="relative -mt-16 flex min-h-[100svh] items-center overflow-hidden pt-16">
         <div aria-hidden className="absolute inset-0 overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_70%_0%,#12456b_0%,#0b192c_55%)]" />
+          <AsciiKoi className="absolute inset-0 opacity-90" />
+          {/* 中央壓暗，讓標題與文字在魚游過時仍清楚 */}
+          <div className="absolute inset-0 bg-[radial-gradient(42%_48%_at_50%_50%,rgba(11,25,44,.72),rgba(11,25,44,0)_100%)]" />
           <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-night" />
         </div>
-        <div className="container-x relative flex flex-col items-center py-16 text-center md:py-24">
+        <div className="container-x relative flex flex-col items-center py-[clamp(1rem,4svh,3rem)] text-center">
           <p className="eyebrow reveal">
             <time dateTime="2027-03-19">2027.03.19</time> — <time dateTime="2027-03-20">03.20</time>
             <span className="mx-2 text-dim">/</span>
             國立中興大學
           </p>
 
-          <h1 className="reveal mt-5 font-serif font-bold" style={d(70)}>
+          <h1 className="reveal mt-[clamp(0.5rem,2svh,1.25rem)] font-serif font-bold" style={d(70)}>
             <span className="block text-lg tracking-[0.2em] text-mist md:text-2xl">2027 興大國際星空電影節</span>
-            <span className="mt-3 flex items-end justify-center gap-4 md:gap-6">
-              <span className="text-[104px] leading-[0.95] text-moon drop-shadow-[0_0_40px_rgba(56,189,248,0.45)] md:text-[168px]">
+            <span className="mt-[clamp(0.25rem,1svh,0.75rem)] flex items-end justify-center gap-4 md:gap-6">
+              <span className="text-[min(104px,14svh)] leading-[0.95] text-moon drop-shadow-[0_0_40px_rgba(56,189,248,0.45)] md:text-[min(168px,18svh)]">
                 {THEME_CHAR}
               </span>
               <span className="pb-3 text-5xl italic tracking-wide text-glow md:pb-6 md:text-[64px]">Ripple</span>
             </span>
           </h1>
 
-          <p className="prose-poem reveal mt-6 text-xl text-moon md:text-2xl" style={d(140)}>
+          <p className="prose-poem reveal mt-[clamp(0.5rem,2.5svh,1.5rem)] text-xl text-moon md:text-2xl" style={d(140)}>
             {site.tagline}
           </p>
 
-          {/* AEO：首段完整交代全名、主題、時間、地點、報名方式 */}
-          <p className="reveal mx-auto mt-5 max-w-2xl text-mist/90" style={d(200)}>
-            <strong className="font-bold text-moon">{site.fullName}</strong> 將於{" "}
-            <strong className="font-bold text-moon">2027 年 3 月 19 日（五）至 20 日（六）</strong>在
-            <strong className="font-bold text-moon">國立中興大學</strong>
-            登場：兩晚星空下的草地放映、市集展覽、現場演出與映後講座。免費入場，透過 Luma 線上預先報名。
-          </p>
-
-          <div className="reveal mt-8 flex flex-wrap items-center justify-center gap-3" style={d(260)}>
+          <div
+            className="reveal mt-[clamp(1rem,3svh,2rem)] flex w-full max-w-sm flex-col items-stretch gap-2.5 sm:w-auto sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-3"
+            style={d(260)}
+          >
             <LumaButton source="hero" className="!px-7 !text-base">
-              立即報名（免費）
+              訂閱活動提醒
             </LumaButton>
-            <AddToCalendar className="justify-center" />
+            {/* 手機：兩顆行事曆按鈕並排在提醒鈕下方；平板以上與提醒鈕同一列 */}
+            <AddToCalendar className="sm:justify-center" />
           </div>
 
-          <div className="reveal mt-12 flex justify-center" style={d(320)}>
+          <div className="reveal mt-[clamp(1rem,4svh,3rem)] flex justify-center" style={d(320)}>
             <Countdown />
           </div>
         </div>
@@ -102,14 +102,14 @@ export default function Home() {
         <h2 id="facts-h" className="sr-only">
           活動資訊一覽
         </h2>
-        <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {[
             { icon: CalendarDays, k: "時間", v: "3/19（五）15:00–22:00", v2: "3/20（六）14:00–23:00" },
             { icon: MapPin, k: "地點", v: site.venue.name, v2: site.venue.address },
             { icon: Clapperboard, k: "放映", v: "《美國女孩》3/19 18:30", v2: "《琳達！琳達！》3/20 18:30" },
-            { icon: Ticket, k: "報名", v: "免費入場", v2: "Luma 線上預先報名" },
+            { icon: Ticket, k: "入場", v: "免費入場", v2: "免報名，直接到場" },
           ].map((f, i) => (
-            <div key={f.k} className="card reveal flex gap-4 p-5" style={d(i * 60)}>
+            <div key={f.k} className="card reveal flex gap-3.5 p-4 sm:gap-4 sm:p-5" style={d(i * 60)}>
               <f.icon aria-hidden className="mt-1 shrink-0 text-glow" size={22} />
               <div>
                 <dt className="text-xs tracking-widest text-dim">{f.k}</dt>
@@ -122,7 +122,7 @@ export default function Home() {
       </section>
 
       {/* ───────── 核心概念 ───────── */}
-      <section aria-labelledby="concept-h" className="container-x mt-24 md:mt-32">
+      <section aria-labelledby="concept-h" className="container-x mt-20 md:mt-28 lg:mt-32">
         <div className="grid items-start gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
           <div>
             <SectionHeading id="concept-h" eyebrow="Concept" title={`「${THEME_CHAR}」——水滴落下，泛起微波`} />
@@ -165,7 +165,7 @@ export default function Home() {
       </section>
 
       {/* ───────── 放映片單 ───────── */}
-      <section aria-labelledby="films-h" className="container-x mt-24 md:mt-32">
+      <section aria-labelledby="films-h" className="container-x mt-20 md:mt-28 lg:mt-32">
         <SectionHeading id="films-h" eyebrow="Screenings" title="星空下的兩個夜晚" more={{ href: "/program", label: "全部節目" }} />
         <div className="mt-8 grid gap-5 md:grid-cols-2">
           {films.map((p, i) => (
@@ -175,10 +175,10 @@ export default function Home() {
                 className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full blur-3xl"
                 style={{ background: i === 0 ? "rgba(56,189,248,.22)" : "rgba(167,139,250,.2)" }}
               />
-              <p className="relative font-mono text-sm text-glow">
+              <p className="relative font-mono text-[13px] text-glow sm:text-sm">
                 {p.facts[1].value}　{p.facts[2].value}
               </p>
-              <h3 className="relative mt-3 font-serif text-3xl font-bold">
+              <h3 className="relative mt-3 font-serif text-[26px] font-bold sm:text-3xl">
                 <Link href={`/program/${p.slug}`} className="after:absolute after:inset-0 hover:text-glow">
                   《{p.title}》
                 </Link>
@@ -189,7 +189,7 @@ export default function Home() {
               <p className="relative mt-4 flex-1 text-mist/90">{p.body[0]}</p>
               <div className="relative z-10 mt-6 flex flex-wrap items-center gap-3">
                 <LumaButton size="sm" source={`home-${p.slug}`}>
-                  報名這一場
+                  提醒我這一場
                 </LumaButton>
                 <Link href={`/program/${p.slug}`} className="btn btn-ghost btn-sm">
                   場次詳情
@@ -201,7 +201,7 @@ export default function Home() {
       </section>
 
       {/* ───────── 時間表 ───────── */}
-      <section id="schedule" aria-labelledby="schedule-h" className="container-x mt-24 md:mt-32">
+      <section id="schedule" aria-labelledby="schedule-h" className="container-x mt-20 md:mt-28 lg:mt-32">
         <SectionHeading id="schedule-h" eyebrow="Timetable" title="活動時間表" />
         <div className="reveal mt-8">
           <Schedule />
@@ -209,7 +209,7 @@ export default function Home() {
       </section>
 
       {/* ───────── 前導短片 ───────── */}
-      <section aria-labelledby="trailer-h" className="container-x mt-24 md:mt-32">
+      <section aria-labelledby="trailer-h" className="container-x mt-20 md:mt-28 lg:mt-32">
         <SectionHeading id="trailer-h" eyebrow="Trailer" title="前導短片" />
         <div className="card reveal relative mt-8 aspect-video overflow-hidden">
           {site.trailerUrl ? (
@@ -237,13 +237,13 @@ export default function Home() {
       </section>
 
       {/* ───────── 地圖與交通 ───────── */}
-      <section aria-labelledby="map-h" className="container-x mt-24 md:mt-32">
+      <section aria-labelledby="map-h" className="container-x mt-20 md:mt-28 lg:mt-32">
         <SectionHeading id="map-h" eyebrow="Venue" title="地圖與交通指引" more={{ href: "/guide", label: "完整現場指引" }} />
         <div className="mt-8 grid gap-5 lg:grid-cols-[1.6fr_1fr]">
           <div className="reveal">
             <MapEmbed />
           </div>
-          <div className="grid content-start gap-4">
+          <div className="grid content-start gap-4 md:grid-cols-2 lg:grid-cols-1">
             <div className="card reveal p-6" style={d(80)}>
               <MapPin aria-hidden className="text-glow" />
               <h3 className="mt-3 text-lg font-bold">{site.venue.name}</h3>
@@ -269,11 +269,11 @@ export default function Home() {
       </section>
 
       {/* ───────── 線上互動館 ───────── */}
-      <section aria-labelledby="play-h" className="container-x mt-24 md:mt-32">
+      <section aria-labelledby="play-h" className="container-x mt-20 md:mt-28 lg:mt-32">
         <SectionHeading id="play-h" eyebrow="Online Pavilion" title="數位線上互動館" more={{ href: "/interactive", label: "全部互動" }} />
         <div className="mt-8 grid gap-5 lg:grid-cols-[1.4fr_1fr]">
           <Link href="/interactive/echoes" className="card card-hover reveal group relative block overflow-hidden p-7 md:p-10">
-            <div aria-hidden className="absolute -right-24 top-1/2 h-80 w-80 -translate-y-1/2 md:-right-10">
+            <div aria-hidden className="absolute -right-36 top-1/2 h-72 w-72 -translate-y-1/2 opacity-40 sm:-right-24 sm:h-80 sm:w-80 sm:opacity-100 md:-right-10">
               <div className="h-full w-full animate-spin-slow rounded-full bg-[repeating-radial-gradient(circle,#0a0f18_0,#0a0f18_2px,#161f2e_3px,#0a0f18_4px)] shadow-[0_0_80px_rgba(56,189,248,.25)]">
                 <div className="absolute inset-[34%] rounded-full bg-gradient-to-br from-glow to-tide" />
                 <div className="absolute inset-[48%] rounded-full bg-night" />
@@ -291,7 +291,7 @@ export default function Home() {
               </span>
             </div>
           </Link>
-          <div className="grid gap-5">
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-1">
             {[
               { href: "/interactive/drift", icon: Sparkles, t: "漂流詞幸運籤", s: "抽一句今天的漂流詞，存成限時動態分享圖。" },
               { href: "/interactive/quiz", icon: Clapperboard, t: "心理測驗", s: "你是《美國女孩》裡的誰？六題找到你的展區。" },
@@ -307,7 +307,7 @@ export default function Home() {
       </section>
 
       {/* ───────── FAQ ───────── */}
-      <section aria-labelledby="faq-h" className="container-x mt-24 md:mt-32">
+      <section aria-labelledby="faq-h" className="container-x mt-20 md:mt-28 lg:mt-32">
         <SectionHeading id="faq-h" eyebrow="FAQ" title="常見問題" />
         <div className="mt-8 max-w-3xl">
           <Faq />
@@ -315,8 +315,8 @@ export default function Home() {
       </section>
 
       {/* ───────── 結尾 CTA ───────── */}
-      <section aria-labelledby="cta-h" className="container-x mt-24 md:mt-32">
-        <div className="card reveal relative overflow-hidden px-6 py-14 text-center md:py-20">
+      <section aria-labelledby="cta-h" className="container-x mt-20 md:mt-28 lg:mt-32">
+        <div className="card reveal relative overflow-hidden px-5 py-12 text-center sm:px-6 sm:py-14 md:py-20">
           <div aria-hidden className="pointer-events-none absolute inset-0">
             {[0, 1, 2].map((i) => (
               <span key={i} className="absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2">
@@ -327,15 +327,12 @@ export default function Home() {
               </span>
             ))}
           </div>
-          <h2 id="cta-h" className="relative font-serif text-3xl font-bold md:text-4xl">
+          <h2 id="cta-h" className="relative font-serif text-[26px] font-bold sm:text-3xl md:text-4xl">
             把 3 月 19、20 日留給電影
           </h2>
-          <p className="relative mx-auto mt-4 max-w-xl text-mist/90">也留給一起看電影的人。報名免費，三十秒完成；報名後會收到 Email 提醒與入場 QR Code。</p>
+          <p className="relative mx-auto mt-4 max-w-xl text-mist/90">也留給一起看電影的人。不用報名，當天直接來就好；想收到活動提醒與電子報，可以在 Luma 留下 Email。</p>
           <div className="relative mt-8 flex flex-wrap justify-center gap-3">
             <LumaButton source="home-bottom" className="!px-7 !text-base" />
-            <Link href="/register" className="btn btn-ghost">
-              報名流程說明
-            </Link>
           </div>
         </div>
       </section>

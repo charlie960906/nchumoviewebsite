@@ -135,7 +135,7 @@ export async function renderCard(spec: CardSpec): Promise<Blob> {
     }
   }
 
-  // 品牌與報名連結
+  // 品牌與活動提醒連結
   g.fillStyle = "rgba(56,189,248,0.4)";
   g.fillRect(W / 2 - 60, H - 330, 120, 2);
   g.fillStyle = "#F8FAFC";
@@ -174,4 +174,4 @@ export async function shareOrDownload(blob: Blob, filename: string, text: string
   return "downloaded";
 }
 
-export const shareText = `${site.fullName}｜2027/3/19–3/20 國立中興大學，免費報名 ${site.luma.url}`;
+export const shareText = `${site.fullName}｜2027/3/19–3/20 國立中興大學，免費入場、免報名 ${site.luma.url}`;

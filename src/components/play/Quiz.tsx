@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import { quiz, type QuizResultKey } from "@/lib/content";
 import LumaButton from "@/components/LumaButton";
@@ -48,27 +48,27 @@ export default function Quiz() {
         aria-valuenow={Math.max(0, Math.min(step, total))}
         className="h-1 bg-white/10"
       >
-        <motion.div className="h-full bg-glow" animate={{ width: `${(Math.max(0, step) / total) * 100}%` }} transition={{ duration: 0.4, ease }} />
+        <m.div className="h-full bg-glow" animate={{ width: `${(Math.max(0, step) / total) * 100}%` }} transition={{ duration: 0.4, ease }} />
       </div>
 
-      <div className="min-h-[520px] p-6 md:p-10">
+      <div className="min-h-[480px] p-5 sm:min-h-[520px] sm:p-6 md:p-10">
         <AnimatePresence mode="wait">
           {step === -1 && (
-            <motion.div key="cover" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.4, ease }} className="grid min-h-[440px] place-items-center text-center">
+            <m.div key="cover" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.4, ease }} className="grid min-h-[440px] place-items-center text-center">
               <div>
                 <p className="eyebrow">展區「傍」・心理測驗</p>
-                <h2 className="mt-4 font-serif text-3xl font-bold md:text-4xl">{quiz.title}</h2>
+                <h2 className="mt-4 font-serif text-[26px] font-bold sm:text-3xl md:text-4xl">{quiz.title}</h2>
                 <p className="mx-auto mt-4 max-w-md text-mist/90">{quiz.intro}</p>
                 <button type="button" onClick={() => (setStep(0), focusHead())} className="btn btn-primary mt-8 !px-8 !text-base">
                   開始測驗
                 </button>
                 <p className="mt-4 text-xs text-dim">共 {total} 題，約 1 分鐘</p>
               </div>
-            </motion.div>
+            </m.div>
           )}
 
           {step >= 0 && step < total && (
-            <motion.div key={step} initial={{ opacity: 0, x: 28 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -28 }} transition={{ duration: 0.35, ease }}>
+            <m.div key={step} initial={{ opacity: 0, x: 28 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -28 }} transition={{ duration: 0.35, ease }}>
               <div className="flex items-center justify-between">
                 <p className="font-mono text-sm text-glow">
                   Q{step + 1} <span className="text-dim">/ {total}</span>
@@ -87,7 +87,7 @@ export default function Quiz() {
               </h2>
               <ul className="mt-7 grid gap-3">
                 {quiz.questions[step].options.map((o, i) => (
-                  <motion.li key={o.text} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 + i * 0.06, duration: 0.35, ease }}>
+                  <m.li key={o.text} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 + i * 0.06, duration: 0.35, ease }}>
                     <button
                       type="button"
                       onClick={() => choose(o.k)}
@@ -98,14 +98,14 @@ export default function Quiz() {
                       </span>
                       <span>{o.text}</span>
                     </button>
-                  </motion.li>
+                  </m.li>
                 ))}
               </ul>
-            </motion.div>
+            </m.div>
           )}
 
           {result && (
-            <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.6, ease }} className="grid items-center gap-8 md:grid-cols-[auto_1fr]">
+            <m.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.6, ease }} className="grid items-center gap-8 md:grid-cols-[auto_1fr]">
               <SuccessRipple color={result.color} />
               <div>
                 <p className="eyebrow" style={{ color: result.color }}>
@@ -130,7 +130,7 @@ export default function Quiz() {
                     spec={{ kicker: "你是《美國女孩》裡的誰？", lines: [result.name, result.tag], sub: result.zone, accent: result.color }}
                   />
                   <LumaButton variant="ghost" source="quiz">
-                    報名看《美國女孩》
+                    提醒我看《美國女孩》
                   </LumaButton>
                   <button type="button" onClick={() => (setAnswers([]), setStep(-1))} className="btn btn-ghost">
                     <RefreshCw aria-hidden size={17} />
@@ -138,7 +138,7 @@ export default function Quiz() {
                   </button>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>

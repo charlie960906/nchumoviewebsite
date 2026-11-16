@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { nav, site } from "@/lib/site";
 import { THEME } from "@/lib/theme";
@@ -15,12 +15,19 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   /** 桌機版目前展開的下拉選單（以父項目的 href 識別） */
   const [menu, setMenu] = useState<string | null>(null);
+  /** 行動版選單中目前展開的子選單（以父項目的 href 識別） */
+  const [sub, setSub] = useState<string | null>(null);
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setOpen(false);
     setMenu(null);
   }, [pathname]);
+
+  // 每次關閉選單就把子選單收回，下次打開時全部是收合狀態
+  useEffect(() => {
+    if (!open) setSub(null);
+  }, [open]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -68,7 +75,7 @@ export default function Header() {
     `relative flex items-center gap-1 rounded-lg px-3 py-2 text-sm transition-colors duration-200 hover:text-glow ${active ? "text-glow" : "text-mist"}`;
 
   const underline = (
-    <motion.span
+    <m.span
       layoutId="nav-underline"
       className="absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-glow"
       transition={{ type: "spring", stiffness: 380, damping: 32 }}
@@ -76,6 +83,7 @@ export default function Header() {
   );
 
   return (
+    <>
     <header
       className={`sticky top-0 z-50 transition-[background-color,border-color,backdrop-filter] duration-300 ${
         scrolled || open ? "border-b border-white/10 bg-night/85 backdrop-blur-md" : "border-b border-transparent bg-transparent"
@@ -125,7 +133,7 @@ export default function Header() {
                 </button>
                 <AnimatePresence>
                   {expanded && (
-                    <motion.ul
+                    <m.ul
                       id={`menu-${n.href.slice(1)}`}
                       initial={{ opacity: 0, y: -6 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -147,7 +155,7 @@ export default function Header() {
                           </Link>
                         </li>
                       ))}
-                    </motion.ul>
+                    </m.ul>
                   )}
                 </AnimatePresence>
               </div>
@@ -169,43 +177,86 @@ export default function Header() {
           </button>
         </div>
       </div>
+    </header>
 
-      <AnimatePresence>
-        {open && (
-          <motion.nav
+    {/* 行動版選單：固定浮在 header 下方的毛玻璃面板，不佔版面、不把頁面往下推。
+        放在 <header> 外面，避免 header 自己的 backdrop-filter 讓這層的模糊失效。 */}
+    <AnimatePresence>
+      {open && (
+        <>
+          <m.div
+            key="mobile-nav-scrim"
+            aria-hidden
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-x-0 bottom-0 top-16 z-40 bg-black/30 lg:hidden"
+            onClick={() => setOpen(false)}
+          />
+          <m.nav
+            key="mobile-nav"
             id="mobile-nav"
             aria-label="行動版選單"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
-            className="overflow-hidden border-t border-white/10 bg-night/95 lg:hidden"
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed inset-x-0 top-16 z-40 border-b border-white/10 bg-night/55 shadow-2xl shadow-black/40 backdrop-blur-xl backdrop-saturate-150 lg:hidden"
           >
             <ul className="container-x flex max-h-[calc(100dvh-4rem)] flex-col gap-1 overflow-y-auto py-4">
               {nav.map((n, i) => (
-                <motion.li
+                <m.li
                   key={n.href}
-                  initial={{ opacity: 0, y: 12 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.04 + i * 0.05, duration: 0.3 }}
+                  transition={{ delay: 0.03 + i * 0.04, duration: 0.25 }}
                 >
                   {n.children ? (
                     <>
-                      <p className={`px-4 pb-1 pt-3 text-xs tracking-widest ${isActive(n.href) ? "text-glow" : "text-dim"}`}>{n.label}</p>
-                      <ul className="grid gap-1">
-                        {n.children.map((c) => (
-                          <li key={c.href}>
-                            <Link
-                              href={c.href}
-                              aria-current={isCurrent(c.href) ? "page" : undefined}
-                              onClick={() => setOpen(false)}
-                              className={`block rounded-xl px-4 py-3 text-lg ${isCurrent(c.href) ? "bg-glow/10 text-glow" : "text-moon hover:bg-white/5"}`}
-                            >
-                              {c.label}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
+                      <button
+                        type="button"
+                        aria-expanded={sub === n.href}
+                        aria-controls={`mobile-sub-${n.href.slice(1)}`}
+                        onClick={() => setSub((s) => (s === n.href ? null : n.href))}
+                        className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-lg ${
+                          isActive(n.href) ? "text-glow" : "text-moon"
+                        } hover:bg-white/5`}
+                      >
+                        {n.label}
+                        <ChevronDown
+                          aria-hidden
+                          size={18}
+                          className={`transition-transform duration-200 ${sub === n.href ? "rotate-180" : ""}`}
+                        />
+                      </button>
+                      <AnimatePresence initial={false}>
+                        {sub === n.href && (
+                          <m.ul
+                            id={`mobile-sub-${n.href.slice(1)}`}
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+                            className="grid gap-1 overflow-hidden pl-4"
+                          >
+                            {n.children.map((c) => (
+                              <li key={c.href}>
+                                <Link
+                                  href={c.href}
+                                  aria-current={isCurrent(c.href) ? "page" : undefined}
+                                  onClick={() => setOpen(false)}
+                                  className={`block rounded-xl px-4 py-2.5 text-base ${
+                                    isCurrent(c.href) ? "bg-glow/10 text-glow" : "text-mist hover:bg-white/5"
+                                  }`}
+                                >
+                                  {c.label}
+                                </Link>
+                              </li>
+                            ))}
+                          </m.ul>
+                        )}
+                      </AnimatePresence>
                     </>
                   ) : (
                     <Link
@@ -217,15 +268,16 @@ export default function Header() {
                       {n.label}
                     </Link>
                   )}
-                </motion.li>
+                </m.li>
               ))}
               <li className="mt-3 px-1">
                 <LumaButton source="mobile-nav" className="w-full" />
               </li>
             </ul>
-          </motion.nav>
-        )}
-      </AnimatePresence>
-    </header>
+          </m.nav>
+        </>
+      )}
+    </AnimatePresence>
+    </>
   );
 }

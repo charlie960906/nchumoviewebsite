@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 import { CalendarPlus, ChevronRight } from "lucide-react";
 import { categories, days, sessions, type Category, type Session } from "@/lib/schedule";
 import { googleCalUrl, sessionEvent } from "@/lib/calendar";
@@ -27,7 +27,7 @@ export default function Schedule({ showFilters = true, compact = false }: { show
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div role="tablist" aria-label="選擇日期" className="card inline-flex gap-1 p-1">
+        <div role="tablist" aria-label="選擇日期" className="card flex w-full gap-1 p-1 sm:inline-flex sm:w-auto">
           {days.map((d) => {
             const active = day === d.key;
             return (
@@ -38,10 +38,10 @@ export default function Schedule({ showFilters = true, compact = false }: { show
                 aria-selected={active}
                 aria-controls={`panel-${d.key}`}
                 onClick={() => setDay(d.key)}
-                className={`relative rounded-xl px-5 py-2.5 text-sm font-bold transition-colors duration-200 ${active ? "text-night" : "text-mist hover:text-glow"}`}
+                className={`relative flex-1 rounded-xl px-5 py-2.5 text-sm font-bold sm:flex-none transition-colors duration-200 ${active ? "text-night" : "text-mist hover:text-glow"}`}
               >
                 {active && (
-                  <motion.span
+                  <m.span
                     layoutId="day-pill"
                     className="absolute inset-0 rounded-xl bg-glow"
                     transition={{ type: "spring", stiffness: 400, damping: 34 }}
@@ -65,7 +65,7 @@ export default function Schedule({ showFilters = true, compact = false }: { show
                   key={k}
                   aria-pressed={active}
                   onClick={() => setCat(k)}
-                  className={`tag cursor-pointer !py-1 transition-colors duration-200 ${active ? "tag-glow" : "hover:border-glow/60"}`}
+                  className={`tag min-h-9 cursor-pointer !px-3 transition-colors duration-200 ${active ? "tag-glow" : "hover:border-glow/60"}`}
                 >
                   {k !== "all" && <span aria-hidden className="h-2 w-2 rounded-full" style={{ background: categories[k].dot }} />}
                   {k === "all" ? "全部" : categories[k].label}
@@ -89,7 +89,7 @@ export default function Schedule({ showFilters = true, compact = false }: { show
                 </caption>
                 <thead>
                   <tr>
-                    <th scope="col" className="w-[7.5rem] pl-5 sm:w-40">
+                    <th scope="col" className="w-[5.75rem] pl-4 sm:w-40 sm:pl-5">
                       時間
                     </th>
                     <th scope="col">活動</th>
@@ -97,7 +97,7 @@ export default function Schedule({ showFilters = true, compact = false }: { show
                       類型
                     </th>
                     {!compact && (
-                      <th scope="col" className="w-12 pr-5 text-right sm:w-44">
+                      <th scope="col" className="w-12 pr-3 text-right sm:w-44 sm:pr-5">
                         <span className="sr-only">操作</span>
                       </th>
                     )}
@@ -109,14 +109,19 @@ export default function Schedule({ showFilters = true, compact = false }: { show
                     const visible = cat === "all" || s.category === cat;
                     return (
                       <tr key={s.id} hidden={!visible} className={s.category === "film" ? "bg-glow/[0.06]" : ""}>
-                        <td className="pl-5 font-mono text-sm tabular-nums text-mist">
+                        <td className="pl-4 font-mono text-sm tabular-nums text-mist sm:pl-5">
+                          {/* 手機：開始／結束上下排，結束時間淡一階；平板以上同一行 */}
                           <time dateTime={`${d.date}T${s.start}+08:00`}>{s.start}</time>
-                          <span className="text-dim"> – </span>
-                          <time dateTime={`${d.date}T${s.end}+08:00`}>{s.end}</time>
+                          <span className="hidden text-dim sm:inline"> – </span>
+                          <time dateTime={`${d.date}T${s.end}+08:00`} className="block text-xs text-dim sm:inline sm:text-sm sm:text-mist">
+                            {s.end}
+                          </time>
                         </td>
                         <th scope="row" className="font-normal">
+                          <span className="flex items-start gap-2.5">
+                          <span aria-hidden className="mt-[0.55rem] h-2 w-2 shrink-0 rounded-full md:hidden" style={{ background: c.dot }} />
+                          <span className="min-w-0">
                           <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                            <span aria-hidden className="h-2 w-2 shrink-0 rounded-full md:hidden" style={{ background: c.dot }} />
                             {s.program ? (
                               <Link href={`/program/${s.program}`} className="inline-flex items-center gap-0.5 font-medium hover:text-glow">
                                 {s.title}
@@ -128,6 +133,8 @@ export default function Schedule({ showFilters = true, compact = false }: { show
                             {s.tentative && <span className="tag tag-warn">待定</span>}
                           </span>
                           {s.note && <span className="mt-0.5 block text-xs text-dim">{s.note}</span>}
+                          </span>
+                          </span>
                         </th>
                         <td className="hidden md:table-cell">
                           <span className="tag">
@@ -136,7 +143,7 @@ export default function Schedule({ showFilters = true, compact = false }: { show
                           </span>
                         </td>
                         {!compact && (
-                          <td className="pr-5 text-right">
+                          <td className="pr-3 text-right sm:pr-5">
                             {s.category !== "closing" && (
                               <span className="inline-flex items-center justify-end gap-2">
                                 <a
@@ -151,7 +158,7 @@ export default function Schedule({ showFilters = true, compact = false }: { show
                                 </a>
                                 {(s.category === "film" || s.category === "talk") && (
                                   <LumaButton size="sm" icon={false} source={`schedule-${s.id}`} className="hidden sm:inline-flex">
-                                    報名
+                                    提醒我
                                   </LumaButton>
                                 )}
                               </span>

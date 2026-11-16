@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { ChevronLeft, ChevronRight, Disc3, ExternalLink, Gauge, Link2, Pause, Play, Undo2, Volume2 } from "lucide-react";
 import { staff as allStaff, STAFF_IS_SAMPLE } from "@/lib/staff";
 import { EchoAudio } from "./audio";
@@ -254,7 +254,7 @@ export default function Echoes() {
       <div ref={storyRef} className="scroll-mt-24">
         <AnimatePresence mode="wait">
           {phase === "open" && sel && (
-            <motion.article
+            <m.article
               key={sel.id}
               initial={{ opacity: 0, y: 24, height: 0 }}
               animate={{ opacity: 1, y: 0, height: "auto" }}
@@ -349,7 +349,7 @@ export default function Echoes() {
                   </div>
                 </div>
               </div>
-            </motion.article>
+            </m.article>
           )}
         </AnimatePresence>
       </div>
@@ -380,7 +380,7 @@ function SimpleStage({
   return (
     <div className="absolute inset-0 grid place-items-center pb-24">
       <AnimatePresence mode="wait">
-        <motion.button
+        <m.button
           key={idx}
           type="button"
           onClick={onPick}
@@ -409,7 +409,7 @@ function SimpleStage({
             </span>
             <span className="absolute h-2.5 w-2.5 translate-y-[1px] rounded-full bg-night opacity-0" />
           </span>
-        </motion.button>
+        </m.button>
       </AnimatePresence>
     </div>
   );

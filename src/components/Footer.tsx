@@ -1,89 +1,149 @@
 import Image from "next/image";
 import Link from "next/link";
 import { footerNav, site } from "@/lib/site";
-import LumaButton from "./LumaButton";
+
+const WEEKDAY = ["日", "一", "二", "三", "四", "五", "六"];
+
+/** 把 ISO 時間轉成「03.19（五）」；依 site.ts 寫的 +08:00 解析，不受伺服器時區影響。 */
+function day(iso: string) {
+  const [, m, d] = iso.slice(0, 10).split("-");
+  const w = new Date(`${iso.slice(0, 10)}T12:00:00Z`).getUTCDay();
+  return `${m}.${d}（${WEEKDAY[w]}）`;
+}
+
+const linkClass = "text-mist transition-colors duration-200 hover:text-glow";
 
 export default function Footer() {
+  const social = [
+    { label: "Instagram", href: site.contact.instagram },
+    { label: "Threads", href: site.contact.threads },
+    { label: "Facebook", href: site.contact.facebook },
+  ].filter((s) => s.href);
+
   return (
-    <footer className="mt-24 border-t border-white/10 bg-night">
-      <div className="container-x grid gap-10 py-14 md:grid-cols-[1.4fr_1fr_1fr]">
-        <div>
-          <p className="font-serif text-xl font-bold tracking-wider">{site.fullName}</p>
-          <p className="mt-3 max-w-md text-sm text-dim">
-            2027 年 3 月 19 日（五）– 3 月 20 日（六）
-            <br />
-            {site.venue.name}｜{site.venue.address}
-          </p>
-          <div className="mt-6">
-            <LumaButton source="footer" />
-          </div>
-        </div>
+    <footer className="relative mt-24 overflow-hidden border-t border-white/10 bg-night">
+      <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-glow/60 to-transparent" />
 
-        <nav aria-label="頁尾選單">
-          <p className="eyebrow mb-4">Sitemap</p>
-          <ul className="grid gap-2 text-sm">
-            {footerNav.map((n) => (
-              <li key={n.href}>
-                <Link href={n.href} className="text-mist hover:text-glow">
-                  {n.label}
-                </Link>
-              </li>
-            ))}
-            <li>
-              <Link href="/register" className="text-mist hover:text-glow">
-                即刻報名
-              </Link>
-            </li>
-          </ul>
+      <div className="container-x grid gap-12 py-14 md:py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] lg:gap-16">
+        {/* 品牌與活動資訊 */}
+        <section aria-labelledby="footer-brand">
+          <h2 id="footer-brand" className="font-serif text-2xl font-bold tracking-wider">
+            {site.shortName}
+          </h2>
+          <p className="mt-1 text-xs tracking-[0.24em] text-dim">NCHU FILM FESTIVAL</p>
+          <p className="mt-5 max-w-xs text-sm leading-7 text-mist">{site.tagline}</p>
+
+          <dl className="mt-6 grid gap-2 text-sm">
+            <div className="flex gap-3">
+              <dt className="w-10 shrink-0 text-dim">日期</dt>
+              <dd className="text-moon">
+                {site.year}.{day(site.start)} — {day(site.end)}
+              </dd>
+            </div>
+            <div className="flex gap-3">
+              <dt className="w-10 shrink-0 text-dim">地點</dt>
+              <dd>
+                <a href={site.venue.mapsUrl} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                  {site.venue.name} <span aria-hidden className="text-dim">↗</span>
+                </a>
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        {/* 網頁導覽 */}
+        <nav aria-label="網頁導覽" className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-4">
+          {footerNav.map((g) => (
+            <div key={g.title}>
+              <p className="eyebrow mb-1">{g.titleEn}</p>
+              <h3 className="mb-4 text-sm font-semibold text-moon">{g.title}</h3>
+              <ul className="grid gap-2.5 text-sm">
+                {g.links.map((l) => (
+                  <li key={l.href}>
+                    <Link href={l.href} className={linkClass}>
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+
+          {social.length > 0 && (
+            <div>
+              <p className="eyebrow mb-1">Follow</p>
+              <h3 className="mb-4 text-sm font-semibold text-moon">追蹤我們</h3>
+              <ul className="grid gap-2.5 text-sm">
+                {social.map((s) => (
+                  <li key={s.label}>
+                    <a
+                      href={s.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`group inline-flex items-center gap-1.5 ${linkClass}`}
+                    >
+                      {s.label}
+                      <span aria-hidden className="text-dim transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                        ↗
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </nav>
+      </div>
 
-        <div>
-          <p className="eyebrow mb-4">Organizers</p>
-          <ul className="grid gap-5">
-            {site.organizers.map((o) => (
-              <li key={o.name} className="flex items-center gap-3">
+      {/* 主辦與執行單位 */}
+      <div className="border-t border-white/10">
+        <ul className="container-x flex flex-wrap items-center gap-x-12 gap-y-8 py-8">
+          {site.organizers.map((o) => {
+            const body = (
+              <>
                 <Image
                   src={o.logo}
-                  alt={`${o.name} 標誌`}
+                  alt=""
                   width={o.logoW}
                   height={o.logoH}
-                  className="h-9 w-auto max-w-[9rem] object-contain"
+                  className="h-10 w-auto max-w-[11rem] shrink-0 object-contain object-left"
                 />
-                <span className="text-sm leading-snug">
-                  <span className="block text-xs text-dim">{o.role}</span>
-                  {o.url ? (
-                    <a href={o.url} target="_blank" rel="noopener" className="hover:text-glow">
-                      {o.name}
-                    </a>
-                  ) : (
-                    o.name
-                  )}
+                <span className="grid">
+                  <span className="text-xs text-dim">{o.role}</span>
+                  <span className="text-sm text-mist transition-colors group-hover:text-glow">{o.name}</span>
                 </span>
+              </>
+            );
+            return (
+              <li key={o.name}>
+                {o.url ? (
+                  <a href={o.url} target="_blank" rel="noopener noreferrer" className="group flex items-center gap-4">
+                    {body}
+                  </a>
+                ) : (
+                  <div className="flex items-center gap-4">{body}</div>
+                )}
               </li>
-            ))}
-          </ul>
-          <Image
-            src="/brand/nchu.png"
-            alt="國立中興大學 National Chung Hsing University"
-            width={854}
-            height={201}
-            className="mt-6 h-9 w-auto opacity-90"
-          />
-        </div>
+            );
+          })}
+        </ul>
       </div>
+
       <div className="border-t border-white/10">
-        <div className="container-x py-5 text-center text-xs text-dim">
-          <p>
-            © 2027 興大國際星空電影節 ｜ 網站設計與開發：
-            <a
-              href="https://hyjdevelop.com"
-              target="_blank"
-              rel="noopener"
-              className="text-mist hover:text-glow"
-            >
-              HYJdevelop
-            </a>
+        <div className="container-x flex flex-col items-center gap-2 py-5 text-xs leading-6 text-dim sm:flex-row sm:justify-between">
+          <p className="text-center sm:text-left">
+            © {site.name}
+            <span aria-hidden className="mx-2 hidden sm:inline">｜</span>
+            <span className="block sm:inline">
+              網站設計與開發：
+              <a href="https://hyjdevelop.com" target="_blank" rel="noopener noreferrer" className={linkClass}>
+                HYJdevelop
+              </a>
+            </span>
           </p>
+          <a href="#" className={`inline-flex items-center gap-1 ${linkClass}`}>
+            回到頂端 <span aria-hidden>↑</span>
+          </a>
         </div>
       </div>
     </footer>

@@ -16,7 +16,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     page("/", 1, "daily"),
     page("/program", 0.9, "daily"),
-    page("/register", 0.9),
     page("/themes", 0.8),
     page("/themes/siu", 0.7),
     page("/themes/gia", 0.7),

@@ -53,7 +53,7 @@ export default async function ProgramDetail({ params }: Props) {
         }
         summary={p.summary}
       >
-        <LumaButton source={`program-${p.slug}`}>報名參加（免費）</LumaButton>
+        <LumaButton source={`program-${p.slug}`}>訂閱活動提醒</LumaButton>
         {ss[0] && !p.tentative && <AddToCalendar event={sessionEvent(ss[0].id)!} icsId={ss[0].id} />}
       </PageHero>
 
@@ -61,7 +61,7 @@ export default async function ProgramDetail({ params }: Props) {
         <article className="grid content-start gap-5">
           {p.tentative && (
             <p role="note" className="card reveal !border-warn/40 p-4 text-sm text-amber-200">
-              <strong>場次資訊待定。</strong>確定後會同步更新本頁、時間表與 Luma 活動頁；已報名者將收到 Email 通知。
+              <strong>場次資訊待定。</strong>確定後會同步更新本頁、時間表與 Luma 活動頁；訂閱 Luma 活動提醒者將收到 Email 通知。
             </p>
           )}
           {p.body.map((t, i) => (
@@ -144,11 +144,11 @@ export default async function ProgramDetail({ params }: Props) {
           )}
 
           <div className="card reveal p-6" style={{ "--d": "140ms" } as React.CSSProperties}>
-            <h2 className="eyebrow">報名步驟</h2>
+            <h2 className="eyebrow">如何參加</h2>
             <ol className="mt-4 grid list-decimal gap-2 pl-5 text-sm text-mist/90 marker:font-mono marker:text-glow">
-              <li>點「報名參加」，在彈出視窗填寫姓名與 Email</li>
-              <li>收到 Luma 確認信與個人 QR Code</li>
-              <li>活動當天出示 QR Code 入場</li>
+              <li>不需報名，活動當天直接到場即可</li>
+              <li>想收到提醒？點「訂閱活動提醒」在 Luma 留下 Email</li>
+              <li>活動前會收到 Email 提醒與最新消息</li>
             </ol>
           </div>
         </aside>

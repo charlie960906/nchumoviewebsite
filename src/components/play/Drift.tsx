@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { RefreshCw, Sparkles } from "lucide-react";
 import { drifts, type Drift as DriftT } from "@/lib/content";
 import LumaButton from "@/components/LumaButton";
@@ -54,7 +54,7 @@ export default function Drift({ initialId }: { initialId?: string }) {
         <div ref={resultRef} tabIndex={-1} aria-live="polite" className="relative w-full max-w-xl text-center outline-none">
           <AnimatePresence mode="wait">
             {cur ? (
-              <motion.div
+              <m.div
                 key={cur.id}
                 initial={{ opacity: 0, y: 20, scale: 0.97, filter: "blur(8px)" }}
                 animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
@@ -64,7 +64,7 @@ export default function Drift({ initialId }: { initialId?: string }) {
                 <p className="eyebrow">第 {cur.id} 籤</p>
                 <blockquote className="prose-poem mt-6 whitespace-pre-line text-[28px] font-bold leading-[1.9] text-moon md:text-[36px]">{cur.text}</blockquote>
                 <p className="mt-4 text-sm text-dim">— {cur.source}</p>
-                <motion.p
+                <m.p
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5, duration: 0.6 }}
@@ -72,8 +72,8 @@ export default function Drift({ initialId }: { initialId?: string }) {
                 >
                   <Sparkles aria-hidden size={16} className="text-glow" />
                   {cur.fortune}
-                </motion.p>
-                <motion.div
+                </m.p>
+                <m.div
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.75, duration: 0.5 }}
@@ -87,21 +87,21 @@ export default function Drift({ initialId }: { initialId?: string }) {
                     <RefreshCw aria-hidden size={17} />
                     再抽一支
                   </button>
-                </motion.div>
-              </motion.div>
+                </m.div>
+              </m.div>
             ) : busy ? (
-              <motion.p key="busy" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="font-serif text-xl text-mist">
+              <m.p key="busy" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="font-serif text-xl text-mist">
                 水面正在把一句話送過來…
-              </motion.p>
+              </m.p>
             ) : (
-              <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.96 }}>
+              <m.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.96 }}>
                 <p className="prose-poem text-xl text-mist">心裡想著一件還沒有答案的事，</p>
                 <p className="prose-poem text-xl text-mist">然後往水裡丟一顆石頭。</p>
                 <button type="button" onClick={draw} className="btn btn-primary mt-9 !px-8 !text-base">
                   <Sparkles aria-hidden size={18} />
                   抽一支漂流詞
                 </button>
-              </motion.div>
+              </m.div>
             )}
           </AnimatePresence>
         </div>

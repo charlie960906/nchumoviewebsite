@@ -71,7 +71,7 @@ export function googleCalUrl(e: CalEvent) {
     action: "TEMPLATE",
     text: e.title,
     dates: `${utc(e.start)}/${utc(e.end)}`,
-    details: `${e.description ?? ""}\n\n報名：${site.luma.url}`.trim(),
+    details: `${e.description ?? ""}\n\n免報名，直接到場｜活動提醒：${site.luma.url}`.trim(),
     location: e.location ?? `${site.venue.name} ${site.venue.address}`,
     ctz: "Asia/Taipei",
   });
@@ -94,7 +94,7 @@ export function sessionEvent(id: string): CalEvent | null {
     title: `${s.title}${s.tentative ? "（待定）" : ""}｜${site.shortName}`,
     start: iso(s.day, s.start),
     end: iso(s.day, s.end),
-    description: `${site.fullName}\n${dayOf(s.day).full} ${s.start}–${s.end}${s.note ? `\n${s.note}` : ""}\n報名：${site.luma.url}`,
+    description: `${site.fullName}\n${dayOf(s.day).full} ${s.start}–${s.end}${s.note ? `\n${s.note}` : ""}\n免報名，直接到場｜活動提醒：${site.luma.url}`,
     tentative: s.tentative,
   };
 }

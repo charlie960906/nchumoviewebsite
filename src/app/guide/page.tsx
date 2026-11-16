@@ -44,7 +44,7 @@ const onsite = [
   {
     icon: Accessibility,
     title: "無障礙",
-    text: "活動場地為平面草地。如需輪椅動線引導、保留席或其他協助，請於報名時在 Luma 表單註記，或到場後洽服務台。",
+    text: "活動場地為平面草地。如需輪椅動線引導、保留席或其他協助，請到場後洽服務台；若有在 Luma 訂閱活動提醒，也可以在表單中先註記。",
   },
   {
     icon: GlassWater,
@@ -144,7 +144,7 @@ export default function GuidePage() {
         <SectionHeading id="flow-h" eyebrow="Suggested Route" title="建議參觀動線" />
         <ol className="mt-8 grid gap-4 md:grid-cols-4">
           {[
-            ["報到", "抵達後於服務台出示 Luma QR Code 完成報到。"],
+            ["抵達", "不需報名或報到，直接入場；有問題可先到服務台詢問。"],
             ["逛市集與展區", "先走左帳篷「泅」，再到右帳篷「涯」，順路逛市集。"],
             ["舞台與遊戲", "下午時段有快閃遊戲與表演演出，可以邊看邊補水。"],
             ["星空放映", "18:30 前到放映區找位置，鋪好野餐墊等天黑。"],
