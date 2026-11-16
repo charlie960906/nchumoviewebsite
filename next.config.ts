@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  basePath: "/nchufilmfestival",
   allowedDevOrigins: ["192.168.1.190","192.168.137.1","192.168.0.105","10.10.23.104"],
   output: "export",
   reactStrictMode: true,
