@@ -141,9 +141,14 @@ export default function Footer() {
               </a>
             </span>
           </p>
-          <a href="#" className={`inline-flex items-center gap-1 ${linkClass}`}>
-            回到頂端 <span aria-hidden>↑</span>
-          </a>
+          <div className="flex items-center gap-5">
+            <Link href="/update" className={linkClass}>
+              Update
+            </Link>
+            <a href="#" className={`inline-flex items-center gap-1 ${linkClass}`}>
+              回到頂端 <span aria-hidden>↑</span>
+            </a>
+          </div>
         </div>
       </div>
     </footer>

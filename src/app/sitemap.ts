@@ -22,6 +22,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     page("/guide", 0.8),
     page("/about", 0.7),
     page("/team", 0.6),
+    page("/update", 0.5, "weekly"),
     page("/interactive", 0.7),
     page("/interactive/echoes", 0.7),
     page("/interactive/drift", 0.5, "monthly"),
