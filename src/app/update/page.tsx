@@ -14,6 +14,11 @@ export const metadata: Metadata = pageMeta({
 
 const updates = [
   {
+    date: "11/21",
+    version: "Beta2026.11.21.01",
+    summary: "更新網站整體視覺與互動體驗，完善主題、節目、展區、場地指引與線上互動內容，並補強 SEO 與網站資訊。",
+  },
+  {
     date: "11/16 20:21",
     version: "Beta2026.11.16.04",
     summary: "增加 Update 頁面紀錄網頁更新過程",
