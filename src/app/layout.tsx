@@ -12,6 +12,8 @@ import RevealObserver from "@/components/RevealObserver";
 import ScrollToTop from "@/components/ScrollToTop";
 import MotionProvider from "@/components/MotionProvider";
 
+const GTM_ID = "GTM-TB3CFNB2";
+
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const notoSans = Noto_Sans_TC({ weight: ["400", "500", "700"], variable: "--font-noto-sans", display: "swap", preload: false });
 const notoSerif = Noto_Serif_TC({ weight: ["500", "700", "900"], variable: "--font-noto-serif", display: "swap", preload: false });
@@ -75,8 +77,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         {/* 僅在 JS 可用時啟用進場動畫的隱藏狀態，確保無 JS／爬蟲仍看得到全部內容 */}
         <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
+        {/* Google Tag Manager（GTM-TB3CFNB2）：先推 gtm.js 事件，容器的「所有網頁」觸發條件才會啟動 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());dataLayer.push({'gtm.start':new Date().getTime(),event:'gtm.js'});`,
+          }}
+        />
+        <script async src={`https://www.googletagmanager.com/gtm.js?id=${GTM_ID}`} />
       </head>
       <body className="min-h-dvh flex flex-col">
+        {/* GTM noscript 備援 */}
+        <noscript>
+          <iframe
+            src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
+          />
+        </noscript>
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-glow focus:px-4 focus:py-2 focus:font-bold focus:text-night"
