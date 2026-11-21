@@ -1,4 +1,8 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+// 需明確寫 noindex，否則會繼承 layout 的 index, follow
+export const metadata: Metadata = { title: "找不到頁面", robots: { index: false, follow: true } };
 
 export default function NotFound() {
   return (

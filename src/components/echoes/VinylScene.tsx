@@ -63,13 +63,13 @@ function drawVinyl(c: HTMLCanvasElement, s: Staff, cover?: HTMLImageElement) {
   g.clip();
   if (cover) {
     g.drawImage(cover, r - lr, r - lr, lr * 2, lr * 2);
-    g.fillStyle = "rgba(11,25,44,0.25)";
+    g.fillStyle = "rgba(0,18,24,0.25)";
     g.fillRect(r - lr, r - lr, lr * 2, lr * 2);
   } else {
     const lg = g.createRadialGradient(r - lr * 0.4, r - lr * 0.45, lr * 0.05, r, r, lr * 1.1);
     lg.addColorStop(0, "#ffffff");
     lg.addColorStop(0.25, s.accentColor);
-    lg.addColorStop(1, "#0b192c");
+    lg.addColorStop(1, "#001218");
     g.fillStyle = lg;
     g.fillRect(r - lr, r - lr, lr * 2, lr * 2);
     // 圓標上的漣漪
@@ -86,9 +86,9 @@ function drawVinyl(c: HTMLCanvasElement, s: Staff, cover?: HTMLImageElement) {
   // 文字：暱稱 + 歌名
   g.textAlign = "center";
   g.textBaseline = "middle";
-  g.shadowColor = "rgba(11,25,44,0.75)";
+  g.shadowColor = "rgba(0,18,24,0.75)";
   g.shadowBlur = size / 60;
-  g.fillStyle = "#F8FAFC";
+  g.fillStyle = "#EAF0F7";
   g.font = `700 ${size * 0.085}px ${fontOf("--font-noto-serif", "serif")}`;
   g.fillText(s.name, r, r - lr * 0.42);
   g.font = `500 ${size * 0.034}px ${fontOf("--font-noto-sans", "sans-serif")}`;
@@ -102,7 +102,7 @@ function drawVinyl(c: HTMLCanvasElement, s: Staff, cover?: HTMLImageElement) {
   g.stroke();
 
   // 軸孔
-  g.fillStyle = "#0B192C";
+  g.fillStyle = "#001218";
   g.beginPath();
   g.arc(r, r, r * 0.035, 0, Math.PI * 2);
   g.fill();
@@ -310,7 +310,7 @@ export default function VinylScene({ ref, staff, onFocus, onPick, onFallback }: 
         transparent: true,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
-        uniforms: { uT: { value: 10 }, uTime: { value: 0 }, uPower: { value: 0 }, uColor: { value: new THREE.Color("#38BDF8") } },
+        uniforms: { uT: { value: 10 }, uTime: { value: 0 }, uPower: { value: 0 }, uColor: { value: new THREE.Color("#8CC4EC") } },
       }),
     );
     const ripple = new THREE.Mesh(planeGeo, rippleMat);

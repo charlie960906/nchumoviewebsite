@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -18,12 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const z = getZone((await params).zone);
   if (!z) return {};
   const title = `展區「${zoneName(z)}」｜${z.subtitle}`;
-  return {
-    title,
-    description: `「${THEME}」${z.summary}`,
-    alternates: { canonical: zonePath(z) },
-    openGraph: { title, description: z.summary, url: zonePath(z) },
-  };
+  return pageMeta({ title, description: `「${THEME}」${z.summary}`, path: zonePath(z) });
 }
 
 const d = (ms: number) => ({ "--d": `${ms}ms` }) as React.CSSProperties;

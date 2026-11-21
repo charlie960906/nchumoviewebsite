@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo";
 import { site } from "@/lib/site";
 import { breadcrumbLd } from "@/lib/jsonld";
 import JsonLd from "@/components/JsonLd";
 import PageHero from "@/components/PageHero";
 import SectionHeading from "@/components/SectionHeading";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: "網站更新紀錄",
   description: `${site.fullName}網站更新紀錄。`,
-  alternates: { canonical: "/update" },
-};
+  path: "/update",
+});
 
 const updates = [
   {

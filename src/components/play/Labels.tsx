@@ -75,7 +75,7 @@ export default function Labels() {
                       whileTap={{ scale: 0.94 }}
                       animate={{ rotate: on ? (l.length % 2 ? -2 : 2) : 0 }}
                       className={`rounded-lg border px-3.5 py-2 text-sm transition-colors duration-200 disabled:opacity-35 ${
-                        on ? "border-glow bg-glow text-night shadow-[0_6px_20px_-8px_#38bdf8]" : "border-white/20 bg-white/5 text-mist hover:border-glow/60"
+                        on ? "border-glow bg-glow text-night" : "border-white/20 bg-white/5 text-mist hover:border-glow/60"
                       }`}
                     >
                       {l}
@@ -95,7 +95,7 @@ export default function Labels() {
         <AnimatePresence mode="wait">
           {done && picked.length > 0 ? (
             <m.div key="card" initial={{ opacity: 0, y: 24, rotate: -2 }} animate={{ opacity: 1, y: 0, rotate: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}>
-              <div className="card relative overflow-hidden p-7 text-center" style={{ background: "radial-gradient(80% 70% at 50% 30%, rgba(56,189,248,.2), transparent), #0f2238" }}>
+              <div className="card relative overflow-hidden p-7 text-center" style={{ background: "radial-gradient(80% 70% at 50% 30%, rgba(140,196,236,.2), transparent), #031C24" }}>
                 <p className="eyebrow">關係名片</p>
                 <p className="mt-5 font-serif text-3xl font-bold">我佮{name}</p>
                 <p className="mt-1 text-sm text-dim">{rel}</p>

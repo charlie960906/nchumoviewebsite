@@ -40,7 +40,7 @@ export default function Drift({ initialId }: { initialId?: string }) {
     <div className="card relative overflow-hidden">
       <div className="relative grid min-h-[520px] place-items-center px-5 py-14 md:min-h-[560px]">
         {/* 水面 */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_55%_at_50%_45%,rgba(8,145,178,.28),transparent)]">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
           {(busy ? [0, 1, 2, 3] : [0, 1]).map((i) => (
             <span key={`${busy}-${i}`} className="absolute left-1/2 top-[45%] h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2">
               <span

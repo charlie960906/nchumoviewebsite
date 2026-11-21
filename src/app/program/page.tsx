@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { programs } from "@/lib/programs";
@@ -11,12 +12,11 @@ import LumaButton from "@/components/LumaButton";
 import AddToCalendar from "@/components/AddToCalendar";
 import JsonLd from "@/components/JsonLd";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: "活動與市集｜活動時間表",
-  description:
-    "2027 興大國際星空電影節完整日程：3/19（五）放映《美國女孩》並規劃阮鳳儀導演映後講座，3/20（六）放映《琳達！琳達！》，另有市集、展覽、表演與《反正你也不睡覺》讀書會。",
-  alternates: { canonical: "/program" },
-};
+  description: "2027 興大國際星空電影節完整日程：3/19（五）放映《美國女孩》並規劃阮鳳儀導演映後講座，3/20（六）放映《琳達！琳達！》，另有市集、展覽、表演與《反正你也不睡覺》讀書會。",
+  path: "/program",
+});
 
 export default function ProgramPage() {
   return (
@@ -25,30 +25,33 @@ export default function ProgramPage() {
       <PageHero
         eyebrow="Program"
         title="活動與市集"
-        summary={`${site.name}為期兩天：3 月 19 日（五）15:00–22:00、3 月 20 日（六）14:00–23:00。每晚 18:30 於星空下放映一部電影，下午起有市集、展覽、快閃遊戲與現場演出。所有場次免費且不需報名，當天直接到場即可。`}
+        summary={`${site.name}為期兩天：3 月 19 日（五）15:00–22:00、3 月 20 日（六）14:00–23:00。
+每晚 18:30 於星空下放映一部電影，
+下午起有市集、展覽、快閃遊戲與現場演出。
+所有場次免費且不需報名，當天直接到場即可。`}
       >
         <LumaButton source="program" />
         <AddToCalendar />
       </PageHero>
 
       <section aria-labelledby="tt-h" className="container-x">
-        <SectionHeading id="tt-h" eyebrow="Timetable" title="日程總覽" />
+        <SectionHeading id="tt-h" index={1} eyebrow="Timetable" title="日程總覽" />
         <div className="reveal mt-8">
           <Schedule />
         </div>
       </section>
 
       <section aria-labelledby="list-h" className="container-x mt-24">
-        <SectionHeading id="list-h" eyebrow="Highlights" title="節目介紹" />
+        <SectionHeading id="list-h" index={2} eyebrow="Highlights" title="節目介紹" />
         <ul className="mt-8 grid gap-5 md:grid-cols-2">
           {programs.map((p, i) => (
             <li key={p.slug} className="reveal" style={{ "--d": `${i * 70}ms` } as React.CSSProperties}>
               <article className="card card-hover relative flex h-full flex-col p-6 md:p-7">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="tag tag-glow">{p.kindLabel}</span>
+                  <span className={`tag ${p.kind === "film" ? "border-shore/50 bg-shore/10 text-shore" : "tag-glow"}`}>{p.kindLabel}</span>
                   {p.tentative && <span className="tag tag-warn">時間待定</span>}
                 </div>
-                <h3 className="mt-4 font-serif text-2xl font-bold">
+                <h3 className="mt-4 font-serif text-2xl font-black">
                   <Link href={`/program/${p.slug}`} className="after:absolute after:inset-0 hover:text-glow">
                     {p.kind === "film" ? `《${p.title}》` : p.title}
                   </Link>

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { footerNav, site } from "@/lib/site";
+import { THEME_CHAR } from "@/lib/theme";
 
 const WEEKDAY = ["日", "一", "二", "三", "四", "五", "六"];
 
@@ -27,10 +28,11 @@ export default function Footer() {
       <div className="container-x grid gap-12 py-14 md:py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] lg:gap-16">
         {/* 品牌與活動資訊 */}
         <section aria-labelledby="footer-brand">
-          <h2 id="footer-brand" className="font-serif text-2xl font-bold tracking-wider">
-            {site.shortName}
+          <h2 id="footer-brand" className="font-serif text-[44px] font-black leading-none md:text-[56px]">
+            {THEME_CHAR} <span className="font-normal italic tracking-wide">Ripple</span>
           </h2>
-          <p className="mt-1 text-xs tracking-[0.24em] text-dim">NCHU FILM FESTIVAL</p>
+          <p className="mt-4 text-sm font-medium text-moon">{site.shortName}</p>
+          <p className="mt-1 font-mono text-xs tracking-[0.24em] text-dim">NCHU FILM FESTIVAL {site.year}</p>
           <p className="mt-5 max-w-xs text-sm leading-7 text-mist">{site.tagline}</p>
 
           <dl className="mt-6 grid gap-2 text-sm">

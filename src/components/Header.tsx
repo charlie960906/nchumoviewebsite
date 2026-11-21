@@ -2,12 +2,24 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, m } from "motion/react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { AnimatePresence, animate, m, useMotionValue, useReducedMotion, useTransform } from "motion/react";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { nav, site } from "@/lib/site";
 import { THEME } from "@/lib/theme";
 import LumaButton from "./LumaButton";
+
+/** 滑動膠囊的彈簧：k = 剛度、ζ = 阻尼比（< 1 會微微回彈）。阻尼 c = 2ζ√(k·m)，m = 1 */
+const PILL_K = 190;
+const PILL_ZETA = 0.55;
+/** stretch：前緣用 k、後緣用 k × 這個比例，後緣慢半拍，膠囊在滑動中被拉長再收回 */
+const PILL_TRAIL = 0.6;
+/** 首頁導覽列：最上方 #1d3352 → 滑過 Hero 後 #001218 */
+const NAV_FROM = [0x1d, 0x33, 0x52];
+const NAV_TO = [0x00, 0x12, 0x18];
+/** 首頁導覽列從透明到完全浮現所需的捲動距離 */
+const NAV_FADE = 200;
+const pillSpring = (k: number) => ({ type: "spring" as const, stiffness: k, damping: 2 * PILL_ZETA * Math.sqrt(k), mass: 1 });
 
 export default function Header() {
   const pathname = usePathname();
@@ -18,10 +30,20 @@ export default function Header() {
   /** 行動版選單中目前展開的子選單（以父項目的 href 識別） */
   const [sub, setSub] = useState<string | null>(null);
   const navRef = useRef<HTMLElement>(null);
+  /** 桌機導覽列：剛點下、正在切換過去的上層項目。點下當下膠囊就先滑過去，不等頁面載入完 */
+  const [pending, setPending] = useState<string | null>(null);
+  /** 滑動膠囊的位置；jump 代表直接定位不滑動（從隱藏出現、或同一項目因字型載入／視窗縮放而改變尺寸） */
+  const [pill, setPill] = useState<{ x: number; y: number; w: number; h: number; jump: boolean; target: string } | null>(null);
+  const reduce = useReducedMotion();
+  /** 膠囊左右兩個邊緣各自用彈簧追目標，寬度 = 右 − 左 */
+  const pillL = useMotionValue(0);
+  const pillR = useMotionValue(0);
+  const pillW = useTransform([pillL, pillR], ([l, r]: number[]) => r - l);
 
   useEffect(() => {
     setOpen(false);
     setMenu(null);
+    setPending(null);
   }, [pathname]);
 
   // 每次關閉選單就把子選單收回，下次打開時全部是收合狀態
@@ -35,6 +57,43 @@ export default function Header() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // 首頁：導覽列在最上方是 Hero 頂端的海軍藍，往下滑過 Hero 一個螢幕高的距離，慢慢變成頁面的深藍黑
+  const headerRef = useRef<HTMLElement>(null);
+  const isHome = pathname === "/";
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el || !isHome) return;
+    let raf = 0;
+    const paint = () => {
+      raf = 0;
+      const y = window.scrollY;
+      const t = Math.min(1, Math.max(0, y / window.innerHeight));
+      // 最上方完全透明，往下滑前 NAV_FADE px 內才慢慢浮現；行動版選單打開時直接顯示
+      const a = open ? 1 : Math.min(1, Math.max(0, y / NAV_FADE));
+      const c = NAV_FROM.map((v, i) => Math.round(v + (NAV_TO[i] - v) * t));
+      const blur = a > 0 ? `blur(${(12 * a).toFixed(1)}px)` : "none";
+      el.style.backgroundColor = `rgb(${c[0]} ${c[1]} ${c[2]} / ${(0.92 * a).toFixed(3)})`;
+      el.style.setProperty("backdrop-filter", blur);
+      el.style.setProperty("-webkit-backdrop-filter", blur);
+      el.style.borderBottomColor = `rgb(255 255 255 / ${(0.1 * a).toFixed(3)})`;
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(paint);
+    };
+    paint();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      el.style.backgroundColor = "";
+      el.style.removeProperty("backdrop-filter");
+      el.style.removeProperty("-webkit-backdrop-filter");
+      el.style.borderBottomColor = "";
+    };
+  }, [isHome, open]);
 
   useEffect(() => {
     if (!open) return;
@@ -72,21 +131,75 @@ export default function Header() {
   const isCurrent = (href: string) => pathname === href;
 
   const itemClass = (active: boolean) =>
-    `relative flex items-center gap-1 rounded-lg px-3 py-2 text-sm transition-colors duration-200 hover:text-glow ${active ? "text-glow" : "text-mist"}`;
+    `relative flex items-center gap-1 rounded-full px-3 py-2 text-sm transition-colors duration-200 hover:text-glow ${active ? "text-glow" : "text-mist"}`;
 
-  const underline = (
-    <m.span
-      layoutId="nav-underline"
-      className="absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-glow"
-      transition={{ type: "spring", stiffness: 380, damping: 32 }}
-    />
-  );
+  const activeTop = nav.find((n) => isActive(n.href))?.href ?? null;
+  /** 膠囊只停在目前頁面；點下其他項目時才滑過去（滑鼠移入不會動） */
+  const pillTarget = pending ?? activeTop;
+  /** 一般左鍵點擊才讓膠囊先滑；Ctrl／Cmd／Shift 點擊是開新分頁，目前頁面不變 */
+  const onNavClick = (href: string) => (e: React.MouseEvent) => {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    setPending(href);
+  };
+
+  // 量測目標項目相對於 nav 的位置。LazyMotion 只載入 domAnimation（不含 layout 動畫），
+  // 所以這裡自己量座標、用 x / width 做彈簧動畫。
+  useLayoutEffect(() => {
+    const navEl = navRef.current;
+    if (!navEl) return;
+    const measure = () => {
+      const el = pillTarget ? navEl.querySelector<HTMLElement>(`[data-pill="${pillTarget}"]`) : null;
+      const box = navEl.getBoundingClientRect();
+      const r = el?.getBoundingClientRect();
+      if (!r || !r.width || !box.width) {
+        setPill(null);
+        return;
+      }
+      const next = { x: r.left - box.left, y: r.top - box.top, w: r.width, h: r.height };
+      const target = pillTarget as string;
+      setPill((prev) => {
+        // ResizeObserver 一開始觀察就會回呼一次；位置沒變就不更新，免得打斷正在滑的動畫
+        if (prev && prev.target === target && prev.x === next.x && prev.y === next.y && prev.w === next.w && prev.h === next.h) return prev;
+        return { ...next, target, jump: prev === null || prev.target === target };
+      });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(navEl);
+    return () => ro.disconnect();
+  }, [pillTarget]);
+
+  useEffect(() => {
+    if (!pill) return;
+    const l = pill.x;
+    const r = pill.x + pill.w;
+    if (pill.jump || reduce) {
+      pillL.jump(l);
+      pillR.jump(r);
+      return;
+    }
+    // 往右滑時右緣領頭、左緣拖在後面；往左則相反
+    const movingRight = l > pillL.get();
+    const lead = pillSpring(PILL_K);
+    const trail = pillSpring(PILL_K * PILL_TRAIL);
+    const a = animate(pillL, l, movingRight ? trail : lead);
+    const b = animate(pillR, r, movingRight ? lead : trail);
+    return () => {
+      a.stop();
+      b.stop();
+    };
+  }, [pill, reduce, pillL, pillR]);
 
   return (
     <>
     <header
-      className={`sticky top-0 z-50 transition-[background-color,border-color,backdrop-filter] duration-300 ${
-        scrolled || open ? "border-b border-white/10 bg-night/85 backdrop-blur-md" : "border-b border-transparent bg-transparent"
+      ref={headerRef}
+      className={`sticky top-0 z-50 ${
+        isHome
+          ? "border-b"
+          : `transition-[background-color,border-color,backdrop-filter] duration-300 ${
+              scrolled || open ? "border-b border-white/10 bg-night/85 backdrop-blur-md" : "border-b border-transparent bg-transparent"
+            }`
       }`}
     >
       <div className="container-x flex h-16 items-center justify-between gap-4">
@@ -97,14 +210,32 @@ export default function Header() {
           </span>
         </Link>
 
-        <nav ref={navRef} aria-label="主選單" className="hidden items-center gap-1 lg:flex">
+        <nav
+          ref={navRef}
+          aria-label="主選單"
+          className="relative hidden items-center gap-1 lg:flex"
+        >
+          <m.span
+            aria-hidden
+            className="pointer-events-none absolute left-0 top-0 rounded-full bg-white/[0.06] ring-[1.5px] ring-inset ring-white/45"
+            style={{ x: pillL, width: pillW, y: pill?.y ?? 0, height: pill?.h ?? 0 }}
+            initial={false}
+            animate={{ opacity: pill ? 1 : 0 }}
+            transition={{ duration: 0.2 }}
+          />
           {nav.map((n) => {
             const active = isActive(n.href);
             if (!n.children) {
               return (
-                <Link key={n.href} href={n.href} aria-current={active ? "page" : undefined} className={itemClass(active)}>
+                <Link
+                  key={n.href}
+                  href={n.href}
+                  data-pill={n.href}
+                  aria-current={active ? "page" : undefined}
+                  className={itemClass(active)}
+                  onClick={onNavClick(n.href)}
+                >
                   {n.label}
-                  {active && underline}
                 </Link>
               );
             }
@@ -119,6 +250,7 @@ export default function Header() {
                 <button
                   type="button"
                   data-menu={n.href}
+                  data-pill={n.href}
                   aria-expanded={expanded}
                   aria-controls={`menu-${n.href.slice(1)}`}
                   className={itemClass(active)}
@@ -129,7 +261,6 @@ export default function Header() {
                 >
                   {n.label}
                   <ChevronDown aria-hidden size={14} className={`transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} />
-                  {active && underline}
                 </button>
                 <AnimatePresence>
                   {expanded && (
@@ -145,7 +276,10 @@ export default function Header() {
                         <li key={c.href}>
                           <Link
                             href={c.href}
-                            onClick={() => setMenu(null)}
+                            onClick={(e) => {
+                              setMenu(null);
+                              onNavClick(n.href)(e);
+                            }}
                             aria-current={isCurrent(c.href) ? "page" : undefined}
                             className={`block whitespace-nowrap rounded-lg px-3 py-2 text-sm transition-colors duration-200 hover:bg-white/5 hover:text-glow ${
                               isCurrent(c.href) ? "text-glow" : "text-mist"
@@ -247,7 +381,7 @@ export default function Header() {
                                   aria-current={isCurrent(c.href) ? "page" : undefined}
                                   onClick={() => setOpen(false)}
                                   className={`block rounded-xl px-4 py-2.5 text-base ${
-                                    isCurrent(c.href) ? "bg-glow/10 text-glow" : "text-mist hover:bg-white/5"
+                                    isCurrent(c.href) ? "bg-white/5 text-glow" : "text-mist hover:bg-white/5"
                                   }`}
                                 >
                                   {c.label}
@@ -263,7 +397,7 @@ export default function Header() {
                       href={n.href}
                       aria-current={isActive(n.href) ? "page" : undefined}
                       onClick={() => setOpen(false)}
-                      className={`block rounded-xl px-4 py-3 text-lg ${isActive(n.href) ? "bg-glow/10 text-glow" : "text-moon hover:bg-white/5"}`}
+                      className={`block rounded-xl px-4 py-3 text-lg ${isActive(n.href) ? "bg-white/5 text-glow" : "text-moon hover:bg-white/5"}`}
                     >
                       {n.label}
                     </Link>

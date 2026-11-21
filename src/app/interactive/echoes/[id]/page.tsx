@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Disc3, ExternalLink } from "lucide-react";
@@ -18,18 +19,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const s = getStaff((await params).id);
   if (!s) return {};
   const description = `${s.role}・${s.name}的黑膠：歌曲〈${s.songTitle}〉與故事〈${s.storyTitle}〉。${s.storyContent.replace(/\*\*/g, "").replace(/\s+/g, " ").slice(0, 70)}…`;
-  return {
+  return pageMeta({
     title: `${s.storyTitle}｜${s.name}・波紋的音像`,
+    ogTitle: `${s.storyTitle}｜波紋的音像`,
     description,
-    alternates: { canonical: `/interactive/echoes/${s.id}` },
-    openGraph: {
-      type: "article",
-      title: `${s.storyTitle}｜波紋的音像`,
-      description,
-      url: `/interactive/echoes/${s.id}`,
-      images: [{ url: `/og/vinyl-${s.id}.png`, width: 1200, height: 630, alt: `${s.name}的黑膠：${s.storyTitle}` }],
-    },
-  };
+    path: `/interactive/echoes/${s.id}`,
+    type: "article",
+    images: [{ url: `/og/vinyl-${s.id}.png`, width: 1200, height: 630, alt: `${s.name}的黑膠：${s.storyTitle}` }],
+  });
 }
 
 /** 故事獨立頁：可被索引的長尾內容（Article + MusicRecording 結構化資料）。 */
@@ -71,7 +68,7 @@ export default async function StoryPage({ params }: Props) {
               className="relative mx-auto grid h-44 w-44 animate-spin-slow place-items-center rounded-full bg-[repeating-radial-gradient(circle,#06080c_0,#06080c_2px,#1a2434_3px,#06080c_4px)]"
               style={{ boxShadow: `0 0 60px -10px ${s.accentColor}` }}
             >
-              <span className="h-16 w-16 rounded-full" style={{ background: `radial-gradient(circle at 30% 30%, #fff, ${s.accentColor} 35%, #0b192c 120%)` }} />
+              <span className="h-16 w-16 rounded-full" style={{ background: `radial-gradient(circle at 30% 30%, #fff, ${s.accentColor} 35%, #001218 120%)` }} />
               <span className="absolute h-2 w-2 rounded-full bg-night" />
             </span>
             <p className="eyebrow mt-6" style={{ color: s.accentColor }}>

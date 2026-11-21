@@ -3,7 +3,8 @@ import { Inter, JetBrains_Mono, Noto_Sans_TC, Noto_Serif_TC } from "next/font/go
 import Script from "next/script";
 import "./globals.css";
 import { site } from "@/lib/site";
-import { organizationLd, websiteLd } from "@/lib/jsonld";
+import { llmsAlternate } from "@/lib/seo";
+import { organizationLd, producerLd, websiteLd } from "@/lib/jsonld";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import JsonLd from "@/components/JsonLd";
@@ -13,7 +14,7 @@ import MotionProvider from "@/components/MotionProvider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const notoSans = Noto_Sans_TC({ weight: ["400", "500", "700"], variable: "--font-noto-sans", display: "swap", preload: false });
-const notoSerif = Noto_Serif_TC({ weight: ["500", "700"], variable: "--font-noto-serif", display: "swap", preload: false });
+const notoSerif = Noto_Serif_TC({ weight: ["500", "700", "900"], variable: "--font-noto-serif", display: "swap", preload: false });
 const jbMono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-jb-mono", display: "swap" });
 
 export const metadata: Metadata = {
@@ -22,9 +23,17 @@ export const metadata: Metadata = {
   description: site.description,
   keywords: [...site.keywords],
   applicationName: site.shortName,
+  authors: [{ name: site.organizers[1].name, url: site.contact.instagram }],
+  creator: site.organizers[1].name,
+  publisher: site.organizers[0].name,
+  category: "event",
   // 暫時不放分頁圖示：明確給一個空白 icon，瀏覽器才不會繼續顯示快取的舊圖。
   icons: { icon: "data:," },
-  alternates: { canonical: "/" },
+  alternates: {
+    canonical: "/",
+    // GEO：讓 AI 爬蟲從任一頁都能找到給 LLM 讀的精簡說明
+    types: llmsAlternate,
+  },
   openGraph: {
     type: "website",
     locale: "zh_TW",
@@ -34,12 +43,16 @@ export const metadata: Metadata = {
     url: "/",
   },
   twitter: { card: "summary_large_image", title: site.fullName, description: site.description },
-  robots: { index: true, follow: true },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
+  },
   formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0B192C",
+  themeColor: "#001218",
   colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
@@ -79,7 +92,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </MotionProvider>
         <ScrollToTop />
         <RevealObserver />
-        <JsonLd data={[organizationLd, websiteLd]} />
+        <JsonLd data={[organizationLd, producerLd, websiteLd]} />
         {/* Luma Checkout：站內彈窗訂閱活動提醒，無需跳轉 */}
         <Script id="luma-checkout" src={site.luma.script} strategy="lazyOnload" />
       </body>

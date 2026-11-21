@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { THEME, THEME_CHAR } from "@/lib/theme";
@@ -8,35 +9,15 @@ import PageHero from "@/components/PageHero";
 import SectionHeading from "@/components/SectionHeading";
 import LumaButton from "@/components/LumaButton";
 import JsonLd from "@/components/JsonLd";
+import StoryJourney from "@/components/StoryJourney";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: "策展理念",
   description: `「${THEME}」策展理念：展區「泅 Siû」談親情與友情（傍、佮），展區「涯 Giâ」談家與土地認同（佇、佗），以水的固、液、氣三態串起從提問到抵達的敘事。`,
-  alternates: { canonical: "/themes" },
-};
+  path: "/themes",
+});
 
 const d = (ms: number) => ({ "--d": `${ms}ms` }) as React.CSSProperties;
-
-const story = [
-  {
-    key: "固",
-    en: "Solid",
-    title: "留在原地",
-    text: "故事從冰開始。家、土地、口音、一張餐桌——這些穩定而沉靜的東西，在我們離開之前，從來不覺得它們有形狀。",
-  },
-  {
-    key: "液",
-    en: "Liquid",
-    title: "開始流動",
-    text: "然後我們出發。穿過城市與人群，被新的語言和關係沖刷。一滴水落下，泛起的漣漪碰到了另一個人的漣漪。",
-  },
-  {
-    key: "氣",
-    en: "Gas",
-    title: "無所不在",
-    text: "最後它變成空氣。看不見，卻滲進呼吸裡——一首歌的前奏、颱風天的鹹味、某句脫口而出的家鄉話。你發現你從未真正離開。",
-  },
-];
 
 export default function ThemesPage() {
   return (
@@ -45,7 +26,12 @@ export default function ThemesPage() {
       <PageHero
         eyebrow="Curatorial Theme"
         title={`策展理念：${THEME}`}
-        summary={`「${THEME}」取台語「水泱 tsuí-iann」（水面漣漪）之意，談人在異鄉與家鄉之間尋找歸屬的過程。現場以「泅」與「涯」兩大展區呈現：前者關於親情與友情，後者關於家與土地認同，各自從「探索」走到「抵達」。`}
+        summary={`「${THEME}」取台語「水泱 tsuí-iann」
+（水面漣漪）之意，
+談人在異鄉與家鄉之間尋找歸屬的過程。
+現場以「泅」與「涯」兩大展區呈現：
+前者關於親情與友情，
+後者關於家與土地認同，各自從「探索」走到「抵達」。`}
       >
         {zones.map((z) => (
           <Link key={z.slug} href={zonePath(z)} className="btn btn-ghost">
@@ -60,10 +46,10 @@ export default function ThemesPage() {
             {[0, 1, 2].map((i) => (
               <span key={i} className="absolute inset-0 animate-ripple-out rounded-full border border-glow/40" style={{ animationDelay: `${i * 0.8}s` }} />
             ))}
-            <span className="font-serif text-[120px] font-bold leading-none text-moon drop-shadow-[0_0_30px_rgba(56,189,248,.5)]">{THEME_CHAR}</span>
+            <span className="font-serif text-[120px] font-bold leading-none text-moon">{THEME_CHAR}</span>
           </div>
           <div>
-            <SectionHeading id="idea-h" eyebrow="Core Idea" title="電影是平靜的水面" />
+            <SectionHeading id="idea-h" index={1} eyebrow="Core Idea" title="電影是平靜的水面" />
             <p className="reveal mt-5 text-mist/90">
               因為觀者與創作者的情感交會，光影層疊出前行的路。「{THEME_CHAR}」象徵水滴墜落水面泛起微波——人類在異鄉與家鄉之間摸索方向、尋覓歸屬的流動歷程。
             </p>
@@ -74,19 +60,40 @@ export default function ThemesPage() {
         </div>
       </section>
 
-      <section aria-labelledby="zones-h" className="container-x mt-24 md:mt-28">
-        <SectionHeading id="zones-h" eyebrow="Two Zones" title="兩大展區" />
-        <p className="reveal mt-4 max-w-2xl text-mist/90">每個展區各有兩個空間，從「探索」走到「抵達」。選一個走進去看看。</p>
+      <section aria-labelledby="story-h" className="mt-24 md:mt-28">
+        <div className="container-x">
+          <SectionHeading id="story-h" index={2} eyebrow="Three States" title="沉浸式三態故事線：固 → 液 → 氣" />
+          <p className="reveal mt-4 max-w-2xl text-mist/90">從一滴水「泱」開始，經過固、液、氣，最後落成「泅」與「涯」兩個展區。水有三種形態，歸屬也是。整個電影節——從網站到現場——都沿著這條線走。</p>
+        </div>
+        {/* 完整版：往下捲、鏡頭沿著水的旅程往右走（首頁 StatesScroll 為簡化版） */}
+        <StoryJourney labelledBy="story-h" />
+      </section>
+
+      <section aria-labelledby="zones-h" className="container-x mt-24 scroll-mt-24 md:mt-28" id="zones">
+        <SectionHeading id="zones-h" index={3} eyebrow="Two Zones" title="兩大展區" />
+        <p className="reveal mt-4 max-w-2xl text-mist/90">水滴落下的漣漪，在現場化成兩個展區。每個展區各有兩個空間，從「探索」走到「抵達」。選一個走進去看看。</p>
         <ul className="mt-8 grid gap-5 md:grid-cols-2">
           {zones.map((z, i) => (
             <li key={z.slug} className="reveal" style={d(i * 100)}>
               <Link
                 href={zonePath(z)}
-                className="card group flex h-full flex-col p-6 transition-colors hover:border-[color:var(--zone)] md:p-8"
+                className="card group relative flex h-full flex-col overflow-hidden p-6 transition-colors hover:border-[color:var(--zone)] md:p-10"
                 style={{ "--zone": `${z.color}99` } as React.CSSProperties}
               >
+                {z.slug === "siu" ? (
+                  <span aria-hidden className="pointer-events-none absolute -bottom-28 -right-28 h-80 w-80">
+                    {[0, 56, 112].map((inset, k) => (
+                      <span key={inset} className="absolute rounded-full border" style={{ inset, borderColor: `${z.color}${["1f", "33", "4d"][k]}` }} />
+                    ))}
+                  </span>
+                ) : (
+                  <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-24">
+                    <span className="block h-px" style={{ background: `${z.color}4d` }} />
+                    <span className="mt-4 block h-px" style={{ background: `${z.color}26` }} />
+                  </span>
+                )}
                 <div className="flex items-end gap-5">
-                  <span aria-hidden className="font-serif text-[88px] font-bold leading-none md:text-[104px]" style={{ color: z.color }}>
+                  <span aria-hidden className="font-serif text-[104px] font-black leading-[0.85] md:text-[148px]" style={{ color: z.color }}>
                     {z.char}
                   </span>
                   <div className="pb-2">
@@ -115,27 +122,6 @@ export default function ThemesPage() {
             </li>
           ))}
         </ul>
-      </section>
-
-      <section aria-labelledby="story-h" className="container-x mt-24 md:mt-28">
-        <SectionHeading id="story-h" eyebrow="Three States" title="沉浸式三態故事線：固 → 液 → 氣" />
-        <p className="reveal mt-4 max-w-2xl text-mist/90">水有三種形態，歸屬也是。整個電影節——從網站到現場——都沿著這條線走。</p>
-        <ol className="relative mt-10 grid gap-8 border-l border-glow/25 pl-8 md:gap-12 md:pl-12">
-          {story.map((s, i) => (
-            <li key={s.key} className="reveal relative" style={d(i * 120)}>
-              <span aria-hidden className="absolute -left-8 top-3 grid h-0 w-0 place-items-center md:-left-12">
-                <span className="absolute h-3 w-3 rounded-full bg-glow" />
-                <span className="absolute h-8 w-8 animate-ripple-out rounded-full border border-glow" style={{ animationDelay: `${i * 0.7}s` }} />
-              </span>
-              <div className="flex items-baseline gap-4">
-                <span className="font-serif text-6xl font-bold text-glow">{s.key}</span>
-                <span className="eyebrow !text-dim">{s.en}</span>
-              </div>
-              <h3 className="mt-2 text-xl font-bold">{s.title}</h3>
-              <p className="mt-2 max-w-2xl text-mist/90">{s.text}</p>
-            </li>
-          ))}
-        </ol>
       </section>
 
       <section className="container-x mt-20">

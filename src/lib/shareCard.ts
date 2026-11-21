@@ -35,7 +35,7 @@ function wrap(g: CanvasRenderingContext2D, text: string, maxW: number) {
 export async function renderCard(spec: CardSpec): Promise<Blob> {
   const W = 1080;
   const H = 1920;
-  const accent = spec.accent ?? "#38BDF8";
+  const accent = spec.accent ?? "#8CC4EC";
   const serif = cssFont("--font-noto-serif", "serif");
   const sans = cssFont("--font-noto-sans", "sans-serif");
   const mono = cssFont("--font-jb-mono", "monospace");
@@ -55,9 +55,9 @@ export async function renderCard(spec: CardSpec): Promise<Blob> {
 
   // 夜空底
   const bg = g.createLinearGradient(0, 0, 0, H);
-  bg.addColorStop(0, "#0B192C");
+  bg.addColorStop(0, "#001218");
   bg.addColorStop(0.55, "#0c2a44");
-  bg.addColorStop(1, "#0B192C");
+  bg.addColorStop(1, "#001218");
   g.fillStyle = bg;
   g.fillRect(0, 0, W, H);
 
@@ -79,7 +79,7 @@ export async function renderCard(spec: CardSpec): Promise<Blob> {
 
   // 漣漪
   for (let i = 1; i <= 7; i++) {
-    g.strokeStyle = `rgba(56,189,248,${0.34 - i * 0.04})`;
+    g.strokeStyle = `rgba(140,196,236,${0.34 - i * 0.04})`;
     g.lineWidth = 2;
     g.beginPath();
     g.ellipse(W / 2, H * 0.44, i * 118, i * 118, 0, 0, Math.PI * 2);
@@ -93,7 +93,7 @@ export async function renderCard(spec: CardSpec): Promise<Blob> {
   g.fillStyle = accent;
   g.font = `700 34px ${mono}`;
   g.fillText("R I P P L E", W / 2, 210);
-  g.fillStyle = "#F8FAFC";
+  g.fillStyle = "#EAF0F7";
   g.font = `500 40px ${sans}`;
   g.fillText(spec.kicker, W / 2, 280);
 
@@ -109,9 +109,9 @@ export async function renderCard(spec: CardSpec): Promise<Blob> {
     spec.emoji.forEach((e, i) => g.fillText(e, x0 + i * gap, y - 190));
     g.font = `700 84px ${serif}`;
   }
-  g.shadowColor = "rgba(11,25,44,0.9)";
+  g.shadowColor = "rgba(0,18,24,0.9)";
   g.shadowBlur = 30;
-  g.fillStyle = "#F8FAFC";
+  g.fillStyle = "#EAF0F7";
   for (const l of lines) {
     g.fillText(l, W / 2, y);
     y += lh;
@@ -119,14 +119,14 @@ export async function renderCard(spec: CardSpec): Promise<Blob> {
   g.shadowBlur = 0;
 
   if (spec.footnote) {
-    g.fillStyle = "#94A3B8";
+    g.fillStyle = "#8B95A7";
     g.font = `400 34px ${sans}`;
     g.fillText(`— ${spec.footnote}`, W / 2, y + 10);
     y += 80;
   }
   if (spec.sub) {
     g.font = `500 42px ${sans}`;
-    g.fillStyle = "#F1F5F9";
+    g.fillStyle = "#D5DEE9";
     const subs = wrap(g, spec.sub, W - 240);
     let sy = Math.max(y + 110, H * 0.7);
     for (const s of subs) {
@@ -136,12 +136,12 @@ export async function renderCard(spec: CardSpec): Promise<Blob> {
   }
 
   // 品牌與活動提醒連結
-  g.fillStyle = "rgba(56,189,248,0.4)";
+  g.fillStyle = "rgba(140,196,236,0.4)";
   g.fillRect(W / 2 - 60, H - 330, 120, 2);
-  g.fillStyle = "#F8FAFC";
+  g.fillStyle = "#EAF0F7";
   g.font = `700 44px ${serif}`;
   g.fillText(`2027 興大國際星空電影節「${THEME}」`, W / 2, H - 260);
-  g.fillStyle = "#94A3B8";
+  g.fillStyle = "#8B95A7";
   g.font = `400 34px ${sans}`;
   g.fillText("2027.03.19 – 03.20｜國立中興大學", W / 2, H - 200);
   g.fillStyle = accent;

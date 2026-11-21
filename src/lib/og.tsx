@@ -21,7 +21,7 @@ async function loadFont(text: string, family: string, weight: number) {
 
 export type OgSpec = { kicker: string; lines: string[]; footnote?: string; accent?: string };
 
-export async function ogImage({ kicker, lines, footnote, accent = "#38BDF8" }: OgSpec) {
+export async function ogImage({ kicker, lines, footnote, accent = "#8CC4EC" }: OgSpec) {
   const footer = `${site.name}　2027.03.19 – 03.20　國立中興大學`;
   const all = `${kicker}${lines.join("")}${footnote ?? ""}${footer}${THEME_CHAR}Ripple—`;
   const [serif, sans] = await Promise.all([loadFont(all, "Noto+Serif+TC", 700), loadFont(all, "Noto+Sans+TC", 500)]);
@@ -39,8 +39,8 @@ export async function ogImage({ kicker, lines, footnote, accent = "#38BDF8" }: O
           height: "100%",
           display: "flex",
           position: "relative",
-          background: "linear-gradient(160deg, #0B192C 0%, #0c2c47 55%, #0B192C 100%)",
-          color: "#F8FAFC",
+          background: "linear-gradient(160deg, #001218 0%, #05212B 55%, #001218 100%)",
+          color: "#EAF0F7",
           fontFamily: "Sans",
         }}
       >
@@ -54,7 +54,7 @@ export async function ogImage({ kicker, lines, footnote, accent = "#38BDF8" }: O
               width: i * 190,
               height: i * 190,
               borderRadius: 9999,
-              border: `2px solid rgba(56,189,248,${0.42 - i * 0.055})`,
+              border: `2px solid rgba(140,196,236,${0.42 - i * 0.055})`,
             }}
           />
         ))}
@@ -70,9 +70,9 @@ export async function ogImage({ kicker, lines, footnote, accent = "#38BDF8" }: O
                 {l}
               </div>
             ))}
-            {footnote ? <div style={{ display: "flex", marginTop: 20, fontFamily: "Sans", fontSize: 26, color: "#94A3B8" }}>— {footnote}</div> : null}
+            {footnote ? <div style={{ display: "flex", marginTop: 20, fontFamily: "Sans", fontSize: 26, color: "#8B95A7" }}>— {footnote}</div> : null}
           </div>
-          <div style={{ display: "flex", alignItems: "center", fontSize: 28, color: "#F1F5F9" }}>
+          <div style={{ display: "flex", alignItems: "center", fontSize: 28, color: "#D5DEE9" }}>
             <div style={{ display: "flex", width: 56, height: 3, background: accent, marginRight: 20 }} />
             {footer}
           </div>

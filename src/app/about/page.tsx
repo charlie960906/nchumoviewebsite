@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, AtSign, Mail } from "lucide-react";
@@ -10,11 +11,11 @@ import SectionHeading from "@/components/SectionHeading";
 import LumaButton from "@/components/LumaButton";
 import JsonLd from "@/components/JsonLd";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: "關於電影節｜主題理念與主辦單位",
   description: `關於 2027 興大國際星空電影節「${THEME}」：由國立中興大學國際事務處主辦，2027 年 3 月 19–20 日於國立中興大學舉行的戶外電影節。主題理念、主辦單位與聯絡方式。`,
-  alternates: { canonical: "/about" },
-};
+  path: "/about",
+});
 
 export default function AboutPage() {
   const { email, instagram, facebook } = site.contact;
@@ -26,7 +27,10 @@ export default function AboutPage() {
       <PageHero
         eyebrow="About"
         title="關於電影節"
-        summary={`${site.fullName}是由國立中興大學國際事務處主辦的戶外電影節，於 2027 年 3 月 19 日（五）至 20 日（六）在國立中興大學舉行。兩晚星空下的草地放映之外，還有市集、概念展覽、現場演出與映後講座，免費入場，不需報名，當天直接到場即可。`}
+        summary={`${site.fullName}是由國立中興大學國際事務處主辦的戶外電影節，
+於 2027 年 3 月 19 日（五）至 20 日（六）在國立中興大學舉行。
+兩晚星空下的草地放映之外，還有市集、概念展覽、現場演出與映後講座，
+免費入場，不需報名，當天直接到場即可。`}
       >
         <LumaButton source="about" />
       </PageHero>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo";
 import { Accessibility, Bike, Bus, Car, GlassWater, Info, MapPin, Store, TrainFront, Umbrella } from "lucide-react";
 import { site } from "@/lib/site";
 import { breadcrumbLd } from "@/lib/jsonld";
@@ -8,12 +9,11 @@ import MapEmbed from "@/components/MapEmbed";
 import LumaButton from "@/components/LumaButton";
 import JsonLd from "@/components/JsonLd";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: "現場指引｜地圖、交通、停車與無障礙",
-  description:
-    "2027 興大國際星空電影節現場指引：國立中興大學（臺中市南區興大路 145 號）場地互動地圖、大眾運輸與停車資訊、無障礙服務、Water Bar 與 22 個市集攤位。",
-  alternates: { canonical: "/guide" },
-};
+  description: "2027 興大國際星空電影節現場指引：國立中興大學（臺中市南區興大路 145 號）場地互動地圖、大眾運輸與停車資訊、無障礙服務、Water Bar 與 22 個市集攤位。",
+  path: "/guide",
+});
 
 const d = (ms: number) => ({ "--d": `${ms}ms` }) as React.CSSProperties;
 
@@ -69,8 +69,8 @@ const onsite = [
 ];
 
 const zones = [
-  { name: "電影放映區", desc: "大豆袋沙發與草地席，星空下的主放映區。" },
-  { name: "舞台", desc: "現場音樂、舞蹈表演與快閃遊戲。" },
+  { name: "電影放映區", desc: "鋪上野餐墊席地而坐，星空下的主放映區。" },
+  { name: "草地表演區", desc: "場地中央的草皮上，現場音樂、舞蹈表演與快閃遊戲。" },
   { name: "概念展區（左帳篷）", desc: "「泅」：展區「傍」與「佮」。" },
   { name: "概念展區（右帳篷）", desc: "「涯」：展區「佇」與「佗」。" },
   { name: "市集", desc: "攤位 1–22，沿場地外圍排列。" },
@@ -84,7 +84,9 @@ export default function GuidePage() {
       <PageHero
         eyebrow="On-site Guide"
         title="現場指引"
-        summary={`電影節在${site.venue.name}（${site.venue.address}）舉行。這一頁整理了場地互動地圖、交通與停車方式、無障礙服務，以及 Water Bar 和市集攤位資訊，出發前看一眼就夠。`}
+        summary={`電影節在${site.venue.name}（${site.venue.address}）舉行。
+這一頁整理了場地互動地圖、交通與停車方式、無障礙服務，
+以及 Water Bar 和市集攤位資訊，出發前看一眼就夠。`}
       >
         <a href={site.venue.mapsUrl} target="_blank" rel="noopener" className="btn btn-primary">
           <MapPin aria-hidden size={18} />
@@ -146,7 +148,7 @@ export default function GuidePage() {
           {[
             ["抵達", "不需報名或報到，直接入場；有問題可先到服務台詢問。"],
             ["逛市集與展區", "先走左帳篷「泅」，再到右帳篷「涯」，順路逛市集。"],
-            ["舞台與遊戲", "下午時段有快閃遊戲與表演演出，可以邊看邊補水。"],
+            ["草地表演與遊戲", "下午時段有快閃遊戲與表演演出，可以邊看邊補水。"],
             ["星空放映", "18:30 前到放映區找位置，鋪好野餐墊等天黑。"],
           ].map(([t, s], i) => (
             <li key={t} className="card reveal p-5" style={d(i * 70)}>

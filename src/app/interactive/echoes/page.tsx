@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo";
 import Link from "next/link";
 import { staff } from "@/lib/staff";
 import { abs } from "@/lib/site";
@@ -8,12 +9,11 @@ import SectionHeading from "@/components/SectionHeading";
 import Echoes from "@/components/echoes/Echoes";
 import JsonLd from "@/components/JsonLd";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: "波紋的音像 Echoes of Home｜黑膠互動館",
-  description:
-    "「波紋的音像」是興大國際星空電影節的線上互動體驗：每位工作人員選定一首歌與一篇故事，化為一張黑膠。旋轉圓環、抽出唱片，聆聽音樂並閱讀屬於某個人的情感波紋。",
-  alternates: { canonical: "/interactive/echoes" },
-};
+  description: "「波紋的音像」是興大國際星空電影節的線上互動體驗：每位工作人員選定一首歌與一篇故事，化為一張黑膠。旋轉圓環、抽出唱片，聆聽音樂並閱讀屬於某個人的情感波紋。",
+  path: "/interactive/echoes",
+});
 
 export default function EchoesPage() {
   const crumbs = [
@@ -38,7 +38,9 @@ export default function EchoesPage() {
       <PageHero
         eyebrow="Echoes of Home"
         title="波紋的音像"
-        summary={`每一位工作人員事先選定了一首歌與一篇故事，化成一張黑膠。轉動這一圈 ${staff.length} 張的圓環，抽出一張——音樂會開始播放，下方展開那個人關於家與漂泊的文字。`}
+        summary={`每一位工作人員事先選定了一首歌與一篇故事，
+化成一張黑膠。轉動這一圈 ${staff.length} 張的圓環，抽出一張——
+音樂會開始播放，下方展開那個人關於家與漂泊的文字。`}
       />
 
       <section aria-label="黑膠圓環互動" className="container-x">

@@ -176,7 +176,7 @@ export default function Echoes() {
         onKeyDown={onKey}
         className="card relative h-[58vh] min-h-[380px] max-h-[640px] overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-glow"
         style={{
-          background: `radial-gradient(70% 80% at 50% 45%, ${(sel ?? cur).accentColor}1f, transparent 70%), linear-gradient(180deg, #0d2038, #0b192c)`,
+          background: `radial-gradient(70% 80% at 50% 45%, ${(sel ?? cur).accentColor}1f, transparent 70%), linear-gradient(180deg, #031C24, #001218)`,
           transition: "background 600ms ease",
         }}
       >
@@ -188,7 +188,7 @@ export default function Echoes() {
         {/* 中心聚焦指示 */}
         {phase === "ring" && simple === false && (
           <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-[19%] flex justify-center">
-            <span className="h-2 w-2 animate-breathe rounded-full bg-glow shadow-[0_0_12px_#38bdf8]" />
+            <span className="h-2 w-2 animate-breathe rounded-full bg-glow" />
           </div>
         )}
 
@@ -307,7 +307,7 @@ export default function Echoes() {
                         setVolume(v);
                         audio.current?.setVolume(v);
                       }}
-                      className="h-11 w-24 accent-[#38BDF8]"
+                      className="h-11 w-24 accent-[#8CC4EC]"
                     />
                   </label>
                   {sel.externalUrl && (
@@ -401,9 +401,9 @@ function SimpleStage({
           </span>
           <span
             className="relative grid h-[38%] w-[38%] place-items-center rounded-full text-center"
-            style={{ background: `radial-gradient(circle at 30% 28%, #fff, ${accent} 30%, #0b192c 115%)` }}
+            style={{ background: `radial-gradient(circle at 30% 28%, #fff, ${accent} 30%, #001218 115%)` }}
           >
-            <span className="px-1 leading-tight [text-shadow:0_1px_8px_rgba(11,25,44,.9)]">
+            <span className="px-1 leading-tight [text-shadow:0_1px_8px_rgba(0,18,24,.9)]">
               <span className="block font-serif text-xl font-bold text-moon">{name}</span>
               <span className="block text-[10px] text-moon/90">{song}</span>
             </span>

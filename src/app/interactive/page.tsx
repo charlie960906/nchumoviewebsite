@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo";
 import Link from "next/link";
 import { ArrowRight, Clapperboard, Disc3, Home, Sparkles, Tags } from "lucide-react";
 import { staff } from "@/lib/staff";
@@ -6,12 +7,11 @@ import { breadcrumbLd } from "@/lib/jsonld";
 import PageHero from "@/components/PageHero";
 import JsonLd from "@/components/JsonLd";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: "數位線上互動館｜波紋的音像、漂流詞、心理測驗",
-  description:
-    "興大國際星空電影節線上互動館：在「波紋的音像」轉動黑膠圓環，抽出工作人員的歌與故事；抽一支漂流詞幸運籤；測驗你是《美國女孩》裡的誰；以及展區延伸的貼標籤與家的符號小遊戲。",
-  alternates: { canonical: "/interactive" },
-};
+  description: "興大國際星空電影節線上互動館：在「波紋的音像」轉動黑膠圓環，抽出工作人員的歌與故事；抽一支漂流詞幸運籤；測驗你是《美國女孩》裡的誰；以及展區延伸的貼標籤與家的符號小遊戲。",
+  path: "/interactive",
+});
 
 const others = [
   { href: "/interactive/drift", icon: Sparkles, zone: "氣 Gas", t: "漂流詞幸運籤", s: "往水裡丟一顆石頭，抽一句今天的漂流詞，存成限時動態分享圖。" },
@@ -27,13 +27,15 @@ export default function InteractivePage() {
       <PageHero
         eyebrow="Online Pavilion"
         title="數位線上互動館"
-        summary="線上互動館是電影節的延伸展區，不必到現場也能參與。核心體驗「波紋的音像」收錄每位工作人員的一首歌與一篇故事；另有漂流詞幸運籤、心理測驗，以及呼應現場四個展區的小遊戲。"
+        summary={`線上互動館是電影節的延伸展區，不必到現場也能參與。
+核心體驗「波紋的音像」收錄每位工作人員的一首歌與一篇故事；
+另有漂流詞幸運籤、心理測驗，以及呼應現場四個展區的小遊戲。`}
       />
 
       <section className="container-x">
         <Link href="/interactive/echoes" className="card card-hover reveal group relative block overflow-hidden p-7 md:p-12">
           <div aria-hidden className="absolute -right-44 top-1/2 h-80 w-80 -translate-y-1/2 opacity-35 sm:-right-28 sm:h-[420px] sm:w-[420px] sm:opacity-50 md:-right-40 md:opacity-90 lg:right-6">
-            <div className="h-full w-full animate-spin-slow rounded-full bg-[repeating-radial-gradient(circle,#06080c_0,#06080c_2px,#161f2e_3px,#06080c_4px)] shadow-[0_0_120px_rgba(56,189,248,.3)]">
+            <div className="h-full w-full animate-spin-slow rounded-full bg-[repeating-radial-gradient(circle,#06080c_0,#06080c_2px,#161f2e_3px,#06080c_4px)]">
               <div className="absolute inset-[32%] rounded-full bg-gradient-to-br from-moon via-glow to-night" />
               <div className="absolute inset-[48.5%] rounded-full bg-night" />
             </div>

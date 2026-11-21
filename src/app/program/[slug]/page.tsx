@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, MessageCircleQuestion } from "lucide-react";
@@ -21,12 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = getProgram((await params).slug);
   if (!p) return {};
   const title = p.kind === "film" ? `《${p.title}》星空放映` : p.title;
-  return {
-    title,
-    description: p.summary,
-    alternates: { canonical: `/program/${p.slug}` },
-    openGraph: { title, description: p.summary, url: `/program/${p.slug}` },
-  };
+  return pageMeta({ title, description: p.summary, path: `/program/${p.slug}` });
 }
 
 export default async function ProgramDetail({ params }: Props) {

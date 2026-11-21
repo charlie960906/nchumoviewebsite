@@ -1,12 +1,12 @@
 export type Category = "market" | "game" | "show" | "talk" | "film" | "closing";
 
 export const categories: Record<Category, { label: string; dot: string }> = {
-  market: { label: "市集／展覽", dot: "#38BDF8" },
+  market: { label: "市集／展覽", dot: "#8CC4EC" },
   game: { label: "快閃遊戲", dot: "#F59E0B" },
   show: { label: "表演演出", dot: "#A78BFA" },
   talk: { label: "電影演講會", dot: "#10B981" },
-  film: { label: "電影放映", dot: "#F8FAFC" },
-  closing: { label: "收尾", dot: "#94A3B8" },
+  film: { label: "電影放映", dot: "#EAF0F7" },
+  closing: { label: "收尾", dot: "#8B95A7" },
 };
 
 export type Session = {

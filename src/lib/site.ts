@@ -44,8 +44,8 @@ export const site = {
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E4%B8%AD%E8%88%88%E5%A4%A7%E5%AD%B8",
   },
   luma: {
-    url: "https://luma.com/34dolgs3",
-    eventId: "evt-tMpSAoE8Tf5i1rW",
+    url: "https://luma.com/fzk0dc6n",
+    eventId: "evt-p8d2JSATmaZcHdi",
     script: "https://embed.lu.ma/checkout-button.js",
   },
   organizers: [

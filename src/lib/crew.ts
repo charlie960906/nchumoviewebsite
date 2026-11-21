@@ -14,8 +14,8 @@ import { getStaff } from "@/lib/staff";
  *   沒有 team 的成員（例如部長）排在最前面。
  * - echo：對應 staff.ts 中「波紋的音像」黑膠的 id（選填）。填了之後，點開成員的詳細資料
  *   最下方會出現他的黑膠與歌名，點擊跳轉到 /interactive/echoes/{echo} 故事頁。
- * - 「關於我」取自成員 Gravatar 個人檔案的 About Me：建置時先抓一份寫進頁面，
- *   訪客點開成員時，瀏覽器會再向 Gravatar 讀取最新內容替換（失敗時保留建置時的版本）。
+ * - 「關於我」取自成員 Gravatar 個人檔案的 About Me：伺服器端不抓（避免 40 多個請求拖慢換頁），
+ *   頁面顯示後由瀏覽器在閒置時／點開成員時向 Gravatar 讀取。
  *
  * ⚠ 這個檔案只能由 Server Component 匯入（"server-only" 會擋下誤用），避免信箱進入前端 bundle。
  */
@@ -134,22 +134,6 @@ export function gravatarUrl(email: string | undefined, size = 320): string | und
 
 const emailHash = (email: string) => createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
 
-/** 建置時讀取 Gravatar 公開個人檔案的 About Me；沒有檔案或失敗時回傳 undefined。 */
-async function gravatarAbout(email: string | undefined): Promise<string | undefined> {
-  if (!email?.trim()) return undefined;
-  try {
-    const res = await fetch(`https://api.gravatar.com/v3/profiles/${emailHash(email)}`, {
-      cache: "force-cache",
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return undefined;
-    const data = (await res.json()) as { description?: string };
-    return data.description?.trim() || undefined;
-  } catch {
-    return undefined;
-  }
-}
-
 /** 傳給前端的成員資料：不含 email。 */
 export type CrewCard = {
   key: string;
@@ -160,17 +144,14 @@ export type CrewCard = {
   avatar?: string;
   /** Gravatar 的 email SHA-256（頭像網址本來就公開含有它），供前端即時讀取個人檔案 */
   hash?: string;
-  about?: string;
   echo?: { id: string; songTitle: string; songArtist: string; accentColor: string; vinylCover?: string };
 };
 export type CrewBoardGroup = Omit<CrewGroup, "members"> & { members: CrewCard[] };
 
-export async function getCrewBoard(): Promise<CrewBoardGroup[]> {
-  return Promise.all(
-    crew.map(async ({ members, ...g }) => ({
+export function getCrewBoard(): CrewBoardGroup[] {
+  return crew.map(({ members, ...g }) => ({
       ...g,
-      members: await Promise.all(
-        members.map(async (p, i): Promise<CrewCard> => {
+      members: members.map((p, i): CrewCard => {
           const s = p.echo ? getStaff(p.echo) : undefined;
           return {
             key: `${g.id}-${i}`,
@@ -180,7 +161,6 @@ export async function getCrewBoard(): Promise<CrewBoardGroup[]> {
             title: [g.dept, p.team, p.role].filter(Boolean).join(" · "),
             avatar: gravatarUrl(p.email),
             hash: p.email?.trim() ? emailHash(p.email) : undefined,
-            about: await gravatarAbout(p.email),
             echo: s && {
               id: s.id,
               songTitle: s.songTitle,
@@ -190,7 +170,5 @@ export async function getCrewBoard(): Promise<CrewBoardGroup[]> {
             },
           };
         }),
-      ),
-    })),
-  );
+    }));
 }

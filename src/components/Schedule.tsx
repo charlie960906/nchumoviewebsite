@@ -28,7 +28,7 @@ export default function Schedule({ showFilters = true, compact = false }: { show
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div role="tablist" aria-label="選擇日期" className="card flex w-full gap-1 p-1 sm:inline-flex sm:w-auto">
-          {days.map((d) => {
+          {days.map((d, i) => {
             const active = day === d.key;
             return (
               <button
@@ -38,18 +38,20 @@ export default function Schedule({ showFilters = true, compact = false }: { show
                 aria-selected={active}
                 aria-controls={`panel-${d.key}`}
                 onClick={() => setDay(d.key)}
-                className={`relative flex-1 rounded-xl px-5 py-2.5 text-sm font-bold sm:flex-none transition-colors duration-200 ${active ? "text-night" : "text-mist hover:text-glow"}`}
+                className={`relative flex-1 rounded-md px-5 py-2.5 text-left sm:flex-none sm:px-7 sm:py-3 transition-colors duration-200 ${active ? "text-night" : "text-mist hover:text-glow"}`}
               >
                 {active && (
                   <m.span
                     layoutId="day-pill"
-                    className="absolute inset-0 rounded-xl bg-glow"
+                    className="absolute inset-0 rounded-md bg-glow"
                     transition={{ type: "spring", stiffness: 400, damping: 34 }}
                   />
                 )}
-                <span className="relative font-mono">
-                  {d.label}
-                  <span className="ml-1.5 font-sans font-medium">（{d.weekday}）</span>
+                <span className="relative flex flex-col leading-tight">
+                  <span className="font-mono text-xl font-bold tabular-nums sm:text-[26px]">{d.date.slice(5).replace("-", ".")}</span>
+                  <span className="mt-1 text-xs font-medium">
+                    週{d.weekday}・第{i === 0 ? "一" : "二"}夜
+                  </span>
                 </span>
               </button>
             );
@@ -108,8 +110,8 @@ export default function Schedule({ showFilters = true, compact = false }: { show
                     const c = categories[s.category];
                     const visible = cat === "all" || s.category === cat;
                     return (
-                      <tr key={s.id} hidden={!visible} className={s.category === "film" ? "bg-glow/[0.06]" : ""}>
-                        <td className="pl-4 font-mono text-sm tabular-nums text-mist sm:pl-5">
+                      <tr key={s.id} hidden={!visible} className={s.category === "film" ? "bg-shore/[0.07]" : ""}>
+                        <td className={`pl-4 font-mono text-sm tabular-nums sm:pl-5 ${s.category === "film" ? "font-bold text-shore" : "text-mist"}`}>
                           {/* 手機：開始／結束上下排，結束時間淡一階；平板以上同一行 */}
                           <time dateTime={`${d.date}T${s.start}+08:00`}>{s.start}</time>
                           <span className="hidden text-dim sm:inline"> – </span>

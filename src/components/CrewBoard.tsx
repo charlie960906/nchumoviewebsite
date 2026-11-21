@@ -15,11 +15,11 @@ export default function CrewBoard({ groups }: { groups: CrewBoardGroup[] }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [member, setMember] = useState<CrewCard | null>(null);
   const [shown, setShown] = useState(false);
-  // 即時讀到的 Gravatar About Me：string＝最新內容，null＝已無個人檔案；未列入＝沿用建置時的版本
+  // 瀏覽器讀到的 Gravatar About Me：string＝內容，null＝沒有／讀取失敗；未列入＝讀取中
   const [live, setLive] = useState<Record<string, string | null>>({});
   const requested = useRef(new Set<string>());
 
-  /** 點開時向 Gravatar 讀取最新 About Me（每位成員每次載入頁面只讀一次；失敗或超過頻率限制時保留建置版本）。 */
+  /** 滑過／聚焦／點開成員時向 Gravatar 讀取 About Me（每位成員每次載入頁面只讀一次；失敗時下次點開再試）。 */
   const refreshAbout = (p: CrewCard) => {
     if (!p.hash || requested.current.has(p.key)) return;
     requested.current.add(p.key);
@@ -31,7 +31,10 @@ export default function CrewBoard({ groups }: { groups: CrewBoardGroup[] }) {
         return data.description?.trim() || null;
       })
       .then((about) => setLive((prev) => ({ ...prev, [p.key]: about })))
-      .catch(() => requested.current.delete(p.key));
+      .catch(() => {
+        requested.current.delete(p.key);
+        setLive((prev) => ({ ...prev, [p.key]: null }));
+      });
   };
 
   const open = (p: CrewCard, el: HTMLElement) => {
@@ -100,6 +103,8 @@ export default function CrewBoard({ groups }: { groups: CrewBoardGroup[] }) {
                       type="button"
                       aria-haspopup="dialog"
                       onClick={(e) => open(p, e.currentTarget)}
+                      onPointerEnter={() => refreshAbout(p)}
+                      onFocus={() => refreshAbout(p)}
                       className="group flex w-full flex-col items-center rounded-xl text-center outline-none focus-visible:ring-2 focus-visible:ring-glow focus-visible:ring-offset-4 focus-visible:ring-offset-night"
                     >
                       <Avatar p={p} className="w-full max-w-40 transition-[transform,border-color] duration-300 group-hover:-translate-y-1 group-hover:border-glow/45" />
@@ -136,7 +141,8 @@ export default function CrewBoard({ groups }: { groups: CrewBoardGroup[] }) {
             <Detail
               key={member.key}
               p={member}
-              about={member.key in live ? live[member.key] ?? undefined : member.about}
+              about={live[member.key] ?? undefined}
+              loading={!!member.hash && !(member.key in live)}
               onClose={close}
             />
           )}
@@ -176,6 +182,7 @@ function Avatar({ p, className = "", eager }: { p: CrewCard; className?: string;
           width={160}
           height={160}
           loading={eager ? "eager" : "lazy"}
+          fetchPriority={eager ? "high" : "low"}
           decoding="async"
           referrerPolicy="no-referrer"
           className="absolute inset-0 h-full w-full scale-105 object-cover transition-transform duration-500 group-hover:scale-110"
@@ -185,7 +192,7 @@ function Avatar({ p, className = "", eager }: { p: CrewCard; className?: string;
   );
 }
 
-function Detail({ p, about, onClose }: { p: CrewCard; about?: string; onClose: () => void }) {
+function Detail({ p, about, loading, onClose }: { p: CrewCard; about?: string; loading: boolean; onClose: () => void }) {
   return (
     <>
       <div className="sticky top-0 z-10 flex justify-end bg-night-2/85 p-3 backdrop-blur md:p-4">
@@ -213,7 +220,13 @@ function Detail({ p, about, onClose }: { p: CrewCard; about?: string; onClose: (
           <p id="crew-dialog-about" className="eyebrow">
             About me
           </p>
-          {about ? (
+          {loading ? (
+            <span aria-busy="true" aria-label="載入自我介紹中" className="mt-4 block space-y-3">
+              <span className="block h-3.5 w-full animate-pulse rounded bg-white/[0.07]" />
+              <span className="block h-3.5 w-11/12 animate-pulse rounded bg-white/[0.07]" />
+              <span className="block h-3.5 w-3/5 animate-pulse rounded bg-white/[0.07]" />
+            </span>
+          ) : about ? (
             <p className="mt-3 whitespace-pre-line text-[15px] leading-[1.9] text-mist/90">{about}</p>
           ) : (
             <p className="mt-3 text-[15px] leading-[1.9] text-dim">
@@ -274,7 +287,7 @@ function Vinyl({ accent = "#334155", cover, muted }: { accent?: string; cover?: 
         style={{
           backgroundImage: cover
             ? `url(${cover})`
-            : `radial-gradient(circle at 30% 30%, #fff, ${accent} 35%, #0b192c 120%)`,
+            : `radial-gradient(circle at 30% 30%, #fff, ${accent} 35%, #001218 120%)`,
         }}
       />
       <span className="absolute h-1.5 w-1.5 rounded-full bg-night" />

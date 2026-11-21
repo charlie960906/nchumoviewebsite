@@ -18,10 +18,24 @@ const place = {
   geo: { "@type": "GeoCoordinates", latitude: site.venue.lat, longitude: site.venue.lng },
 };
 
+const OIA_ID = abs("/#organizer");
+const IO_ID = abs("/#intuitive-observer");
+
 const organizer = {
   "@type": "Organization",
+  "@id": OIA_ID,
   name: site.organizers[0].name,
   url: site.organizers[0].url,
+};
+
+/** 策劃執行團隊：官方社群帳號放在這裡，讓搜尋／AI 能把 IG、Threads 與本站連成同一個實體 */
+const producer = {
+  "@type": "Organization",
+  "@id": IO_ID,
+  name: site.organizers[1].name,
+  alternateName: site.organizers[1].nameEn,
+  logo: abs(site.organizers[1].logo),
+  sameAs: [site.contact.instagram, site.contact.threads].filter(Boolean),
 };
 
 const offer = {
@@ -36,6 +50,7 @@ const offer = {
 export const organizationLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
+  "@id": OIA_ID,
   name: site.organizers[0].name,
   alternateName: site.organizers[0].nameEn,
   url: site.organizers[0].url,
@@ -43,13 +58,19 @@ export const organizationLd = {
   parentOrganization: { "@type": "CollegeOrUniversity", name: site.venue.name, url: "https://www.nchu.edu.tw/" },
 };
 
+export const producerLd = { "@context": "https://schema.org", ...producer };
+
 export const websiteLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
+  "@id": abs("/#website"),
   name: site.fullName,
   alternateName: [site.shortName, site.nameEn],
+  description: site.description,
   url: abs("/"),
   inLanguage: "zh-Hant-TW",
+  publisher: { "@id": OIA_ID },
+  about: { "@id": abs("/#festival") },
 };
 
 export function sessionLd(s: Session) {
@@ -81,8 +102,10 @@ export const festivalLd = {
   url: abs("/"),
   image: [abs("/opengraph-image")],
   location: place,
-  organizer,
+  organizer: [organizer, producer],
   offers: offer,
+  keywords: site.keywords.join(", "),
+  sameAs: [site.luma.url],
   // 待定場次（電影演講會）確定前不列入子活動，避免搜尋引擎引用未定資訊
   subEvent: sessions.filter((s) => !s.tentative && s.category !== "closing").map(sessionLd),
 };

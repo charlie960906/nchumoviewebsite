@@ -72,7 +72,7 @@ const SPECIES: Record<Species["name"], Species> = {
     stripe: false,
     spots: [2, 4],
     eye: { s: 0.07, spread: 0.62, r: 0.6 },
-    ripple: { chance: 0.6, size: 0.26 },
+    ripple: { chance: 0.6, size: 0.48 },
     palettes: [
       { color: [226, 232, 240], belly: [248, 250, 252], spot: [240, 140, 80] }, // 白底紅斑
       { color: [236, 166, 98], belly: [253, 214, 160], spot: [248, 250, 252] }, // 黃金
@@ -102,7 +102,7 @@ const SPECIES: Record<Species["name"], Species> = {
     stripe: false,
     spots: [1, 2],
     eye: { s: 0.1, spread: 0.7, r: 0.75 },
-    ripple: { chance: 0.5, size: 0.3 },
+    ripple: { chance: 0.5, size: 0.55 },
     palettes: [{ color: [248, 120, 72], belly: [254, 205, 160], spot: [255, 240, 225] }],
   },
   ray: {
@@ -130,8 +130,8 @@ const SPECIES: Record<Species["name"], Species> = {
     stripe: false,
     spots: [7, 10],
     eye: { s: 0.16, spread: 0.32, r: 0.55 },
-    ripple: { chance: 0.45, size: 0.28 },
-    palettes: [{ color: [8, 145, 178], belly: [56, 189, 248], spot: [165, 230, 250] }],
+    ripple: { chance: 0.45, size: 0.5 },
+    palettes: [{ color: [90, 159, 212], belly: [140, 196, 236], spot: [200, 226, 245] }],
   },
   slender: {
     name: "slender",
@@ -157,7 +157,7 @@ const SPECIES: Record<Species["name"], Species> = {
     stripe: true,
     spots: [0, 0],
     eye: { s: 0.06, spread: 0.6, r: 0.5 },
-    ripple: { chance: 0.45, size: 0.22 },
+    ripple: { chance: 0.45, size: 0.4 },
     palettes: [{ color: [148, 197, 235], belly: [224, 242, 254], spot: [224, 242, 254] }],
   },
   fry: {
@@ -176,14 +176,15 @@ const SPECIES: Record<Species["name"], Species> = {
     pelvic: 0,
     amp: 0.1,
     wave: 2.2,
-    speed: [3.6, 4.4],
-    turnR: 0.5,
+    speed: [3.4, 3.8],
+    // 領頭轉彎放緩，整群才不會甩動散開
+    turnR: 4,
     flap: 0,
     stripe: false,
     spots: [0, 0],
     eye: { s: 0.1, spread: 0.5, r: 0.45 },
-    ripple: { chance: 0.06, size: 0.45 },
-    palettes: [{ color: [56, 189, 248], belly: [186, 230, 253], spot: [186, 230, 253] }],
+    ripple: { chance: 0.06, size: 0.7 },
+    palettes: [{ color: [140, 196, 236], belly: [214, 232, 247], spot: [214, 232, 247] }],
   },
 };
 
@@ -209,6 +210,12 @@ type Fish = {
   /** 幼魚群：跟隨領頭的位置偏移（領頭座標系，x 朝前） */
   leader?: Fish;
   offset?: { x: number; y: number };
+  /** 領頭走過的路徑（新→舊），隊員沿著它排隊，轉彎時隊形不會甩開 */
+  trail?: { x: number; y: number }[];
+  /** 隊員各自的游移節奏：讓隊形鬆散、會呼吸，不像釘死在格子上 */
+  wander?: { t: number; f1: number; p1: number; f2: number; p2: number; lag: number };
+  /** 整隻游出框外後，正在加速游回來 */
+  returning?: boolean;
 };
 
 type Ripple = { x: number; y: number; age: number; life: number; strength: number; maxR: number };
@@ -279,28 +286,70 @@ function makeFish(sp: Species, idx: number, cols: number, rows: number, baseLen:
   };
 }
 
-const LINEUP: Species["name"][] = ["koi", "goldfish", "ray", "slender", "koi"];
+/** 幼魚隊形（以身長為單位；x 朝前、y 朝側）：領頭在 (0,0)，後方 2–3 排交錯 */
+const SCHOOL_SLOTS: [number, number][] = [
+  [-1.2, -0.8],
+  [-1.2, 0.8],
+  [-2.4, 0],
+  [-2.4, -1.6],
+  [-2.4, 1.6],
+  [-3.6, -0.8],
+  [-3.6, 0.8],
+];
+
+const LINEUP: Species["name"][] =["koi", "goldfish", "ray", "slender", "koi"];
 
 function makeAll(cols: number, rows: number, baseLen: number): Fish[] {
   const count = clamp(Math.round((cols * rows) / 4200), 3, 5);
   const out: Fish[] = [];
   const used: Partial<Record<Species["name"], number>> = {};
+  // 出生點彼此拉開：取樣數次，挑離其他魚最遠的位置
+  const spawn = () => {
+    let best = { x: rand(cols * 0.1, cols * 0.9), y: rand(rows * 0.15, rows * 0.85) };
+    let bestD = -1;
+    for (let k = 0; k < 24; k++) {
+      const c = { x: rand(cols * 0.1, cols * 0.9), y: rand(rows * 0.15, rows * 0.85) };
+      const d = out.reduce((m, o) => Math.min(m, Math.hypot(o.x - c.x, o.y - c.y)), Infinity);
+      if (d > bestD) {
+        best = c;
+        bestD = d;
+      }
+    }
+    return { ...best, heading: rand(0, Math.PI * 2) };
+  };
   for (let i = 0; i < count; i++) {
     const name = LINEUP[i];
     used[name] = (used[name] ?? -1) + 1;
-    out.push(makeFish(SPECIES[name], used[name]!, cols, rows, baseLen));
+    out.push(makeFish(SPECIES[name], used[name]!, cols, rows, baseLen, spawn()));
   }
-  // 一小群幼魚：第一條自由游動，其餘跟隨
+  // 幼魚群：領頭自由游動，其餘排成整齊的菱形隊形跟在後方
   const n = cols * rows > 9000 ? 6 : 4;
-  const lead = makeFish(SPECIES.fry, 0, cols, rows, baseLen);
+  const lead = makeFish(SPECIES.fry, 0, cols, rows, baseLen, spawn());
   out.push(lead);
+  const c = Math.cos(lead.heading);
+  const s = Math.sin(lead.heading);
   for (let i = 1; i < n; i++) {
-    const offset = { x: -rand(1.2, 3.2) * i * 0.6 * lead.len, y: rand(-1, 1) * lead.len * (0.6 + i * 0.25) };
+    const [fx, fy] = SCHOOL_SLOTS[i - 1];
+    const offset = { x: fx * lead.len, y: fy * lead.len };
     const f = makeFish(SPECIES.fry, 0, cols, rows, baseLen, {
-      x: lead.x + offset.x * Math.cos(lead.heading),
-      y: lead.y + offset.x * Math.sin(lead.heading) + offset.y,
+      x: lead.x + offset.x * c - offset.y * s,
+      y: lead.y + offset.x * s + offset.y * c,
       heading: lead.heading,
     });
+    // 同一群大小一致、擺尾節奏相近，看起來才整齊
+    f.len = lead.len;
+    f.halfW = lead.halfW;
+    const seg = f.len / (SEG - 1);
+    f.chain.forEach((p, k) => {
+      p.x = f.x - c * seg * k;
+      p.y = f.y - s * seg * k;
+    });
+    f.phase = lead.phase + rand(0, Math.PI * 2);
+    // 每隻的位置稍微錯開，不排成完美的菱形
+    offset.x += rand(-0.35, 0.35) * lead.len;
+    offset.y += rand(-0.3, 0.3) * lead.len;
+    f.wander = { t: rand(0, 100), f1: rand(0.25, 0.55), p1: rand(0, 6.28), f2: rand(0.3, 0.7), p2: rand(0, 6.28), lag: rand(1.2, 2.4) };
+    f.baseSpeed = lead.baseSpeed;
     f.leader = lead;
     f.offset = offset;
     out.push(f);
@@ -324,6 +373,9 @@ export default function AsciiKoi({ className = "" }: { className?: string }) {
     let cols = 0;
     let rows = 0;
     let dpr = 1;
+    /** 頂部導覽列（h-16 = 64px）佔掉的格數：魚不游進去，誤入的點也會淡出 */
+    const HEADER_PX = 64;
+    let topRows = 0;
     let fish: Fish[] = [];
     const ripples: Ripple[] = [];
     let field = new Float32Array(0);
@@ -342,6 +394,7 @@ export default function AsciiKoi({ className = "" }: { className?: string }) {
       canvas.height = Math.round(rect.height * dpr);
       cols = Math.ceil(rect.width / cell);
       rows = Math.ceil(rect.height / cell);
+      topRows = Math.ceil(HEADER_PX / cell);
       off.width = cols;
       off.height = rows;
       field = new Float32Array(cols * rows);
@@ -358,7 +411,7 @@ export default function AsciiKoi({ className = "" }: { className?: string }) {
       grid.height = canvas.height;
       const g = grid.getContext("2d")!;
       g.scale(dpr, dpr);
-      g.fillStyle = "rgba(148,197,235,0.07)";
+      g.fillStyle = "rgba(140,196,236,0.07)";
       for (let r = 0; r < rows; r += 2)
         for (let c = 0; c < cols; c += 2) g.fillRect(c * cell + cell / 2 - 0.5, r * cell + cell / 2 - 0.5, 1, 1);
     };
@@ -385,48 +438,63 @@ export default function AsciiKoi({ className = "" }: { className?: string }) {
     /* ───────── 模擬 ───────── */
     const step = (dt: number) => {
       for (const f of fish) {
-        let desired: number;
-        let target = f.baseSpeed;
-
         if (f.leader && f.offset) {
-          // 幼魚：維持在領頭身後的相對位置
+          // 隊員：沿領頭走過的路徑找到自己大致的位置，再加上各自緩慢的前後、左右游移，
+          // 以「游過去」而不是「吸過去」的方式靠近，隊形鬆散自然
           const L = f.leader;
-          const c = Math.cos(L.heading);
-          const s = Math.sin(L.heading);
-          const gx = L.x + f.offset.x * c - f.offset.y * s;
-          const gy = L.y + f.offset.x * s + f.offset.y * c;
-          desired = Math.atan2(gy - f.y, gx - f.x);
-          const d = Math.hypot(gx - f.x, gy - f.y);
-          target = L.speed * clamp(0.75 + d * 0.08, 0.6, 1.6);
-        } else {
-          // 選新目的地：允許略為游出畫面邊緣
-          f.retarget -= dt;
-          const dx = f.tx - f.x;
-          const dy = f.ty - f.y;
-          if (f.retarget < 0 || dx * dx + dy * dy < 16) {
-            f.tx = rand(-cols * 0.08, cols * 1.08);
-            f.ty = rand(-rows * 0.08, rows * 1.08);
-            f.retarget = rand(4, 9);
+          const w = f.wander!;
+          w.t += dt;
+          const along = -f.offset.x + Math.sin(w.t * w.f1 + w.p1) * L.len * 0.45;
+          const side = f.offset.y + Math.sin(w.t * w.f2 + w.p2) * L.len * 0.5;
+          const slot = alongTrail(L, Math.max(L.len * 0.6, along));
+          const gx = slot.x - slot.dy * side;
+          const gy = slot.y + slot.dx * side;
+          const ddx = gx - f.x;
+          const ddy = gy - f.y;
+          const dist = Math.hypot(ddx, ddy);
+          // 整隻（連尾巴）游出框外時，加速游回來；頭回到框內一段距離才恢復
+          if (fullyOutside(f)) f.returning = true;
+          else if (f.returning) {
+            const m = f.len * 0.5;
+            if (f.x > m && f.x < cols - m && f.y > topRows + m && f.y < rows - m) f.returning = false;
           }
-          desired = Math.atan2(f.ty - f.y, f.tx - f.x);
+          const rush = f.returning ? 2.2 : 1;
+          // 越落後游得越快，追上後回到群體速度
+          const want = L.speed * clamp(0.85 + dist / (L.len * w.lag), 0.7, 2.2) * rush;
+          f.speed += (want - f.speed) * Math.min(1, dt * 2.5);
+          // 朝目標位置游；接近時改為跟領頭同方向
+          const toward = Math.atan2(ddy, ddx);
+          const near = clamp(dist / L.len, 0, 1);
+          const aim = Math.atan2(
+            Math.sin(toward) * near + slot.dy * (1 - near),
+            Math.cos(toward) * near + slot.dx * (1 - near),
+          );
+          f.heading += clamp(angDiff(aim, f.heading), -dt * 3.5 * rush, dt * 3.5 * rush);
+          f.x += Math.cos(f.heading) * f.speed * dt;
+          f.y += Math.sin(f.heading) * f.speed * dt;
+          // 隊員之間留一點空隙，游移時不會疊在一起
+          for (const o of fish) {
+            if (o === f || o.sp.name !== "fry") continue;
+            const sx = f.x - o.x;
+            const sy = f.y - o.y;
+            const sd = Math.hypot(sx, sy);
+            const min = L.len * 0.7;
+            if (sd > 1e-3 && sd < min) {
+              const push = ((min - sd) / min) * dt * 4;
+              f.x += (sx / sd) * push;
+              f.y += (sy / sd) * push;
+            }
+          }
+        } else {
+          swim(f, dt);
+          if (f.sp.name === "fry") {
+            // 記錄領頭路徑
+            const tr = (f.trail ??= [{ x: f.x, y: f.y }]);
+            const last = tr[0];
+            if (Math.hypot(f.x - last.x, f.y - last.y) > 0.35) tr.unshift({ x: f.x, y: f.y });
+            if (tr.length > 160) tr.length = 160;
+          }
         }
-
-        // 游標驚嚇
-        const px = f.x - pointer.x;
-        const py = f.y - pointer.y;
-        if (Math.hypot(px, py) < Math.max(10, f.len * 0.8)) {
-          f.scared = 1;
-          desired = Math.atan2(py, px);
-        }
-        f.scared = Math.max(0, f.scared - dt * 0.6);
-        target *= 1 + f.scared * 1.6;
-
-        // 轉彎半徑不小於 turnR 個身長，避免身體捲成一團
-        const turn = (f.speed / (f.len * f.sp.turnR)) * (1 + f.scared * 0.8) * dt;
-        f.heading += clamp(angDiff(desired, f.heading), -turn, turn);
-        f.speed += (target - f.speed) * Math.min(1, dt * 1.5);
-        f.x += Math.cos(f.heading) * f.speed * dt;
-        f.y += Math.sin(f.heading) * f.speed * dt;
 
         // 擺尾頻率隨速度（以身長正規化，小魚擺得快）
         f.phase += dt * Math.PI * 2 * (0.45 + (f.speed / f.len) * 3.2);
@@ -457,7 +525,7 @@ export default function AsciiKoi({ className = "" }: { className?: string }) {
             x: tail.x + ((tail.x - prev.x) / tl) * ext,
             y: tail.y + ((tail.y - prev.y) / tl) * ext,
             age: 0,
-            life: rand(1.9, 2.5),
+            life: rand(2.3, 3),
             strength: clamp(0.85 + f.speed * 0.06, 0.9, 1.25),
             maxR: f.len * f.sp.ripple.size * rand(0.85, 1.15),
           });
@@ -468,7 +536,164 @@ export default function AsciiKoi({ className = "" }: { className?: string }) {
         ripples[i].age += dt;
         if (ripples[i].age > ripples[i].life) ripples.splice(i, 1);
       }
-      if (ripples.length > 36) ripples.splice(0, ripples.length - 36);
+      if (ripples.length > 40) ripples.splice(0, ripples.length - 40);
+    };
+
+    /** 沿領頭路徑往回 dist 格的位置與前進方向；路徑不夠長時沿目前朝向直線外推 */
+    const alongTrail = (L: Fish, dist: number) => {
+      const tr = L.trail ?? [];
+      let px = L.x;
+      let py = L.y;
+      let left = dist;
+      for (const p of tr) {
+        const seg = Math.hypot(px - p.x, py - p.y);
+        if (seg >= left && seg > 1e-6) {
+          const dx = (px - p.x) / seg;
+          const dy = (py - p.y) / seg;
+          return { x: px - dx * left, y: py - dy * left, dx, dy };
+        }
+        left -= seg;
+        px = p.x;
+        py = p.y;
+      }
+      const dx = Math.cos(L.heading);
+      const dy = Math.sin(L.heading);
+      return { x: px - dx * left, y: py - dy * left, dx, dy };
+    };
+
+    /** 整隻魚（骨架每一節，加上尾鰭末端、身寬）都在框外 */
+    const fullyOutside = (f: Fish) => {
+      const m = f.halfW;
+      const outBy = (p: { x: number; y: number }) =>
+        p.x < -m || p.x > cols + m || p.y < topRows - m || p.y > rows + m;
+      for (const p of f.chain) if (!outBy(p)) return false;
+      const t = f.chain[SEG - 1];
+      const b = f.chain[SEG - 2];
+      const tl = Math.hypot(t.x - b.x, t.y - b.y) || 1;
+      const F = f.len * f.sp.tailLen;
+      return outBy({ x: t.x + ((t.x - b.x) / tl) * F, y: t.y + ((t.y - b.y) / tl) * F });
+    };
+
+    /** 魚身（含鰭）要保持在這條線以下，才不會蓋到導覽列文字 */
+    const safeTop = (f: Fish) => topRows + f.halfW + f.len * 0.25 + 3;
+
+    /** 自由游動的魚（含幼魚群的領頭）：漫遊、受驚、彼此避讓 */
+    const swim = (f: Fish, dt: number) => {
+      let target = f.baseSpeed;
+      // 幼魚群的領頭要替整群著想：避讓與驚嚇範圍涵蓋身後的隊形
+      const isLead = f.sp.name === "fry";
+      const school = isLead ? f.len * 2.2 : 0;
+
+      // 整隻魚（連尾巴）都游出框外 → 掉頭加速游回來；頭回到框內一段距離後才恢復正常
+      let rush = 0;
+      if (!f.returning && fullyOutside(f)) {
+        f.returning = true;
+        f.tx = rand(cols * 0.2, cols * 0.8);
+        f.ty = rand(Math.max(safeTop(f) + school, rows * 0.3), rows * 0.75);
+        f.retarget = 99;
+      }
+      if (f.returning) {
+        const m = f.len * 0.5;
+        if (f.x > m && f.x < cols - m && f.y > topRows + m && f.y < rows - m) {
+          f.returning = false;
+          f.retarget = 0; // 回來後立刻挑下一段路線
+        } else {
+          rush = 1;
+          target *= 2.2;
+        }
+      }
+
+      // 選新目的地：在下半部的魚往上半部（左上或右上）游，上半部的往下半部（左下或右下）游
+      f.retarget -= dt;
+      const dx = f.tx - f.x;
+      const dy = f.ty - f.y;
+      if (!f.returning && (f.retarget < 0 || dx * dx + dy * dy < 16)) {
+        // 以可見範圍（導覽列以下）的中線分上下半部；目的地落在另一半的外側 60%，路線才有明確的斜向
+        const midY = (topRows + rows) / 2;
+        const top = safeTop(f) + school;
+        const bottom = isLead ? rows * 0.9 : rows * 1.04;
+        const goUp = f.y > midY;
+        f.ty = goUp ? rand(top, top + (midY - top) * 0.6) : rand(bottom - (bottom - midY) * 0.6, bottom);
+        const toLeft = Math.random() < 0.5;
+        f.tx = toLeft ? rand(cols * (isLead ? 0.08 : -0.05), cols * 0.4) : rand(cols * 0.6, cols * (isLead ? 0.92 : 1.05));
+        f.retarget = isLead ? rand(8, 13) : rand(6, 11);
+      }
+      let desired = Math.atan2(f.ty - f.y, f.tx - f.x);
+
+      {
+        // 游標驚嚇
+        const px = f.x - pointer.x;
+        const py = f.y - pointer.y;
+        if (Math.hypot(px, py) < Math.max(10, f.len * 0.8) + school) {
+          f.scared = 1;
+          desired = Math.atan2(py, px);
+        }
+        f.scared = Math.max(0, f.scared - dt * 0.6);
+        target *= 1 + f.scared * 1.6;
+
+        // 魚與魚保持距離：以頭、前方預判點、身體中段探測其他魚的骨架，往反方向推開
+        let ax = 0;
+        let ay = 0;
+        let crowd = 0;
+        const hc = Math.cos(f.heading);
+        const hs = Math.sin(f.heading);
+        const mid = f.chain[SEG >> 1];
+        const probes = [
+          { x: f.x, y: f.y },
+          { x: f.x + hc * f.len * 0.45, y: f.y + hs * f.len * 0.45 },
+          { x: mid.x, y: mid.y },
+          { x: f.chain[SEG - 1].x, y: f.chain[SEG - 1].y },
+        ];
+        // 領頭額外以隊形中心探測，讓整群一起繞開
+        if (isLead) probes.push({ x: f.x - hc * f.len * 2, y: f.y - hs * f.len * 2 });
+        for (const o of fish) {
+          if (o === f) continue;
+          if (isLead && o.sp.name === "fry") continue; // 同一群幼魚由隊形管理
+          const R = (f.halfW + o.halfW) * 1.8 + Math.min(f.len, o.len) * 0.45 + 4 + school * 0.6;
+          // 小魚讓大魚、大魚對小魚只稍微閃避（領頭代表整群，以群體大小計）
+          const weight = clamp(o.len / (f.len + school), 0.35, 1.6) * (isLead ? 1.6 : 1);
+          for (let k = 0; k < SEG; k += 2) {
+            const p = o.chain[k];
+            for (const q of probes) {
+              const dx = q.x - p.x;
+              const dy = q.y - p.y;
+              const d = Math.hypot(dx, dy);
+              if (d >= R || d < 1e-3) continue;
+              const u = 1 - d / R;
+              ax += (dx / d) * u * u * weight;
+              ay += (dy / d) * u * u * weight;
+              crowd = Math.max(crowd, u * Math.min(1, weight));
+            }
+          }
+        }
+        // 導覽列禁區：任何探測點靠近頂部就強力往下推
+        const keep = safeTop(f);
+        for (const q of probes) {
+          if (q.y >= keep) continue;
+          const u = clamp((keep - q.y) / keep, 0, 1);
+          ay += 1.5 + u * 3;
+          crowd = Math.max(crowd, 0.5 + u * 0.5);
+        }
+        if (crowd > 0) {
+          desired = Math.atan2(Math.sin(desired) + ay * 3.5, Math.cos(desired) + ax * 3.5);
+          // 前方擁擠時稍微放慢，讓對方先過
+          const ahead = ax * hc + ay * hs < 0 ? crowd : 0;
+          target *= 1 - ahead * 0.35;
+        }
+
+        // 轉彎半徑不小於 turnR 個身長，避免身體捲成一團（閃避時允許轉得急一些）
+        const turn = (f.speed / (f.len * f.sp.turnR)) * (1 + f.scared * 0.8 + crowd * 1.4 + rush * (isLead ? 9 : 4.5)) * dt;
+        f.heading += clamp(angDiff(desired, f.heading), -turn, turn);
+        f.speed += (target - f.speed) * Math.min(1, dt * 1.5);
+        f.x += Math.cos(f.heading) * f.speed * dt;
+        f.y += Math.sin(f.heading) * f.speed * dt;
+        // 已經太近時直接輕推開，確保不會疊在一起
+        if (crowd > 0.35) {
+          const push = (crowd - 0.35) * 6 * dt;
+          f.x += ax * push;
+          f.y += ay * push;
+        }
+      }
     };
 
     /* ───────── 繪製魚到離屏低解析畫布 ───────── */
@@ -630,7 +855,7 @@ export default function AsciiKoi({ className = "" }: { className?: string }) {
         const k = r.age / r.life;
         const rad = r.maxR * (1 - Math.pow(1 - k, 2.2));
         const fade = Math.pow(1 - k, 1.6) * r.strength;
-        const width = 0.9 + k * 0.9;
+        const width = 1 + k * 1.2;
         const inner = rad * 0.55;
         const reach = Math.ceil(rad + width * 2);
         const c0 = Math.max(0, Math.floor(r.x - reach));
@@ -660,6 +885,10 @@ export default function AsciiKoi({ className = "" }: { className?: string }) {
       };
 
       for (let y = 0; y < rows; y++) {
+        // 導覽列底下的點淡出：保險起見，就算魚被擠到上方也不會干擾文字
+        const fadeTop = clamp((y - topRows + 1) / 5, 0, 1);
+        if (fadeTop <= 0) continue;
+        ctx.globalAlpha = fadeTop * fadeTop;
         for (let x = 0; x < cols; x++) {
           const i = y * cols + x;
           const a = px[i * 4 + 3] / 255;
@@ -684,6 +913,7 @@ export default function AsciiKoi({ className = "" }: { className?: string }) {
           }
         }
       }
+      ctx.globalAlpha = 1;
     };
 
     resize();
