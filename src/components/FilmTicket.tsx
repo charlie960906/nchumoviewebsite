@@ -156,7 +156,7 @@ export default function FilmTicket({
     setPhase("tearing");
     track("ticket_interact", { action: "tear", item: program.slug });
     const fontFamily = stubRef.current ? getComputedStyle(stubRef.current).fontFamily : "sans-serif";
-    renderStub({ title: program.title, titleEn: program.titleEn, meta, code: f.code, when, fontFamily })
+    renderStub({ title: program.title, titleEn: program.titleEn, meta, code: f.code, when, fontFamily, layout: wide ? "portrait" : "landscape" })
       .then((blob) => {
         const file = new File([blob], filename, { type: "image/png" });
         setImg({ url: URL.createObjectURL(blob), file });

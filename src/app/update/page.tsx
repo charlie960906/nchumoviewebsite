@@ -14,6 +14,11 @@ export const metadata: Metadata = pageMeta({
 
 const updates = [
   {
+    date: "11/24 18:26",
+    version: "Beta2026.11.24.08",
+    summary: "撕下的電影票根圖片依裝置分成兩種版型：手機版改為橫式票根，與畫面上看到的票根一致，電腦版維持直式。",
+  },
+  {
     date: "11/24 18:07",
     version: "Beta2026.11.24.07",
     summary:
