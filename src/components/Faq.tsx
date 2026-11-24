@@ -91,9 +91,9 @@ export default function Faq({ limit }: { limit?: number }) {
     >
       {/* 片頭條 */}
       <div className="relative faq-bar px-5 pb-6 pt-4 text-moon sm:px-8 sm:pb-8 sm:pt-5">
-        <div aria-hidden className="pointer-events-none absolute right-3 top-3 hidden gap-1.5 sm:flex md:right-5">
+        <div aria-hidden className="pointer-events-none absolute right-4 top-5 flex gap-1 sm:right-3 sm:top-3 sm:gap-1.5 md:right-5">
           {[0, 1, 2, 3].map((i) => (
-            <span key={i} className="faq-chev h-9 w-8 bg-glow/90 md:h-11 md:w-10" style={{ animationDelay: `${i * 0.18}s` }} />
+            <span key={i} className="faq-chev h-6 w-5 bg-glow/90 sm:h-9 sm:w-8 md:h-11 md:w-10" style={{ animationDelay: `${i * 0.18}s` }} />
           ))}
         </div>
         <p className="flex items-center gap-3">
@@ -101,30 +101,31 @@ export default function Faq({ limit }: { limit?: number }) {
             ?
           </span>
           <span className="font-mono text-3xl font-bold tracking-[0.18em] sm:text-4xl">FAQ</span>
-          <span className="ml-auto font-mono text-sm text-dim sm:hidden">
-            {String(idx + 1).padStart(2, "0")}/{String(n).padStart(2, "0")}
-          </span>
         </p>
-        {list.map((f, i) => (
-          <h3
-            key={f.q}
-            id={`faq-q-${i}`}
-            hidden={i !== idx}
-            className="mt-4 text-lg font-bold leading-snug tracking-[0.12em] sm:mt-5 sm:text-[22px]"
-          >
-            {f.q}
-          </h3>
-        ))}
+        {/* 所有題目疊在同一格：高度固定取最長的那題，換題時卡片不會跳動 */}
+        <div className="mt-4 grid sm:mt-5">
+          {list.map((f, i) => (
+            <h3
+              key={f.q}
+              id={`faq-q-${i}`}
+              aria-hidden={i !== idx}
+              className={`col-start-1 row-start-1 text-lg font-bold leading-snug tracking-[0.12em] sm:text-[22px] ${i === idx ? "" : "invisible"}`}
+            >
+              {f.q}
+            </h3>
+          ))}
+        </div>
       </div>
 
       {/* 答案 */}
-      <div className="flex-1 bg-moon px-5 py-6 text-night sm:px-8 sm:py-8" aria-live={playing ? "off" : "polite"}>
+      {/* 所有答案疊在同一格：高度固定取最長的答案 */}
+      <div className="grid flex-1 bg-moon px-5 py-6 text-night sm:px-8 sm:py-8" aria-live={playing ? "off" : "polite"}>
         {list.map((f, i) => (
           <p
             key={f.q}
-            hidden={i !== idx}
+            aria-hidden={i !== idx}
             aria-labelledby={`faq-q-${i}`}
-            className="faq-answer min-h-[9.5em] text-[15px] leading-[2] tracking-[0.08em] sm:text-[17px]"
+            className={`col-start-1 row-start-1 text-[15px] leading-[2] tracking-[0.08em] sm:text-[17px] ${i === idx ? "faq-answer" : "invisible"}`}
           >
             <span className="font-bold">A：</span>
             {f.a}
@@ -167,7 +168,7 @@ export default function Faq({ limit }: { limit?: number }) {
           />
         </div>
 
-        <span className="hidden shrink-0 font-mono text-sm tabular-nums text-mist/80 sm:block">
+        <span className="shrink-0 font-mono text-xs tabular-nums text-mist/80 sm:text-sm">
           {String(idx + 1).padStart(2, "0")} / {String(n).padStart(2, "0")}
         </span>
       </div>

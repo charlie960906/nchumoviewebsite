@@ -14,6 +14,8 @@ import FilmDetail from "@/components/FilmDetail";
 import LumaButton from "@/components/LumaButton";
 import AddToCalendar from "@/components/AddToCalendar";
 import JsonLd from "@/components/JsonLd";
+import VendorCard from "@/components/VendorCard";
+import { vendors, vendorsAreSample } from "@/lib/vendors";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -73,6 +75,21 @@ export default async function ProgramDetail({ params }: Props) {
 
       {p.film ? (
         <FilmDetail program={{ ...p, film: p.film }} session={ss[0]} />
+      ) : p.kind === "market" ? (
+        // 星空市集頁：內容只放全部攤商卡片
+        <section aria-labelledby="vendors-h" className="container-x">
+          <h2 id="vendors-h" className="reveal font-mono text-sm text-dim">
+            <span className="text-moon">{String(vendors.length).padStart(2, "0")}</span> 攤
+            {vendorsAreSample && <span className="tag tag-warn ml-3 align-middle">示意資料</span>}
+          </h2>
+          <ul className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {vendors.map((v, i) => (
+              <li key={v.booth} className="reveal" style={{ "--d": `${(i % 3) * 60}ms` } as React.CSSProperties}>
+                <VendorCard vendor={v} />
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : (
       <div className="container-x grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:gap-14">
         <article className="grid content-start gap-5">

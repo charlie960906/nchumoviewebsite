@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useSlidingPill } from "@/lib/useSlidingPill";
 
 /** 團隊頁底部浮動的部門錨點列：捲動時標示目前所在部門，點擊平滑跳轉。 */
 export default function TeamAnchorBar({ groups }: { groups: { id: string; label: string }[] }) {
   const [active, setActive] = useState(groups[0]?.id);
   const [visible, setVisible] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+  // 與時間表日期切換相同的 Tabs sliding 膠囊：目前部門改變時滑過去
+  const { pillRef, tabRef, ready: pillReady } = useSlidingPill(active);
 
   useEffect(() => {
     const els = groups.map((g) => document.getElementById(`crew-${g.id}`)).filter(Boolean) as HTMLElement[];
@@ -50,18 +53,20 @@ export default function TeamAnchorBar({ groups }: { groups: { id: string; label:
         ref={listRef}
         className="no-scrollbar relative flex max-w-full gap-1 overflow-x-auto rounded-full border border-white/10 bg-night/70 p-1.5 shadow-[0_12px_40px_-12px_rgb(0_0_0/0.6)] backdrop-blur-xl"
       >
+        <span ref={pillRef} aria-hidden className="t-tabs-pill rounded-full bg-glow/15" style={{ top: "0.375rem", bottom: "0.375rem" }} />
         {groups.map((g) => {
           const on = g.id === active;
           return (
             <a
               key={g.id}
+              ref={tabRef(g.id)}
               data-id={g.id}
               href={`#crew-${g.id}`}
               aria-current={on ? "true" : undefined}
               tabIndex={visible ? 0 : -1}
-              className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm transition-colors ${
-                on ? "bg-glow/15 font-bold text-glow" : "text-dim hover:text-mist"
-              }`}
+              className={`t-tab relative z-[1] shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm ${
+                on ? "font-bold text-glow" : "text-dim hover:text-mist"
+              } ${on && !pillReady ? "bg-glow/15" : ""}`}
             >
               {g.label}
             </a>

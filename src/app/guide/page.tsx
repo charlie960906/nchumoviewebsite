@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/seo";
-import { Accessibility, Bike, Bus, Car, GlassWater, Info, MapPin, Store, TrainFront, Umbrella } from "lucide-react";
+import { Bike, Bus, Car, MapPin, TrainFront } from "lucide-react";
 import { site } from "@/lib/site";
 import { breadcrumbLd } from "@/lib/jsonld";
 import PageHero from "@/components/PageHero";
@@ -40,43 +40,6 @@ const transport = [
   },
 ];
 
-const onsite = [
-  {
-    icon: Accessibility,
-    title: "無障礙",
-    text: "活動場地為平面草地。如需輪椅動線引導、保留席或其他協助，請到場後洽服務台；若有在 Luma 訂閱活動提醒，也可以在表單中先註記。",
-  },
-  {
-    icon: GlassWater,
-    title: "Water Bar",
-    text: "現場設有 Water Bar 提供飲水補給，歡迎自備環保杯。",
-  },
-  {
-    icon: Store,
-    title: "市集攤位",
-    text: "22 個攤位涵蓋手作、選物、飲食與體驗。各攤位位置與介紹可在互動地圖上點選查看。",
-  },
-  {
-    icon: Info,
-    title: "服務台",
-    text: "提供地圖手冊、遺失物招領、醫護諮詢與廣播服務。國際處與國際志工（IPC）攤位提供多語協助。",
-  },
-  {
-    icon: Umbrella,
-    title: "天候與攜帶物品",
-    text: "放映為戶外席地而坐，建議攜帶野餐墊、薄外套與防蚊用品。雨天應變方式將於活動前公告。",
-  },
-];
-
-const zones = [
-  { name: "電影放映區", desc: "鋪上野餐墊席地而坐，星空下的主放映區。" },
-  { name: "草地表演區", desc: "場地中央的草皮上，現場音樂、舞蹈表演與快閃遊戲。" },
-  { name: "概念展區（左帳篷）", desc: "「泅」：展區「傍」與「佮」。" },
-  { name: "概念展區（右帳篷）", desc: "「涯」：展區「佇」與「佗」。" },
-  { name: "市集", desc: "攤位 1–22，沿場地外圍排列。" },
-  { name: "服務台／國際處／IPC", desc: "諮詢、報到協助與多語服務。" },
-];
-
 export default function GuidePage() {
   return (
     <>
@@ -100,16 +63,6 @@ export default function GuidePage() {
         <div className="reveal mt-8">
           <MapEmbed tall />
         </div>
-        {/* 地圖內容的文字版：確保關鍵資訊不只存在於 WebGL 中 */}
-        <h3 className="reveal mt-10 text-lg font-bold">場內分區</h3>
-        <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {zones.map((z, i) => (
-            <div key={z.name} className="card reveal p-4" style={d(i * 40)}>
-              <dt className="font-bold">{z.name}</dt>
-              <dd className="mt-1 text-sm text-dim">{z.desc}</dd>
-            </div>
-          ))}
-        </dl>
       </section>
 
       <section aria-labelledby="tr-h" className="container-x mt-24">
@@ -124,19 +77,6 @@ export default function GuidePage() {
                   <li key={x}>{x}</li>
                 ))}
               </ul>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section aria-labelledby="os-h" className="container-x mt-24">
-        <SectionHeading id="os-h" eyebrow="On Site" title="現場服務" />
-        <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {onsite.map((t, i) => (
-            <article key={t.title} className="card reveal p-6" style={d(i * 60)}>
-              <t.icon aria-hidden className="text-glow" />
-              <h3 className="mt-3 text-lg font-bold">{t.title}</h3>
-              <p className="mt-2 text-sm text-mist/90">{t.text}</p>
             </article>
           ))}
         </div>

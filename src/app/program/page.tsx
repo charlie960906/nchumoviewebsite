@@ -8,6 +8,7 @@ import { site } from "@/lib/site";
 import PageHero from "@/components/PageHero";
 import SectionHeading from "@/components/SectionHeading";
 import Schedule from "@/components/Schedule";
+import VendorCarousel from "@/components/VendorCarousel";
 import LumaButton from "@/components/LumaButton";
 import AddToCalendar from "@/components/AddToCalendar";
 import JsonLd from "@/components/JsonLd";
@@ -34,17 +35,18 @@ export default function ProgramPage() {
         <AddToCalendar />
       </PageHero>
 
-      <section aria-labelledby="tt-h" className="container-x">
-        <SectionHeading id="tt-h" index={1} eyebrow="Timetable" title="日程總覽" />
+      <section aria-labelledby="vendor-h" className="container-x">
+        <SectionHeading id="vendor-h" index={1} eyebrow="Market" title="市集攤商" />
         <div className="reveal mt-8">
-          <Schedule />
+          <VendorCarousel />
         </div>
       </section>
 
       <section aria-labelledby="list-h" className="container-x mt-24">
         <SectionHeading id="list-h" index={2} eyebrow="Highlights" title="節目介紹" />
         <ul className="mt-8 grid gap-5 md:grid-cols-2">
-          {programs.map((p, i) => (
+          {/* 市集已有上方「市集攤商」區塊，這裡不再列星空市集卡；單場頁 /program/market 仍保留（時間表與導覽列有連結） */}
+          {programs.filter((p) => p.slug !== "market").map((p, i) => (
             <li key={p.slug} className="reveal" style={{ "--d": `${i * 70}ms` } as React.CSSProperties}>
               <article className="card card-hover relative flex h-full flex-col p-6 md:p-7">
                 <div className="flex flex-wrap items-center gap-2">
@@ -72,6 +74,13 @@ export default function ProgramPage() {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section aria-labelledby="tt-h" className="container-x mt-24">
+        <SectionHeading id="tt-h" index={3} eyebrow="Timetable" title="日程總覽" />
+        <div className="reveal mt-8">
+          <Schedule />
+        </div>
       </section>
     </>
   );

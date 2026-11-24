@@ -433,13 +433,13 @@ html.no-splash #splash { display: none; }
   0%, 100% { opacity: 0.55; }
   40% { opacity: 1; }
 }
-.faq-answer:not([hidden]) { animation: faq-in 420ms var(--ease-ripple, ease) both; }
+.faq-answer { animation: faq-in 420ms var(--ease-ripple, ease) both; }
 @keyframes faq-in {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .faq-chev, .faq-answer:not([hidden]) { animation: none; }
+  .faq-chev, .faq-answer { animation: none; }
 }
 
 /* ───────── 電影介紹頁：電影票 Hero ───────── */
@@ -481,7 +481,7 @@ html.no-splash #splash { display: none; }
 .ticket-tilt { transform-style: preserve-3d; transition: transform 250ms ease-out; }
 .ticket-flip { position: relative; transform-style: preserve-3d; transition: transform 900ms cubic-bezier(0.3, 1.15, 0.4, 1); }
 .ticket-face { -webkit-backface-visibility: hidden; backface-visibility: hidden; }
-.ticket-back { position: absolute; inset: 0; transform: rotateY(180deg); grid-template-rows: minmax(0, 1fr) 14px auto; }
+.ticket-back { position: absolute; inset: 0; transform: rotateY(180deg); grid-template-rows: minmax(0, 1fr) 14px var(--stub-h, auto); }
 .ticket-tearable { cursor: grab; touch-action: none; user-select: none; }
 .ticket-tearable:active { cursor: grabbing; }
 @media (min-width: 768px) {
@@ -506,3 +506,28 @@ html.no-splash #splash { display: none; }
 @media (min-width: 768px) {
   .ticket-fit { max-width: min(64rem, calc((100svh - 15rem) * 2.3)); }
 }
+
+/* 攤商輪播（VendorCarousel.tsx）：細捲軸，維持可滑動提示但不搶戲 */
+.vendor-track { scrollbar-width: thin; scrollbar-color: rgb(140 196 236 / 0.35) transparent; scroll-padding-inline: 0; }
+.vendor-track::-webkit-scrollbar { height: 6px; }
+.vendor-track::-webkit-scrollbar-thumb { background: rgb(140 196 236 / 0.35); border-radius: 999px; }
+.vendor-arrow {
+  position: absolute;
+  top: calc(50% - 0.5rem);
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  border: 1px solid rgb(140 196 236 / 0.4);
+  background: rgb(3 28 36 / 0.85);
+  color: var(--color-moon);
+  backdrop-filter: blur(6px);
+  transform: translateY(-50%);
+  cursor: pointer;
+  transition: opacity 200ms ease, background-color 180ms ease, border-color 180ms ease, transform 180ms var(--ease-ripple);
+}
+.vendor-arrow:hover { background: rgb(140 196 236 / 0.18); border-color: var(--color-glow); transform: translateY(-50%) scale(1.06); }
+.vendor-arrow:focus-visible { outline: 2px solid var(--color-glow); outline-offset: 2px; }
+.vendor-arrow:disabled { opacity: 0; pointer-events: none; }

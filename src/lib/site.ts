@@ -117,11 +117,13 @@ export const nav: readonly NavItem[] = [
     label: "活動與市集",
     children: [
       { href: "/program", label: "活動總覽" },
-      { href: "/program/american-girl", label: "《美國女孩》放映" },
+      // 概念展已放在「展區介紹」，這裡只列市集
+      { href: "/program/market", label: "星空市集" },
       { href: "/program/american-girl-talk", label: "映後講座" },
-      { href: "/program/linda-linda-linda", label: "《琳達！琳達！》放映" },
-      { href: "/program/reading-club", label: "讀書會" },
-      { href: "/program/market-exhibition", label: "星空市集與概念展" },
+      { href: "/program/american-girl", label: "《美國女孩》" },
+      { href: "/program/linda-linda-linda", label: "《琳達！琳達！》" },
+      // 讀書會的書名，選單直接用書名
+      { href: "/program/reading-club", label: "《反正你也不睡覺》" },
     ],
   },
   { href: "/guide", label: "現場指引" },
@@ -137,22 +139,19 @@ export const nav: readonly NavItem[] = [
 
 export type NavGroup = { title: string; titleEn: string; links: readonly NavLink[] };
 
-/** 頁尾網頁導覽：依主題分組，包含上方導覽列沒有直接入口的頁面（活動提醒、線上互動館）。 */
+/** 取上方導覽列某一項的下拉選單，讓頁尾跟導覽列保持同步（導覽列改順序或改名，頁尾跟著變）。 */
+function navChildren(href: string): readonly NavLink[] {
+  return nav.find((n) => n.href === href)?.children ?? [];
+}
+
+/** 頁尾網頁導覽：依主題分組，另外收進導覽列沒有直接入口的頁面（線上互動館、更新紀錄）。 */
 export const footerNav: readonly NavGroup[] = [
+  { title: "展區介紹", titleEn: "Exhibitions", links: navChildren("/themes") },
+  { title: "活動與市集", titleEn: "Program", links: navChildren("/program") },
   {
-    title: "展區介紹",
-    titleEn: "Exhibitions",
-    links: [
-      { href: "/themes", label: "策展理念" },
-      { href: "/themes/siu", label: "泅 Siû" },
-      { href: "/themes/gia", label: "涯 Giâ" },
-    ],
-  },
-  {
-    title: "參與活動",
+    title: "參觀資訊",
     titleEn: "Visit",
     links: [
-      { href: "/program", label: "活動與市集" },
       { href: "/guide", label: "現場指引" },
       { href: "/interactive", label: "線上互動館" },
     ],
@@ -163,6 +162,7 @@ export const footerNav: readonly NavGroup[] = [
     links: [
       { href: "/about", label: "關於電影節" },
       { href: "/team", label: "團隊成員" },
+      { href: "/update", label: "網站更新紀錄" },
     ],
   },
 ];

@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { m, useReducedMotion } from "motion/react";
 import { CalendarPlus, ChevronRight } from "lucide-react";
 import { days, sessions, type Session } from "@/lib/schedule";
 import { googleCalUrl, sessionEvent } from "@/lib/calendar";
 import SplitFlap from "./SplitFlap";
+import { useSlidingPill } from "@/lib/useSlidingPill";
 
 /**
  * 活動時間表：以真正的 HTML <table> 呈現（利於 SEO／AEO 與螢幕閱讀器）。
@@ -19,32 +20,8 @@ export default function Schedule({ compact = false }: { compact?: boolean }) {
   const reduce = useReducedMotion();
   const current = days.find((d) => d.key === day)!;
 
-  // Tabs sliding（transitions.dev）：一顆膠囊依選中按鈕的 offsetLeft／offsetWidth 定位，
-  // 由 CSS transition 在新舊位置間滑動；首次與 resize 時不帶動畫直接定位。
-  const pillRef = useRef<HTMLSpanElement>(null);
-  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const [pillReady, setPillReady] = useState(false);
-  const movePill = (key: string, animate: boolean) => {
-    const tab = tabRefs.current[key];
-    const pill = pillRef.current;
-    if (!tab || !pill) return;
-    const place = () => {
-      pill.style.transform = `translateX(${tab.offsetLeft}px)`;
-      pill.style.width = `${tab.offsetWidth}px`;
-    };
-    if (animate) return place();
-    pill.style.transition = "none";
-    place();
-    void pill.offsetWidth;
-    pill.style.transition = "";
-  };
-  useLayoutEffect(() => {
-    movePill(day, false);
-    setPillReady(true);
-    const onResize = () => movePill(day, false);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
+  // Tabs sliding（transitions.dev）：膠囊滑到選中的日期，邏輯在 useSlidingPill
+  const { pillRef, tabRef, ready: pillReady } = useSlidingPill(day);
 
   return (
     <div>
@@ -68,15 +45,12 @@ export default function Schedule({ compact = false }: { compact?: boolean }) {
                         <button
                           key={d.key}
                           type="button"
-                          ref={(el) => {
-                            tabRefs.current[d.key] = el;
-                          }}
+                          ref={tabRef(d.key)}
                           aria-pressed={active}
                           onClick={() => {
                             if (active) return;
                             setSwitched(true);
                             setDay(d.key);
-                            movePill(d.key, true);
                           }}
                           className={`t-tab relative z-[1] rounded-md px-2.5 py-1.5 sm:px-3.5 ${active ? "text-night" : "text-mist hover:text-glow"} ${active && !pillReady ? "bg-glow" : ""}`}
                         >

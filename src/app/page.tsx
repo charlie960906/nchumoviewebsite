@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Bus, Car, Clapperboard, MapPin, TrainFront } from "lucide-react";
 import { site } from "@/lib/site";
@@ -102,7 +103,7 @@ export default function Home() {
         <SectionHeading id="films-h" index={3} eyebrow="Screenings" title="星空下的兩個夜晚" more={{ href: "/program", label: "全部節目" }} />
         <div className="mt-8 grid gap-5 md:grid-cols-2">
           {films.map((p, i) => (
-            <article key={p.slug} className="card card-hover reveal relative flex flex-col overflow-hidden p-6 md:p-8" style={d(i * 90)}>
+            <article key={p.slug} className="card card-hover reveal group/card relative flex flex-col overflow-hidden p-6 md:p-8" style={d(i * 90)}>
               <p className="relative flex flex-wrap items-center justify-between gap-2 font-mono text-[13px] sm:text-sm">
                 <span className="tracking-[0.2em] text-glow">
                   NIGHT {i + 1}
@@ -111,6 +112,19 @@ export default function Home() {
                   {p.facts[1].value}　{p.facts[2].value}
                 </span>
               </p>
+              <div className="relative mt-5 aspect-[3/2] w-full overflow-hidden rounded-sm bg-[#1d2a3a]">
+                {p.film?.still ? (
+                  <Image
+                    src={p.film.still}
+                    alt={`《${p.title}》劇照`}
+                    fill
+                    sizes="(min-width: 768px) 45vw, 100vw"
+                    className="object-cover transition-transform duration-500 group-hover/card:scale-[1.03]"
+                  />
+                ) : (
+                  <span className="absolute inset-0 grid place-items-center font-mono text-xs tracking-[0.3em] text-white/40">STILL · COMING SOON</span>
+                )}
+              </div>
               <div className="relative mt-5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-white/10 pb-4">
                 <h3 className="font-serif text-[28px] font-black sm:text-[34px]">
                   <Link href={`/program/${p.slug}`} className="after:absolute after:inset-0 hover:text-glow">
@@ -119,8 +133,7 @@ export default function Home() {
                 </h3>
                 <p className="font-mono text-xs text-dim sm:text-[13px]">{p.titleEn}</p>
               </div>
-              <p className="relative mt-3 text-sm text-dim">導演 {p.facts[0].value}</p>
-              <p className="relative mt-4 flex-1 text-mist/90">{p.body[0]}</p>
+              <p className="relative mt-3 flex-1 text-sm text-dim">導演 {p.facts[0].value}</p>
               <div className="relative z-10 mt-6 flex flex-wrap items-center gap-3">
                 <Link
                   href={`/program/${p.slug}`}

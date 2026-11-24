@@ -54,7 +54,7 @@ export default function MapEmbed({ tall = false }: { tall?: boolean }) {
             <div className="relative">
               <MapIcon aria-hidden size={36} className="mx-auto text-dim" />
               <p className="mt-4 font-serif text-lg font-bold">地圖暫時無法載入</p>
-              <p className="mx-auto mt-2 max-w-sm text-sm text-dim">這個瀏覽器可能不支援 WebGL，請改用其他瀏覽器，或參考下方的場內分區文字說明。</p>
+              <p className="mx-auto mt-2 max-w-sm text-sm text-dim">這個瀏覽器可能不支援 WebGL，請改用其他瀏覽器開啟。</p>
               <button type="button" className="btn btn-primary mt-5" onClick={() => start()}>
                 <RotateCw aria-hidden size={16} />
                 重新載入

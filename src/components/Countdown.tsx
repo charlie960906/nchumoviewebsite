@@ -16,7 +16,7 @@ function parts(now: number) {
   };
 }
 
-/** 倒數至 2027/3/19 15:00（市集／展覽開始）。伺服器端先輸出文字日期，掛載後才開始跳秒，避免 hydration 不一致。 */
+/** 倒數至 2027/3/19 15:00（星空市集開始）。伺服器端先輸出文字日期，掛載後才開始跳秒，避免 hydration 不一致。 */
 export default function Countdown() {
   const [now, setNow] = useState<number | null>(null);
 
@@ -48,7 +48,7 @@ export default function Countdown() {
   return (
     <div>
       <p className="mb-3 text-sm text-dim">
-        距離 <time dateTime={site.start}>2027/3/19（五）15:00</time> 市集／展覽開始
+        距離 <time dateTime={site.start}>2027/3/19（五）15:00</time> 星空市集開始
       </p>
       <div
         role="timer"

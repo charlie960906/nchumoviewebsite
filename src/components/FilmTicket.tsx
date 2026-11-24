@@ -107,6 +107,8 @@ export default function FilmTicket({
   const [img, setImg] = useState<{ url: string; file: File } | null>(null);
   const [canShare, setCanShare] = useState(false);
   const [copied, setCopied] = useState(false);
+  /** 正面票根的實際高度（手機版背面票根要跟它一樣高，翻面後撕線位置才一致） */
+  const [stubH, setStubH] = useState(0);
   const drag = useRef<{ x: number; y: number; moved: boolean } | null>(null);
   const suppressClick = useRef(false);
   const stubRef = useRef<HTMLDivElement>(null);
@@ -124,12 +126,25 @@ export default function FilmTicket({
     };
   }, []);
 
+  useEffect(() => {
+    const el = stubRef.current;
+    if (!el) return;
+    // offsetHeight 不受拖曳時的 transform 影響；掛載時先量一次，之後由 ResizeObserver 追蹤（字型載入、轉向等）
+    const measure = () => setStubH(el.offsetHeight);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   useEffect(() => () => void (img && URL.revokeObjectURL(img.url)), [img]);
 
   const later = (fn: () => void, ms: number) => timers.current.push(window.setTimeout(fn, ms));
 
   /** dir：+1 點在右半邊（右邊往下、左邊往上），−1 點在左半邊（左邊往下、右邊往上） */
   const flip = (dir: 1 | -1 = 1) => {
+    // 翻面前再量一次正面票根高度（ResizeObserver 若還沒回呼，例如開場動畫期間載入，也保證對齊）
+    if (stubRef.current?.offsetHeight) setStubH(stubRef.current.offsetHeight);
     track("ticket_interact", { action: flipped ? "flip_front" : "flip_back", item: program.slug });
     setTurns((t) => t + dir);
   };
@@ -278,6 +293,58 @@ export default function FilmTicket({
   };
   const hideStyle: React.CSSProperties = gone ? { opacity: 0, transition: `opacity ${FLY_MS}ms` } : {};
 
+  const qrLink = (cls = "") => (
+    <a
+      href={lumaUrl}
+      target="_blank"
+      rel="noopener"
+      tabIndex={flipped ? 0 : -1}
+      onClick={(e) => {
+        e.stopPropagation();
+        track("ticket_interact", { action: "qr_click", item: program.slug });
+      }}
+      className={`block text-center ${cls}`}
+      aria-label="訂閱放映提醒（Luma，另開新分頁）"
+    >
+      <span className="block w-24 rounded-md bg-white p-1 shadow-sm sm:w-28 md:w-32">
+        <Qr value={lumaUrl} />
+      </span>
+      <span className="mt-1.5 block text-[11px] tracking-[0.12em] text-[#4e5d80]">掃描訂閱提醒</span>
+    </a>
+  );
+
+  const schedule = (
+    <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2.5 gap-y-0.5 text-[12px] tracking-[0.04em] sm:gap-x-3 sm:text-[13px] sm:tracking-[0.06em] md:gap-y-1.5 md:text-sm">
+      {[
+        ["DATE", show ? `${show.date} ${show.weekday}` : "待公布"],
+        ["TIME", show?.time ?? "待公布"],
+        ["VENUE", "國立中興大學"],
+        ["SEAT", "草地席地・自由入座"],
+        ["ENTRY", "免費・免報名"],
+      ].map(([k, v]) => (
+        <div key={k} className="contents">
+          <dt className="font-mono text-[10px] leading-6 tracking-[0.12em] text-[#4e5d80] sm:text-[11px] sm:tracking-[0.15em]">{k}</dt>
+          <dd className="leading-6">{v}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+
+  const stamp = (cls: string) => (
+    <span
+      aria-hidden
+      className={`pointer-events-none absolute grid rotate-[-14deg] place-items-center rounded-full border-2 border-dashed border-[#b0493a]/55 text-center font-mono text-[10px] leading-tight tracking-[0.12em] text-[#b0493a]/70 ${cls}`}
+    >
+      <span>
+        NCHU
+        <br />
+        <span className="text-[13px] font-bold">{show ? show.date.slice(5) : "2027"}</span>
+        <br />
+        RIPPLE
+      </span>
+    </span>
+  );
+
   return (
     <div className="ticket-fit reveal-now mx-auto w-full max-w-5xl" style={{ "--d": "60ms" } as React.CSSProperties}>
       <div className="ticket-scene" onPointerMove={onScenePointerMove} onPointerLeave={() => setTilt({ x: 0, y: 0 })}>
@@ -324,86 +391,62 @@ export default function FilmTicket({
             </div>
 
             {/* ───────── 背面 ───────── */}
-            <div className="ticket ticket-back ticket-face grid text-left text-[#3a3a3a]" aria-hidden={!flipped}>
-              {/* 存根背面：票號＋細條碼 */}
+            {/* 手機：背面票根高度跟正面同步（--stub-h），翻面後撕線停在同一個位置；
+                主票背面因此較矮，場次資訊與印章移到票根背面。桌機維持原排法。 */}
+            <div
+              className="ticket ticket-back ticket-face grid text-left text-[#3a3a3a]"
+              aria-hidden={!flipped}
+              style={stubH ? ({ "--stub-h": `${stubH}px` } as React.CSSProperties) : undefined}
+            >
+              {/* 存根背面：票號＋條碼（手機另有場次資訊與印章） */}
               <div
-                className={`ticket-stub flex items-center justify-between gap-4 bg-[#f2f2f0] px-6 py-5 md:flex-col md:items-stretch md:p-8 short:p-6 ${canTear && flipped ? "ticket-tearable" : ""}`}
+                className={`ticket-stub relative flex flex-col justify-between gap-4 overflow-hidden bg-[#f2f2f0] px-6 py-5 md:p-8 short:p-6 ${canTear && flipped ? "ticket-tearable" : ""}`}
                 style={stubStyle("back")}
                 {...(flipped ? tearHandlers : {})}
               >
-                <div>
-                  <p className="font-mono text-[11px] tracking-[0.3em] text-[#4e5d80]">TICKET</p>
-                  <p className="mt-1 whitespace-nowrap font-mono text-lg tracking-[0.08em] sm:text-xl md:text-2xl md:tracking-[0.12em]">{ticketNo}</p>
+                <div className="flex items-center justify-between gap-4 md:block">
+                  <div>
+                    <p className="font-mono text-[11px] tracking-[0.3em] text-[#4e5d80]">TICKET</p>
+                    <p className="mt-1 whitespace-nowrap font-mono text-lg tracking-[0.08em] sm:text-xl md:text-2xl md:tracking-[0.12em]">{ticketNo}</p>
+                  </div>
+                  <div className="relative h-10 w-24 shrink-0 text-[#4e5d80] sm:w-32 md:hidden">
+                    <Barcode value={f.code} horizontal />
+                  </div>
                 </div>
+                <div className="md:hidden">{schedule}</div>
                 <p className="hidden text-sm leading-relaxed tracking-[0.08em] text-[#5a5a5a] md:block">
                   《{program.title}》
                   <br />
                   {show ? `${show.date} ${show.weekday}` : ""}
                 </p>
-                <div className="relative h-10 w-24 shrink-0 text-[#4e5d80] sm:w-32 md:h-14 md:w-full">
+                <div className="relative hidden h-14 w-full text-[#4e5d80] md:block">
                   <Barcode value={f.code} horizontal />
                 </div>
+                {stamp("bottom-5 right-5 size-20 md:hidden")}
               </div>
 
               <div aria-hidden className="ticket-perf" style={hideStyle} />
 
-              {/* 主票背面：電影節、QR、場次、標語、印章 */}
-              <div className="ticket-main relative flex flex-col justify-between gap-5 overflow-hidden bg-[#f2f2f0] p-6 sm:p-8 md:p-10 short:gap-3 short:p-7">
-                {/* 手機版印章在右上角，標題右側留位置 */}
-                <div className="pr-20 md:pr-0">
-                  <p className="font-mono text-[11px] tracking-[0.3em] text-[#4e5d80]">ADMIT ONE · 星空放映</p>
-                  <p className="mt-2 font-serif text-xl font-bold tracking-wider md:text-2xl">2027 中興星空電影節「{THEME}」</p>
+              {/* 主票背面：電影節、QR、（桌機）場次、標語、（桌機）印章 */}
+              <div className="ticket-main relative flex flex-col justify-between gap-4 overflow-hidden bg-[#f2f2f0] p-6 sm:p-8 md:gap-5 md:p-10 short:gap-3 short:p-7">
+                <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4 md:block">
+                  {qrLink("md:hidden")}
+                  <div>
+                    <p className="whitespace-nowrap font-mono text-[11px] tracking-[0.12em] text-[#4e5d80] sm:tracking-[0.3em]">ADMIT ONE · 星空放映</p>
+                    <p className="mt-2 font-serif text-lg font-bold leading-snug tracking-wider sm:text-xl md:text-2xl">
+                      2027 中興星空電影節<wbr />「{THEME}」
+                    </p>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-5 md:gap-7">
-                  <a
-                    href={lumaUrl}
-                    target="_blank"
-                    rel="noopener"
-                    tabIndex={flipped ? 0 : -1}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      track("ticket_interact", { action: "qr_click", item: program.slug });
-                    }}
-                    className="block text-center"
-                    aria-label="訂閱放映提醒（Luma，另開新分頁）"
-                  >
-                    <span className="block w-20 rounded-md bg-white p-1 shadow-sm sm:w-28 md:w-32">
-                      <Qr value={lumaUrl} />
-                    </span>
-                    <span className="mt-1.5 block text-[11px] tracking-[0.12em] text-[#4e5d80]">掃描訂閱提醒</span>
-                  </a>
-                  <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2.5 gap-y-1 text-[12px] tracking-[0.04em] sm:gap-x-3 sm:text-[13px] sm:tracking-[0.06em] md:gap-y-1.5 md:text-sm">
-                    {[
-                      ["DATE", show ? `${show.date} ${show.weekday}` : "待公布"],
-                      ["TIME", show?.time ?? "待公布"],
-                      ["VENUE", "國立中興大學"],
-                      ["SEAT", "草地席地・自由入座"],
-                      ["ENTRY", "免費・免報名"],
-                    ].map(([k, v]) => (
-                      <div key={k} className="contents">
-                        <dt className="font-mono text-[10px] leading-6 tracking-[0.12em] text-[#4e5d80] sm:text-[11px] sm:tracking-[0.15em]">{k}</dt>
-                        <dd className="leading-6">{v}</dd>
-                      </div>
-                    ))}
-                  </dl>
+                <div className="hidden grid-cols-[auto_minmax(0,1fr)] items-center gap-7 md:grid">
+                  {qrLink()}
+                  {schedule}
                 </div>
 
-                <p className="font-serif text-sm tracking-[0.3em] text-[#4e5d80] md:text-base">{site.tagline}</p>
+                <p className="font-serif text-xs tracking-[0.25em] text-[#4e5d80] sm:text-sm md:text-base md:tracking-[0.3em]">{site.tagline}</p>
 
-                {/* 印章 */}
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute right-5 top-5 grid size-20 rotate-[-14deg] place-items-center rounded-full border-2 border-dashed border-[#b0493a]/55 text-center font-mono text-[10px] leading-tight tracking-[0.12em] text-[#b0493a]/70 md:bottom-8 md:right-8 md:top-auto md:size-28"
-                >
-                  <span>
-                    NCHU
-                    <br />
-                    <span className="text-[13px] font-bold">{show ? show.date.slice(5) : "2027"}</span>
-                    <br />
-                    RIPPLE
-                  </span>
-                </span>
+                {stamp("hidden md:grid md:bottom-8 md:right-8 md:size-28")}
               </div>
             </div>
           </div>

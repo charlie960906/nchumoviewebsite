@@ -53,7 +53,24 @@ export default function ThemesPage() {
         ))}
       </PageHero>
 
-      <section aria-labelledby="idea-h" className="container-x">
+      <section aria-labelledby="what-h" className="container-x">
+        <div className="max-w-3xl">
+          <SectionHeading id="what-h" index={1} eyebrow="What" title="一個讓異鄉人與在地人坐在同一片草地上的夜晚" />
+          <div className="mt-5 grid gap-4 text-mist/90">
+            <p className="reveal">
+              中興星空電影節從校園裡的國際交流出發。在中興大學，來自不同國家的學生與在地學生共享同一座校園，卻不一定有機會坐下來，看同一部電影、聊同一件事。
+            </p>
+            <p className="reveal">
+              2027 年的主題「{THEME}」取台語「水泱 tsuí-iann」之意——水面上的漣漪。我們相信每個人在離家與回家之間，都曾泛起過這樣的波紋；而電影，是讓這些波紋彼此遇見的水面。
+            </p>
+            <p className="reveal">
+              兩天的活動包含兩部電影的星空放映、《美國女孩》導演阮鳳儀映後講座、「泅」與「涯」兩大概念展區、22 攤市集、現場演出與快閃遊戲。線上則有「波紋的音像」黑膠互動館，收錄工作人員的歌與故事。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="idea-h" className="container-x mt-24 md:mt-28">
         <div className="grid gap-8 lg:grid-cols-[auto_1fr] lg:gap-14">
           <div aria-hidden className="reveal relative mx-auto grid h-56 w-56 place-items-center lg:mx-0">
             {[0, 1, 2].map((i) => (
@@ -62,7 +79,7 @@ export default function ThemesPage() {
             <span className="font-serif text-[120px] font-bold leading-none text-moon">{THEME_CHAR}</span>
           </div>
           <div>
-            <SectionHeading id="idea-h" index={1} eyebrow="Core Idea" title="電影是平靜的水面" />
+            <SectionHeading id="idea-h" index={2} eyebrow="Core Idea" title="電影是平靜的水面" />
             <p className="reveal mt-5 text-mist/90">
               因為觀者與創作者的情感交會，光影層疊出前行的路。「{THEME_CHAR}」象徵水滴墜落水面泛起微波——人類在異鄉與家鄉之間摸索方向、尋覓歸屬的流動歷程。
             </p>
@@ -90,7 +107,7 @@ export default function ThemesPage() {
       </section>
 
       <section aria-labelledby="kv-h" className="container-x mt-24 md:mt-28">
-        <SectionHeading id="kv-h" index={2} eyebrow="Key Visual" title="主視覺：設計論述" />
+        <SectionHeading id="kv-h" index={3} eyebrow="Key Visual" title="主視覺：設計論述" />
         <div className="mt-8 grid items-start gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-14">
           <figure className="reveal lg:sticky lg:top-28">
             <Image
@@ -117,7 +134,7 @@ export default function ThemesPage() {
 
       <section aria-labelledby="story-h" className="mt-24 md:mt-28">
         <div className="container-x">
-          <SectionHeading id="story-h" index={3} eyebrow="Three States" title="沉浸式三態故事線：固 → 液 → 氣" />
+          <SectionHeading id="story-h" index={4} eyebrow="Three States" title="沉浸式三態故事線：固 → 液 → 氣" />
           <p className="reveal mt-4 max-w-2xl text-mist/90">從一滴水「泱」開始，經過固、液、氣，最後落成「泅」與「涯」兩個展區。水有三種形態，歸屬也是。整個電影節——從網站到現場——都沿著這條線走。</p>
         </div>
         {/* 完整版：往下捲、鏡頭沿著水的旅程往右走（首頁 StatesScroll 為簡化版） */}

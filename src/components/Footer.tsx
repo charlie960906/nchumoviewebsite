@@ -48,13 +48,39 @@ export default function Footer() {
                 <a href={site.venue.mapsUrl} target="_blank" rel="noopener noreferrer" className={linkClass}>
                   {site.venue.name} <span aria-hidden className="text-dim">↗</span>
                 </a>
+                <span className="mt-0.5 block text-xs text-dim">{site.venue.address}</span>
               </dd>
             </div>
+            <div className="flex gap-3">
+              <dt className="w-10 shrink-0 text-dim">入場</dt>
+              <dd className="text-moon">免費入場・不需報名</dd>
+            </div>
+            {social.length > 0 && (
+              <div className="flex gap-3">
+                <dt className="w-10 shrink-0 text-dim">追蹤</dt>
+                <dd className="flex flex-wrap gap-x-4 gap-y-1">
+                  {social.map((s) => (
+                    <a
+                      key={s.label}
+                      href={s.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`group inline-flex items-center gap-1 ${linkClass}`}
+                    >
+                      {s.label}
+                      <span aria-hidden className="text-dim transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                        ↗
+                      </span>
+                    </a>
+                  ))}
+                </dd>
+              </div>
+            )}
           </dl>
         </section>
 
         {/* 網頁導覽 */}
-        <nav aria-label="網頁導覽" className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-4">
+        <nav aria-label="網頁導覽" className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-[1fr_1.5fr_1fr_1fr]">
           {footerNav.map((g) => (
             <div key={g.title}>
               <p className="eyebrow mb-1">{g.titleEn}</p>
@@ -70,30 +96,6 @@ export default function Footer() {
               </ul>
             </div>
           ))}
-
-          {social.length > 0 && (
-            <div>
-              <p className="eyebrow mb-1">Follow</p>
-              <h3 className="mb-4 text-sm font-semibold text-moon">追蹤我們</h3>
-              <ul className="grid gap-2.5 text-sm">
-                {social.map((s) => (
-                  <li key={s.label}>
-                    <a
-                      href={s.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`group inline-flex items-center gap-1.5 ${linkClass}`}
-                    >
-                      {s.label}
-                      <span aria-hidden className="text-dim transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
-                        ↗
-                      </span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </nav>
       </div>
 
@@ -155,9 +157,6 @@ export default function Footer() {
             <a href="https://www.hyjdevelop.com/privacy" target="_blank" rel="noopener" className={linkClass}>
               隱私權政策
             </a>
-            <Link href="/update" className={linkClass}>
-              Update
-            </Link>
             <a href="#" className={`inline-flex items-center gap-1 ${linkClass}`}>
               回到頂端 <span aria-hidden>↑</span>
             </a>

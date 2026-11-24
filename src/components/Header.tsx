@@ -58,9 +58,10 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // 首頁：導覽列在最上方是 Hero 頂端的海軍藍，往下滑過 Hero 一個螢幕高的距離，慢慢變成頁面的深藍黑
+  // 首頁與使用 PageHero 的內頁：導覽列在最上方是 Hero 頂端的海軍藍，往下滑過 Hero 一個螢幕高的距離，慢慢變成頁面的深藍黑。
+  // 各展區內頁（/themes/<zone>）用展區代表色當頁首，維持原本的淡入。
   const headerRef = useRef<HTMLElement>(null);
-  const isHome = pathname === "/";
+  const isHome = !/^\/themes\/[^/]+/.test(pathname);
   useEffect(() => {
     const el = headerRef.current;
     if (!el || !isHome) return;

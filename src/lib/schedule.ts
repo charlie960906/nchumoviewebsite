@@ -1,7 +1,7 @@
 export type Category = "market" | "game" | "show" | "talk" | "film" | "closing";
 
 export const categories: Record<Category, { label: string; dot: string }> = {
-  market: { label: "市集／展覽", dot: "#8CC4EC" },
+  market: { label: "星空市集", dot: "#8CC4EC" },
   game: { label: "快閃遊戲", dot: "#F59E0B" },
   show: { label: "表演演出", dot: "#A78BFA" },
   talk: { label: "電影演講會", dot: "#10B981" },
@@ -29,7 +29,7 @@ export const days = [
 ] as const;
 
 export const sessions: Session[] = [
-  { id: "d1-market", day: "0319", start: "15:00", end: "20:30", title: "市集／展覽開始", category: "market", program: "market-exhibition" },
+  { id: "d1-market", day: "0319", start: "15:00", end: "20:30", title: "星空市集開始", category: "market", program: "market" },
   { id: "d1-game-1", day: "0319", start: "15:30", end: "16:00", title: "快閃遊戲", category: "game" },
   { id: "d1-game-2", day: "0319", start: "16:30", end: "17:00", title: "快閃遊戲", category: "game" },
   { id: "d1-show-1", day: "0319", start: "17:10", end: "17:30", title: "表演演出", category: "show" },
@@ -38,7 +38,7 @@ export const sessions: Session[] = [
   { id: "d1-film", day: "0319", start: "18:30", end: "20:30", title: "電影放映《美國女孩》", category: "film", program: "american-girl" },
   { id: "d1-close", day: "0319", start: "20:30", end: "22:00", title: "活動結束收尾", category: "closing" },
 
-  { id: "d2-market", day: "0320", start: "14:00", end: "20:30", title: "市集／展覽開始", category: "market", program: "market-exhibition" },
+  { id: "d2-market", day: "0320", start: "14:00", end: "20:30", title: "星空市集開始", category: "market", program: "market" },
   { id: "d2-show-1", day: "0320", start: "14:00", end: "15:30", title: "表演演出", category: "show" },
   { id: "d2-game-1", day: "0320", start: "15:30", end: "16:00", title: "快閃遊戲", category: "game" },
   { id: "d2-show-2", day: "0320", start: "16:00", end: "17:30", title: "表演演出", category: "show" },
