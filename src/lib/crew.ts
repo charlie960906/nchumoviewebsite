@@ -45,7 +45,6 @@ export const crew: CrewGroup[] = [
       m("江佩諭", { email: "pinky940928@gmail.com" }),
       m("蘇家佳", { email: "suchia22222@gmail.com" }),
       m("朱宇禎", { email: "yujencheryl@gmail.com" }),
-      m("吳廷豐", { nick: "Max", email: "maxmilliangladstoney@gmail.com" }),
       m("陳昜安", { email: "chenyoung1128@gmail.com" }),
       m("賴映儒", { email: "laiyingju315@gmail.com" }),
     ],
@@ -110,6 +109,7 @@ export const crew: CrewGroup[] = [
     desc: "在台上串起每一個段落，陪觀眾度過兩個夜晚。",
     members: [
       m("陳聖邦", { email: "ben23367583@gmail.com" }),
+      m("吳廷豐", { nick: "Max", email: "maxmilliangladstoney@gmail.com" }),
     ],
   },
   {

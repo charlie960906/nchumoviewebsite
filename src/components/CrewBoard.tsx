@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Disc3, X } from "lucide-react";
+import { ArrowRight, Disc3, MapPin, X } from "lucide-react";
 import type { CrewBoardGroup, CrewCard } from "@/lib/crew";
 import TeamAnchorBar from "@/components/TeamAnchorBar";
 
@@ -15,11 +15,11 @@ export default function CrewBoard({ groups }: { groups: CrewBoardGroup[] }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [member, setMember] = useState<CrewCard | null>(null);
   const [shown, setShown] = useState(false);
-  // 瀏覽器讀到的 Gravatar About Me：string＝內容，null＝沒有／讀取失敗；未列入＝讀取中
-  const [live, setLive] = useState<Record<string, string | null>>({});
+  // 瀏覽器讀到的 Gravatar 個人檔案（About Me、所在地）：物件＝內容，null＝沒有／讀取失敗；未列入＝讀取中
+  const [live, setLive] = useState<Record<string, Profile | null>>({});
   const requested = useRef(new Set<string>());
 
-  /** 滑過／聚焦／點開成員時向 Gravatar 讀取 About Me（每位成員每次載入頁面只讀一次；失敗時下次點開再試）。 */
+  /** 滑過／聚焦／點開成員時向 Gravatar 讀取 About Me 與所在地（每位成員每次載入頁面只讀一次；失敗時下次點開再試）。 */
   const refreshAbout = (p: CrewCard) => {
     if (!p.hash || requested.current.has(p.key)) return;
     requested.current.add(p.key);
@@ -27,10 +27,12 @@ export default function CrewBoard({ groups }: { groups: CrewBoardGroup[] }) {
       .then(async (res) => {
         if (res.status === 404) return null;
         if (!res.ok) throw new Error(String(res.status));
-        const data = (await res.json()) as { description?: string };
-        return data.description?.trim() || null;
+        const data = (await res.json()) as { description?: string; location?: string };
+        const about = data.description?.trim() || undefined;
+        const location = data.location?.trim() || undefined;
+        return about || location ? { about, location } : null;
       })
-      .then((about) => setLive((prev) => ({ ...prev, [p.key]: about })))
+      .then((profile) => setLive((prev) => ({ ...prev, [p.key]: profile })))
       .catch(() => {
         requested.current.delete(p.key);
         setLive((prev) => ({ ...prev, [p.key]: null }));
@@ -141,7 +143,8 @@ export default function CrewBoard({ groups }: { groups: CrewBoardGroup[] }) {
             <Detail
               key={member.key}
               p={member}
-              about={live[member.key] ?? undefined}
+              about={live[member.key]?.about}
+              location={live[member.key]?.location}
               loading={!!member.hash && !(member.key in live)}
               onClose={close}
             />
@@ -151,6 +154,8 @@ export default function CrewBoard({ groups }: { groups: CrewBoardGroup[] }) {
     </>
   );
 }
+
+type Profile = { about?: string; location?: string };
 
 /** 依組別分段：沒有組別的成員（例如部長）在最前，其餘依第一次出現的順序。 */
 function splitTeams(members: CrewCard[]) {
@@ -192,7 +197,19 @@ function Avatar({ p, className = "", eager }: { p: CrewCard; className?: string;
   );
 }
 
-function Detail({ p, about, loading, onClose }: { p: CrewCard; about?: string; loading: boolean; onClose: () => void }) {
+function Detail({
+  p,
+  about,
+  location,
+  loading,
+  onClose,
+}: {
+  p: CrewCard;
+  about?: string;
+  location?: string;
+  loading: boolean;
+  onClose: () => void;
+}) {
   return (
     <>
       <div className="sticky top-0 z-10 flex justify-end bg-night-2/85 p-3 backdrop-blur md:p-4">
@@ -213,6 +230,13 @@ function Detail({ p, about, loading, onClose }: { p: CrewCard; about?: string; l
         </h2>
         <p className="mt-1.5 text-[15px] text-glow">{p.title}</p>
         {p.sub && p.sub !== p.title && <p className="text-sm text-dim">{p.sub}</p>}
+        {location && (
+          <p className="mt-2 flex items-center gap-1.5 text-sm text-mist/80">
+            <MapPin aria-hidden size={15} className="shrink-0 text-glow/80" />
+            <span className="sr-only">所在地：</span>
+            {location}
+          </p>
+        )}
 
         <Avatar p={p} eager className="mt-6 w-40" />
 
