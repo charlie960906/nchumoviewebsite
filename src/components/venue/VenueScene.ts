@@ -184,6 +184,11 @@ export class VenueScene {
     }
   }
 
+  /** 卡片模式下讓單指上下滑動交給頁面捲動（避免手機在地圖上卡住滑不動）；全螢幕時地圖獨佔手勢 */
+  setPageScroll(allow: boolean) {
+    this.renderer.domElement.style.touchAction = allow ? "pan-y" : "none";
+  }
+
   set2D(on: boolean) {
     if (on === this.is2D) return;
     this.is2D = on;

@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* 矮螢幕的電腦版（筆電、瀏覽器工具列較多）：電影票 Hero 縮小內距與字級，讓整張票留在第一個畫面 */
+@custom-variant short (@media (min-width: 768px) and (max-height: 860px));
+
+/* 中文字型由 layout 非同步載入 Google Fonts；Canvas 繪字也讀這兩個變數 */
+:root {
+  --font-noto-sans: "Noto Sans TC";
+  --font-noto-serif: "Noto Serif TC";
+}
+
 /* ───────── 設計權杖（規格書 2.1 / 2.2 / 2.4） ───────── */
 @theme {
   --color-night: #001218; /* 星空深藍 */
@@ -306,6 +315,40 @@ html.js .reveal {
 }
 html.js .reveal.is-in { opacity: 1; transform: none; }
 
+/* 首屏（Hero）用純 CSS 進場：不必等 JS 載入完成才顯示，避免手機 LCP 被拖到好幾秒後 */
+.reveal-now { animation: reveal-now 700ms var(--ease-ripple) var(--d, 0ms) both; }
+html.splashing { overflow: hidden; }
+/* 重新整理時的載入閘門：字型與魚準備好前整頁透明，之後一次淡入（Splash.tsx） */
+html { background: #001218; }
+body { transition: opacity 380ms ease; }
+html.preparing body { opacity: 0; }
+/* 閘門開啟前不播 Hero 進場，開啟後才從頭播放 */
+html.preparing .reveal-now, html.splashing .reveal-now { animation: none; opacity: 0; }
+
+/* ───────── 首次進站加載畫面（Splash.tsx） ───────── */
+/* 預設顯示（第一次繪製就是加載畫面）；看過的工作階段由 head script 加 .no-splash 隱藏 */
+html.no-splash #splash { display: none; }
+#splash {
+  display: grid; place-items: center; position: fixed; inset: 0; z-index: 200;
+  background: radial-gradient(60% 45% at 50% 42%, #172b46, #001218 75%);
+  color: var(--color-moon, #F5F7FA);
+}
+#splash.splash-out { animation: splash-out 650ms var(--ease-ripple) forwards; pointer-events: none; }
+@keyframes splash-out { to { opacity: 0; visibility: hidden; transform: scale(1.03); } }
+.splash-inner { display: flex; gap: 0.9rem; align-items: flex-end; }
+/* 五個小水滴：外框淡淡的，裡面的水從底部一滴一滴慢慢漲滿（每滴間隔 0.36 秒，約 2 秒全滿） */
+.splash-drop { width: 1.8rem; height: 2.5rem; overflow: visible; }
+.splash-drop .drop-edge { fill: rgb(140 196 236 / 0.1); stroke: rgb(140 196 236 / 0.45); stroke-width: 1.2; }
+.splash-drop .drop-water { fill: #8CC4EC; transform: translateY(28px);
+  animation: splash-fill 700ms cubic-bezier(.45,0,.2,1) calc(var(--i) * 360ms + 150ms) forwards; }
+.splash-drop .drop-shine { fill: #EAF0F7; opacity: 0; animation: splash-shine 400ms ease calc(var(--i) * 360ms + 800ms) forwards; }
+@keyframes splash-fill { to { transform: translateY(0); } }
+@keyframes splash-shine { to { opacity: 0.7; } }
+.splash-drop { animation: splash-bob 1.6s ease-in-out calc(var(--i) * 360ms + 850ms) infinite; }
+@keyframes splash-bob { 50% { transform: translateY(-3px); } }
+
+@keyframes reveal-now { from { opacity: 0; transform: translateY(16px); } }
+
 /* 水波 spinner（Loading） */
 .ripple-spinner { position: relative; width: 1.25em; height: 1.25em; display: inline-block; }
 .ripple-spinner::before, .ripple-spinner::after {
@@ -325,6 +368,32 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
 .schedule-table thead th { font-size: 0.75rem; letter-spacing: 0.12em; color: var(--color-dim); font-weight: 500; border-bottom: 1px solid rgb(148 163 184 / 0.2); }
 .schedule-table tbody tr { border-bottom: 1px solid rgb(148 163 184 / 0.1); transition: background-color 180ms ease; }
 .schedule-table tbody tr:hover { background: rgb(140 196 236 / 0.05); }
+
+/* Tabs sliding（transitions.dev）：時間表日期切換的滑動膠囊；位置與寬度由 Schedule.tsx 以 inline style 寫入 */
+:root { --tabs-dur: 250ms; --tabs-ease: cubic-bezier(0.22, 1, 0.36, 1); }
+.t-tab { transition: color var(--tabs-dur) var(--tabs-ease); }
+.t-tabs-pill {
+  position: absolute; top: 0.25rem; bottom: 0.25rem; left: 0; width: 0;
+  transform: translateX(0);
+  transition: transform var(--tabs-dur) var(--tabs-ease), width var(--tabs-dur) var(--tabs-ease);
+  will-change: transform, width; z-index: 0; pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) { .t-tabs-pill, .t-tab { transition: none !important; } }
+
+/* 機械翻頁板（SplitFlap.tsx）：每個數字一格，上下兩半以 clip-path 切開，翻牌時舊上半落下、新下半翻上 */
+:root { --flap-half: 55ms; --flap-bg: var(--color-night-3); }
+.flap-row { display: inline-flex; align-items: center; gap: 1px; vertical-align: baseline; }
+.flap { position: relative; display: inline-block; padding: 0 0.08em; line-height: 1.4; border-radius: 3px; }
+.flap-sizer { visibility: hidden; }
+.flap-half { position: absolute; inset: 0; padding: 0 0.08em; text-align: center; background: var(--flap-bg); border-radius: 3px; backface-visibility: hidden; }
+.flap-top { clip-path: inset(0 0 50% 0); }
+.flap-bottom { clip-path: inset(50% 0 0 0); }
+.flap-fall { animation: flap-fall var(--flap-half) ease-in both; }
+.flap-rise { animation: flap-rise var(--flap-half) ease-out var(--flap-half) both; }
+.flap-hinge { position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgb(0 0 0 / 0.5); pointer-events: none; }
+.flap-sep { padding: 0 0.06em; }
+@keyframes flap-fall { from { transform: perspective(10em) rotateX(0deg); } to { transform: perspective(10em) rotateX(-90deg); } }
+@keyframes flap-rise { from { transform: perspective(10em) rotateX(90deg); } to { transform: perspective(10em) rotateX(0deg); } }
 
 /* Luma 彈窗在最上層 */
 .lu-checkout-overlay, [class*="luma-checkout"] iframe { z-index: 9999; }
@@ -354,3 +423,86 @@ html.js .reveal.is-in { opacity: 1; transform: none; }
   cursor: pointer;
 }
 .underwater[data-shown="true"] { opacity: 1; }
+
+/* ───────── FAQ 播放器 ───────── */
+.faq-chev {
+  clip-path: polygon(0 0, 55% 0, 100% 50%, 55% 100%, 0 100%, 45% 50%);
+  animation: faq-chev 2.4s ease-in-out infinite;
+}
+@keyframes faq-chev {
+  0%, 100% { opacity: 0.55; }
+  40% { opacity: 1; }
+}
+.faq-answer:not([hidden]) { animation: faq-in 420ms var(--ease-ripple, ease) both; }
+@keyframes faq-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .faq-chev, .faq-answer:not([hidden]) { animation: none; }
+}
+
+/* ───────── 電影介紹頁：電影票 Hero ───────── */
+/* 手機：劇照在上、存根在下，撕線橫向；md 以上：左右排列（存根在左），撕線直向。缺口用 mask 挖半圓。 */
+.ticket { --notch: 22px; grid-template-columns: minmax(0, 1fr); }
+.ticket-stub, .ticket-main { -webkit-mask-composite: source-in; mask-composite: intersect; border-radius: 14px; }
+.ticket > .ticket-main { order: 1; }
+.ticket > .ticket-perf { order: 2; }
+.ticket > .ticket-stub { order: 3; }
+.ticket-stub {
+  -webkit-mask-image: radial-gradient(circle var(--notch) at 0 0, #0000 98%, #000), radial-gradient(circle var(--notch) at 100% 0, #0000 98%, #000);
+  mask-image: radial-gradient(circle var(--notch) at 0 0, #0000 98%, #000), radial-gradient(circle var(--notch) at 100% 0, #0000 98%, #000);
+}
+.ticket-main {
+  -webkit-mask-image: radial-gradient(circle var(--notch) at 0 100%, #0000 98%, #000), radial-gradient(circle var(--notch) at 100% 100%, #0000 98%, #000);
+  mask-image: radial-gradient(circle var(--notch) at 0 100%, #0000 98%, #000), radial-gradient(circle var(--notch) at 100% 100%, #0000 98%, #000);
+}
+.ticket-perf { height: 14px; margin-inline: var(--notch); background: linear-gradient(90deg, rgb(242 242 240 / 0.55) 50%, transparent 0) 0 50% / 14px 3px repeat-x; }
+@media (min-width: 768px) {
+  .ticket { --notch: 32px; grid-template-columns: minmax(0, 0.95fr) 18px minmax(0, 1.6fr); }
+  .ticket-stub {
+    -webkit-mask-image: radial-gradient(circle var(--notch) at 100% 0, #0000 98%, #000), radial-gradient(circle var(--notch) at 100% 100%, #0000 98%, #000);
+    mask-image: radial-gradient(circle var(--notch) at 100% 0, #0000 98%, #000), radial-gradient(circle var(--notch) at 100% 100%, #0000 98%, #000);
+  }
+  .ticket-main {
+    -webkit-mask-image: radial-gradient(circle var(--notch) at 0 0, #0000 98%, #000), radial-gradient(circle var(--notch) at 0 100%, #0000 98%, #000);
+    mask-image: radial-gradient(circle var(--notch) at 0 0, #0000 98%, #000), radial-gradient(circle var(--notch) at 0 100%, #0000 98%, #000);
+  }
+  .ticket-perf { height: auto; margin-inline: 0; margin-block: var(--notch); background: linear-gradient(180deg, rgb(242 242 240 / 0.55) 55%, transparent 0) 50% 0 / 3px 26px repeat-y; }
+}
+/* FAQ 上下條：與結尾 CTA 卡片相同的深藍底 */
+.faq-bar {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.045), rgb(255 255 255 / 0.015)), var(--color-night);
+}
+
+/* 電影票：3D 傾斜＋翻面（正反兩面疊在一起，背面預先轉 180°） */
+/* 陰影放在外層：filter 若放在票面上，Chrome 的 backface-visibility 會失效，翻面時看得到正面 */
+.ticket-scene { perspective: 1800px; filter: drop-shadow(0 18px 40px rgb(0 0 0 / 0.35)); }
+.ticket-tilt { transform-style: preserve-3d; transition: transform 250ms ease-out; }
+.ticket-flip { position: relative; transform-style: preserve-3d; transition: transform 900ms cubic-bezier(0.3, 1.15, 0.4, 1); }
+.ticket-face { -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+.ticket-back { position: absolute; inset: 0; transform: rotateY(180deg); grid-template-rows: minmax(0, 1fr) 14px auto; }
+.ticket-tearable { cursor: grab; touch-action: none; user-select: none; }
+.ticket-tearable:active { cursor: grabbing; }
+@media (min-width: 768px) {
+  /* 翻到背面時左右對調：存根背面在右、主票背面在左，缺口也跟著換邊 */
+  .ticket-back { grid-template-columns: minmax(0, 1.6fr) 18px minmax(0, 0.95fr); grid-template-rows: none; }
+  /* 正面存根在左；背面存根在右（順序同手機：主票、撕線、存根） */
+  .ticket:not(.ticket-back) > .ticket-stub { order: 1; }
+  .ticket:not(.ticket-back) > .ticket-main { order: 3; }
+  .ticket-back > .ticket-stub {
+    -webkit-mask-image: radial-gradient(circle var(--notch) at 0 0, #0000 98%, #000), radial-gradient(circle var(--notch) at 0 100%, #0000 98%, #000);
+    mask-image: radial-gradient(circle var(--notch) at 0 0, #0000 98%, #000), radial-gradient(circle var(--notch) at 0 100%, #0000 98%, #000);
+  }
+  .ticket-back > .ticket-main {
+    -webkit-mask-image: radial-gradient(circle var(--notch) at 100% 0, #0000 98%, #000), radial-gradient(circle var(--notch) at 100% 100%, #0000 98%, #000);
+    mask-image: radial-gradient(circle var(--notch) at 100% 0, #0000 98%, #000), radial-gradient(circle var(--notch) at 100% 100%, #0000 98%, #000);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticket-tilt, .ticket-flip { transition: none; }
+}
+/* 桌機：票寬也受視窗高度限制，讓「票＋按鈕＋提示」都留在第一個畫面裡（票約 2.3:1，上下保留約 15rem 給導覽列、標籤、按鈕與提示） */
+@media (min-width: 768px) {
+  .ticket-fit { max-width: min(64rem, calc((100svh - 15rem) * 2.3)); }
+}

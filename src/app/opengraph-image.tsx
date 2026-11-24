@@ -8,5 +8,5 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default function Image() {
-  return ogImage({ kicker: "2027 興大國際星空電影節", lines: [THEME], footnote: site.tagline });
+  return ogImage({ kicker: "2027 中興星空電影節", lines: [THEME], footnote: site.tagline });
 }

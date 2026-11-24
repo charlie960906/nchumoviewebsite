@@ -9,7 +9,7 @@ import JsonLd from "@/components/JsonLd";
 
 export const metadata: Metadata = pageMeta({
   title: "數位線上互動館｜波紋的音像、漂流詞、心理測驗",
-  description: "興大國際星空電影節線上互動館：在「波紋的音像」轉動黑膠圓環，抽出工作人員的歌與故事；抽一支漂流詞幸運籤；測驗你是《美國女孩》裡的誰；以及展區延伸的貼標籤與家的符號小遊戲。",
+  description: "中興星空電影節線上互動館：在「波紋的音像」轉動黑膠圓環，抽出工作人員的歌與故事；抽一支漂流詞幸運籤；測驗你是《美國女孩》裡的誰；以及展區延伸的貼標籤與家的符號小遊戲。",
   path: "/interactive",
 });
 

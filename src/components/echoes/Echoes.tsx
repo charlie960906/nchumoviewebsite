@@ -7,6 +7,7 @@ import { AnimatePresence, m } from "motion/react";
 import { ChevronLeft, ChevronRight, Disc3, ExternalLink, Gauge, Link2, Pause, Play, Undo2, Volume2 } from "lucide-react";
 import { staff as allStaff, STAFF_IS_SAMPLE } from "@/lib/staff";
 import { EchoAudio } from "./audio";
+import { track } from "@/lib/track";
 import StoryBody from "./StoryBody";
 import type { SceneHandle } from "./VinylScene";
 
@@ -84,6 +85,7 @@ export default function Echoes() {
   const pull = useCallback(
     (i: number) => {
       if (phase !== "ring") return;
+      track("interactive_play", { game: "echoes", action: "open", item: staff[i].id });
       setPicked(i);
       setFocus(i);
       void audio.current?.play(staff[i]).then((ok) => setPlaying(!!ok));
@@ -152,6 +154,7 @@ export default function Echoes() {
 
   const share = async () => {
     if (!sel) return;
+    track("interactive_play", { game: "echoes", action: "share", item: sel.id });
     const url = `${location.origin}/interactive/echoes/${sel.id}`;
     const data = { title: `${sel.storyTitle}｜波紋的音像`, text: `我在「波紋的音像」抽到了${sel.name}的黑膠〈${sel.songTitle}〉`, url };
     try {

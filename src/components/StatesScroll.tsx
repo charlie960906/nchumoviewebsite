@@ -138,7 +138,6 @@ export default function StatesScroll({
   const waterSX = useTransform(p, [MELT[0], MELT[1], EVAP[0], EVAP[1]], [0.25, 1, 1, 0.55]);
   const waterSY = useTransform(p, [MELT[0], MELT[1], EVAP[0], EVAP[1]], [0.25, 1, 1, 0.45]);
   const waterOpacity = useTransform(p, [MELT[0], MELT[0] + 0.06, EVAP[0], EVAP[1]], [0, 1, 1, 0.22]);
-  const rippleOpacity = useTransform(p, [MELT[1] - 0.06, MELT[1], EVAP[0], EVAP[0] + 0.1], [0, 1, 1, 0]);
 
   /* ── 蒸氣與雲 ── */
   const mistOpacity = useTransform(p, [EVAP[0], EVAP[0] + 0.12], [0, 1]);
@@ -394,7 +393,7 @@ export default function StatesScroll({
                 </filter>
               </defs>
 
-              {/* 水面 + 漣漪：水窪中心（212,328）平移到冰塊底點（200,320），融出的水與縮到最小的冰塊在同一點 */}
+              {/* 水面：水窪中心（212,328）平移到冰塊底點（200,320），融出的水與縮到最小的冰塊在同一點 */}
               <g transform="translate(-12 -8)">
               <m.g style={{ opacity: waterOpacity }}>
                 {/* 水窪以冰塊底點 (200,320) 為中心擴張／收縮，讓水始終從冰塊底下流出、不與冰塊分離 */}
@@ -408,23 +407,6 @@ export default function StatesScroll({
                   {/* 水面反光 */}
                   <path d="M128 312 q40 -10 82 -6" fill="none" stroke="#f0f9ff" strokeOpacity=".55" strokeWidth="3" strokeLinecap="round" />
                   <path d="M286 352 q20 4 40 2" fill="none" stroke="#f0f9ff" strokeOpacity=".3" strokeWidth="2" strokeLinecap="round" />
-                </m.g>
-                <m.g style={{ opacity: rippleOpacity }} clipPath="url(#puddle-clip)">
-                  {[0, 1, 2].map((i) => (
-                    <ellipse
-                      key={i}
-                      cx="212"
-                      cy="328"
-                      rx="150"
-                      ry="30"
-                      fill="none"
-                      stroke="#e0f2fe"
-                      strokeOpacity=".7"
-                      strokeWidth="1.2"
-                      className="states-ripple"
-                      style={{ animationDelay: `${i * 1.1}s` }}
-                    />
-                  ))}
                 </m.g>
               </m.g>
               </g>

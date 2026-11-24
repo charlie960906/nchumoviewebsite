@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, m } from "motion/react";
 import { RefreshCw } from "lucide-react";
 import { relationLabels } from "@/lib/content";
+import { track } from "@/lib/track";
 import ShareCardButton from "./ShareCardButton";
 
 const MAX = 3;
@@ -86,7 +87,7 @@ export default function Labels() {
             </fieldset>
           </li>
         </ol>
-        <button type="button" disabled={picked.length === 0} onClick={() => setDone(true)} className="btn btn-primary mt-8">
+        <button type="button" disabled={picked.length === 0} onClick={() => (setDone(true), track("interactive_play", { game: "labels", action: "complete", item: rel }))} className="btn btn-primary mt-8">
           生成關係名片
         </button>
       </div>
@@ -116,6 +117,7 @@ export default function Labels() {
               </div>
               <div className="mt-4 flex flex-wrap items-start gap-3">
                 <ShareCardButton
+                  game="labels"
                   filename="ripple-relation-card.png"
                   spec={{ kicker: `關係名片・${rel}`, lines: [`我佮${name}`, ...picked.map((p) => `「${p}」`)], sub: "展區「佮」— 泅：親情與友情" }}
                 />

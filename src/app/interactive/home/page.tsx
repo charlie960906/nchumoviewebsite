@@ -7,7 +7,7 @@ import HomeSymbols from "@/components/play/HomeSymbols";
 
 export const metadata: Metadata = pageMeta({
   title: "拼湊家的符號｜展區「佗」互動小遊戲",
-  description: "興大國際星空電影節展區「佗」線上小遊戲：從十二個符號中挑選四個，拼湊出你心中「家」的樣子，並生成可分享的圖片。",
+  description: "中興星空電影節展區「佗」線上小遊戲：從十二個符號中挑選四個，拼湊出你心中「家」的樣子，並生成可分享的圖片。",
   path: "/interactive/home",
 });
 

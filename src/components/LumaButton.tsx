@@ -45,6 +45,8 @@ export default function LumaButton({
       className={`btn ${variant === "primary" ? "btn-primary" : "btn-ghost"} ${size === "sm" ? "btn-sm" : ""} ${className}`}
       data-luma-action="checkout"
       data-luma-event-id={site.luma.eventId}
+      data-track="luma_open"
+      data-track-source={source}
     >
       {icon && <BellRing aria-hidden size={size === "sm" ? 15 : 18} />}
       {children}

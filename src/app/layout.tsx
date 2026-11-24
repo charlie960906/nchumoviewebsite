@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono, Noto_Sans_TC, Noto_Serif_TC } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { site } from "@/lib/site";
@@ -11,12 +11,16 @@ import JsonLd from "@/components/JsonLd";
 import RevealObserver from "@/components/RevealObserver";
 import ScrollToTop from "@/components/ScrollToTop";
 import MotionProvider from "@/components/MotionProvider";
+import TrackClicks from "@/components/TrackClicks";
+import Splash, { SplashHeadScript } from "@/components/Splash";
 
 const GTM_ID = "GTM-TB3CFNB2";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-const notoSans = Noto_Sans_TC({ weight: ["400", "500", "700"], variable: "--font-noto-sans", display: "swap", preload: false });
-const notoSerif = Noto_Serif_TC({ weight: ["500", "700", "900"], variable: "--font-noto-serif", display: "swap", preload: false });
+// 中文字型（Noto Sans／Serif TC）改由 Google Fonts 非同步載入：
+// next/font 會把數百個 unicode-range 區段打包成約 600 KB 的阻斷式 CSS，手機首屏會被拖慢好幾秒。
+const CJK_FONTS =
+  "https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@500;700;900&display=swap";
 const jbMono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-jb-mono", display: "swap" });
 
 export const metadata: Metadata = {
@@ -64,11 +68,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="zh-Hant-TW"
-      className={`${inter.variable} ${notoSans.variable} ${notoSerif.variable} ${jbMono.variable}`}
+      className={`${inter.variable} ${jbMono.variable}`}
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
       <head>
+        <SplashHeadScript fontsHref={CJK_FONTS} />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <script
           dangerouslySetInnerHTML={{
             __html:
@@ -86,6 +93,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script async src={`https://www.googletagmanager.com/gtm.js?id=${GTM_ID}`} />
       </head>
       <body className="min-h-dvh flex flex-col">
+        <Splash />
         {/* GTM noscript 備援 */}
         <noscript>
           <iframe
@@ -110,6 +118,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </MotionProvider>
         <ScrollToTop />
         <RevealObserver />
+        <TrackClicks />
         <JsonLd data={[organizationLd, producerLd, websiteLd]} />
         {/* Luma Checkout：站內彈窗訂閱活動提醒，無需跳轉 */}
         <Script id="luma-checkout" src={site.luma.script} strategy="lazyOnload" />

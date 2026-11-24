@@ -3,11 +3,24 @@
 import { useState } from "react";
 import { Check, Download } from "lucide-react";
 import { renderCard, shareOrDownload, shareText, type CardSpec } from "@/lib/shareCard";
+import { track } from "@/lib/track";
 
-export default function ShareCardButton({ spec, filename, label = "存成限時動態圖" }: { spec: CardSpec; filename: string; label?: string }) {
+export default function ShareCardButton({
+  spec,
+  filename,
+  game,
+  label = "存成限時動態圖",
+}: {
+  spec: CardSpec;
+  filename: string;
+  /** GA4 interactive_play 的 game 參數 */
+  game: string;
+  label?: string;
+}) {
   const [state, setState] = useState<"idle" | "busy" | "done" | "error">("idle");
 
   const run = async () => {
+    track("interactive_play", { game, action: "share_card", item: filename });
     setState("busy");
     try {
       const blob = await renderCard(spec);

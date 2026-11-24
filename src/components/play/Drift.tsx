@@ -6,6 +6,7 @@ import { RefreshCw, Sparkles } from "lucide-react";
 import { drifts, type Drift as DriftT } from "@/lib/content";
 import LumaButton from "@/components/LumaButton";
 import ShareCardButton from "./ShareCardButton";
+import { track } from "@/lib/track";
 
 /** 漂流詞幸運籤：抽取 → 水波擴散 → 揭示籤詩與今日小指引 → 產生分享圖。 */
 export default function Drift({ initialId }: { initialId?: string }) {
@@ -22,6 +23,7 @@ export default function Drift({ initialId }: { initialId?: string }) {
     const pool = drifts.filter((d) => d.id !== last.current);
     const next = pool[Math.floor(Math.random() * pool.length)];
     last.current = next.id;
+    track("interactive_play", { game: "drift", action: "draw", item: next.id });
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     setBusy(true);
     setCur(null);
@@ -80,6 +82,7 @@ export default function Drift({ initialId }: { initialId?: string }) {
                   className="mt-9 flex flex-wrap items-start justify-center gap-3"
                 >
                   <ShareCardButton
+                    game="drift"
                     filename={`ripple-drift-${cur.id}.png`}
                     spec={{ kicker: `漂流詞幸運籤・第 ${cur.id} 籤`, lines: cur.text.split("\n"), footnote: cur.source, sub: cur.fortune }}
                   />

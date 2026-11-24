@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, Bus, Car, Clapperboard, Disc3, MapPin, Sparkles, TrainFront } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Bus, Car, Clapperboard, MapPin, TrainFront } from "lucide-react";
 import { site } from "@/lib/site";
 import { THEME, THEME_CHAR } from "@/lib/theme";
 import { programs } from "@/lib/programs";
@@ -10,6 +10,7 @@ import AddToCalendar from "@/components/AddToCalendar";
 import Schedule from "@/components/Schedule";
 import MapEmbed from "@/components/MapEmbed";
 import Faq from "@/components/Faq";
+import MerchPicker from "@/components/MerchPicker";
 import JsonLd from "@/components/JsonLd";
 import SectionHeading from "@/components/SectionHeading";
 import AsciiKoi from "@/components/AsciiKoi";
@@ -36,14 +37,8 @@ export default function Home() {
           <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-night" />
         </div>
         <div className="container-x relative flex flex-col items-center py-[clamp(1rem,4svh,3rem)] text-center">
-          <p className="eyebrow reveal">
-            <time dateTime="2027-03-19">2027.03.19</time> — <time dateTime="2027-03-20">03.20</time>
-            <span className="mx-2 text-dim">/</span>
-            國立中興大學
-          </p>
-
-          <h1 className="reveal mt-[clamp(0.5rem,2svh,1.25rem)] font-serif font-bold" style={d(70)}>
-            <span className="block text-lg tracking-[0.2em] text-mist md:text-2xl">2027 興大國際星空電影節</span>
+          <h1 className="reveal-now font-serif font-bold" style={d(70)}>
+            <span className="block text-lg tracking-[0.2em] text-mist md:text-2xl">2027 中興星空電影節</span>
             <span className="mt-[clamp(0.25rem,1svh,0.75rem)] flex items-end justify-center gap-4 md:gap-6">
               <span className="text-[min(104px,14svh)] leading-[0.95] text-moon md:text-[min(168px,18svh)]">
                 {THEME_CHAR}
@@ -52,8 +47,15 @@ export default function Home() {
             </span>
           </h1>
 
-          <p className="prose-poem reveal mt-[clamp(0.5rem,2.5svh,1.5rem)] text-xl text-moon md:text-2xl" style={d(140)}>
+          <p className="prose-poem reveal-now mt-[clamp(0.5rem,2.5svh,1.5rem)] text-xl text-moon md:text-2xl" style={d(140)}>
             {site.tagline}
+          </p>
+
+          <p
+            className="reveal-now mt-[clamp(1rem,3svh,2rem)] font-mono text-xl tracking-[0.18em] text-glow md:text-3xl"
+            style={d(210)}
+          >
+            <time dateTime="2027-03-19">03.19</time> — <time dateTime="2027-03-20">03.20</time>
           </p>
         </div>
       </section>
@@ -103,7 +105,7 @@ export default function Home() {
             <article key={p.slug} className="card card-hover reveal relative flex flex-col overflow-hidden p-6 md:p-8" style={d(i * 90)}>
               <p className="relative flex flex-wrap items-center justify-between gap-2 font-mono text-[13px] sm:text-sm">
                 <span className="tracking-[0.2em] text-glow">
-                  NIGHT {i + 1} / {films.length}
+                  NIGHT {i + 1}
                 </span>
                 <span className="text-shore">
                   {p.facts[1].value}　{p.facts[2].value}
@@ -120,11 +122,12 @@ export default function Home() {
               <p className="relative mt-3 text-sm text-dim">導演 {p.facts[0].value}</p>
               <p className="relative mt-4 flex-1 text-mist/90">{p.body[0]}</p>
               <div className="relative z-10 mt-6 flex flex-wrap items-center gap-3">
-                <LumaButton size="sm" source={`home-${p.slug}`}>
-                  提醒我這一場
-                </LumaButton>
-                <Link href={`/program/${p.slug}`} className="btn btn-ghost btn-sm">
-                  場次詳情
+                <Link
+                  href={`/program/${p.slug}`}
+                  className="group inline-flex min-h-11 items-center gap-1.5 border-b-2 border-glow font-bold text-glow hover:border-moon hover:text-moon"
+                >
+                  了解更多
+                  <ArrowRight aria-hidden size={17} className="transition-transform duration-200 group-hover:translate-x-1" />
                 </Link>
               </div>
             </article>
@@ -205,7 +208,7 @@ export default function Home() {
               <ul className="mt-4 grid divide-y divide-white/5 text-sm">
                 {[
                   { Icon: Bus, label: "公車", text: "搭乘行經「中興大學」站的市區公車" },
-                  { Icon: TrainFront, label: "火車", text: "臺中車站或大慶車站轉乘公車／計程車" },
+                  { Icon: TrainFront, label: "火車", text: "搭至五權車站，步行或轉乘公車／計程車" },
                   { Icon: Car, label: "開車", text: "校內車位有限，建議多利用大眾運輸" },
                 ].map(({ Icon, label, text }) => (
                   <li key={label} className="flex items-start gap-3 py-2 first:pt-0 last:pb-0">
@@ -226,49 +229,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ───────── 線上互動館 ───────── */}
-      <section aria-labelledby="play-h" className="container-x mt-20 md:mt-28 lg:mt-32">
-        <SectionHeading id="play-h" index={7} eyebrow="Online Pavilion" title="數位線上互動館" more={{ href: "/interactive", label: "全部互動" }} />
-        <div className="mt-8 grid gap-5 lg:grid-cols-[1.4fr_1fr]">
-          <Link href="/interactive/echoes" className="card card-hover reveal group relative block overflow-hidden p-7 md:p-10">
-            <div aria-hidden className="absolute -right-36 top-1/2 h-72 w-72 -translate-y-1/2 opacity-40 sm:-right-24 sm:h-80 sm:w-80 sm:opacity-100 md:-right-10">
-              <div className="h-full w-full animate-spin-slow rounded-full bg-[repeating-radial-gradient(circle,#0a0f18_0,#0a0f18_2px,#161f2e_3px,#0a0f18_4px)]">
-                <div className="absolute inset-[34%] rounded-full bg-gradient-to-br from-glow to-tide" />
-                <div className="absolute inset-[48%] rounded-full bg-night" />
-              </div>
-            </div>
-            <div className="relative max-w-sm">
-              <Disc3 aria-hidden className="text-glow" />
-              <h3 className="mt-4 font-serif text-3xl font-bold">波紋的音像</h3>
-              <p className="eyebrow mt-1 !text-dim">Echoes of Home</p>
-              <p className="mt-4 text-mist/90">
-                每位工作人員選了一首歌、寫了一篇故事，化成一張黑膠。轉動圓環，抽出屬於某個人的情感波紋。
-              </p>
-              <span className="mt-6 inline-flex items-center gap-1 font-bold text-glow">
-                開始轉動 <ArrowRight aria-hidden size={17} className="transition-transform duration-200 group-hover:translate-x-1" />
-              </span>
-            </div>
-          </Link>
-          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-1">
-            {[
-              { href: "/interactive/drift", icon: Sparkles, t: "漂流詞幸運籤", s: "抽一句今天的漂流詞，存成限時動態分享圖。" },
-              { href: "/interactive/quiz", icon: Clapperboard, t: "心理測驗", s: "你是《美國女孩》裡的誰？六題找到你的展區。" },
-            ].map((c, i) => (
-              <Link key={c.href} href={c.href} className="card card-hover reveal group block p-6" style={d(80 + i * 70)}>
-                <c.icon aria-hidden className="text-glow" />
-                <h3 className="mt-3 text-xl font-bold">{c.t}</h3>
-                <p className="mt-1 text-sm text-mist/85">{c.s}</p>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ───────── FAQ ───────── */}
       <section aria-labelledby="faq-h" className="container-x mt-20 md:mt-28 lg:mt-32">
-        <SectionHeading id="faq-h" index={8} eyebrow="FAQ" title="常見問題" />
-        <div className="mt-8 max-w-3xl">
+        <SectionHeading id="faq-h" index={7} eyebrow="FAQ" title="常見問題" />
+        <div className="mt-8 grid gap-10 lg:grid-cols-[1.6fr_1fr] lg:gap-12">
           <Faq />
+          <MerchPicker />
         </div>
       </section>
 

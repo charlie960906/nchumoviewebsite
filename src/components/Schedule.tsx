@@ -1,127 +1,128 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { m } from "motion/react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { m, useReducedMotion } from "motion/react";
 import { CalendarPlus, ChevronRight } from "lucide-react";
-import { categories, days, sessions, type Category, type Session } from "@/lib/schedule";
+import { days, sessions, type Session } from "@/lib/schedule";
 import { googleCalUrl, sessionEvent } from "@/lib/calendar";
-import LumaButton from "./LumaButton";
-
-const filterable: Category[] = ["film", "talk", "show", "game", "market"];
+import SplitFlap from "./SplitFlap";
 
 /**
  * 活動時間表：以真正的 HTML <table> 呈現（利於 SEO／AEO 與螢幕閱讀器）。
- * 篩選只是切換列的顯示，兩天的完整資料始終在 DOM 中。
+ * 日期切換放在表頭「活動」那一列右側；切換只是切換顯示，兩天的完整資料始終在 DOM 中。
  */
-export default function Schedule({ showFilters = true, compact = false }: { showFilters?: boolean; compact?: boolean }) {
+export default function Schedule({ compact = false }: { compact?: boolean }) {
   const [day, setDay] = useState<Session["day"]>("0319");
-  const [cat, setCat] = useState<Category | "all">("all");
+  // 第一次渲染不播進場動畫（避免 SSR 內容先隱形），使用者切換日期後才播
+  const [switched, setSwitched] = useState(false);
+  const reduce = useReducedMotion();
+  const current = days.find((d) => d.key === day)!;
 
-  const counts = useMemo(() => {
-    const c: Record<string, number> = {};
-    for (const s of sessions) c[s.category] = (c[s.category] ?? 0) + 1;
-    return c;
+  // Tabs sliding（transitions.dev）：一顆膠囊依選中按鈕的 offsetLeft／offsetWidth 定位，
+  // 由 CSS transition 在新舊位置間滑動；首次與 resize 時不帶動畫直接定位。
+  const pillRef = useRef<HTMLSpanElement>(null);
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [pillReady, setPillReady] = useState(false);
+  const movePill = (key: string, animate: boolean) => {
+    const tab = tabRefs.current[key];
+    const pill = pillRef.current;
+    if (!tab || !pill) return;
+    const place = () => {
+      pill.style.transform = `translateX(${tab.offsetLeft}px)`;
+      pill.style.width = `${tab.offsetWidth}px`;
+    };
+    if (animate) return place();
+    pill.style.transition = "none";
+    place();
+    void pill.offsetWidth;
+    pill.style.transition = "";
+  };
+  useLayoutEffect(() => {
+    movePill(day, false);
+    setPillReady(true);
+    const onResize = () => movePill(day, false);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div role="tablist" aria-label="選擇日期" className="card flex w-full gap-1 p-1 sm:inline-flex sm:w-auto">
-          {days.map((d, i) => {
-            const active = day === d.key;
-            return (
-              <button
-                key={d.key}
-                role="tab"
-                id={`tab-${d.key}`}
-                aria-selected={active}
-                aria-controls={`panel-${d.key}`}
-                onClick={() => setDay(d.key)}
-                className={`relative flex-1 rounded-md px-5 py-2.5 text-left sm:flex-none sm:px-7 sm:py-3 transition-colors duration-200 ${active ? "text-night" : "text-mist hover:text-glow"}`}
-              >
-                {active && (
-                  <m.span
-                    layoutId="day-pill"
-                    className="absolute inset-0 rounded-md bg-glow"
-                    transition={{ type: "spring", stiffness: 400, damping: 34 }}
-                  />
-                )}
-                <span className="relative flex flex-col leading-tight">
-                  <span className="font-mono text-xl font-bold tabular-nums sm:text-[26px]">{d.date.slice(5).replace("-", ".")}</span>
-                  <span className="mt-1 text-xs font-medium">
-                    週{d.weekday}・第{i === 0 ? "一" : "二"}夜
+      <div className="card overflow-hidden">
+        <table className="schedule-table">
+          <caption className="sr-only">{current.full} 活動時間表</caption>
+          <thead>
+            <tr>
+              <th scope="col" className="w-[5.75rem] pl-4 sm:w-44 sm:pl-5">
+                時間
+              </th>
+              {/* 「活動」標題與日期切換同一列：日期切換靠右，橫跨活動欄與操作欄 */}
+              <th scope="col" colSpan={compact ? 1 : 2} className="pr-3 sm:pr-5">
+                <span className="flex items-center justify-between gap-3">
+                  <span>活動</span>
+                  <span role="group" aria-label="選擇日期" className="t-tabs relative flex gap-1 rounded-lg bg-white/[0.04] p-1 tracking-normal">
+                    <span ref={pillRef} aria-hidden className="t-tabs-pill rounded-md bg-glow" />
+                    {days.map((d, i) => {
+                      const active = day === d.key;
+                      return (
+                        <button
+                          key={d.key}
+                          type="button"
+                          ref={(el) => {
+                            tabRefs.current[d.key] = el;
+                          }}
+                          aria-pressed={active}
+                          onClick={() => {
+                            if (active) return;
+                            setSwitched(true);
+                            setDay(d.key);
+                            movePill(d.key, true);
+                          }}
+                          className={`t-tab relative z-[1] rounded-md px-2.5 py-1.5 sm:px-3.5 ${active ? "text-night" : "text-mist hover:text-glow"} ${active && !pillReady ? "bg-glow" : ""}`}
+                        >
+                          <span className="relative flex items-baseline gap-1.5 whitespace-nowrap">
+                            <span className="font-mono text-sm font-bold tabular-nums">{d.date.slice(5).replace("-", ".")}</span>
+                            <span className="hidden text-[11px] font-medium sm:inline">
+                              週{d.weekday}・第{i === 0 ? "一" : "二"}夜
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })}
                   </span>
                 </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {showFilters && (
-          <div role="group" aria-label="依活動類型篩選" className="flex flex-wrap gap-2">
-            {(["all", ...filterable] as const).map((k) => {
-              const active = cat === k;
-              return (
-                <button
-                  key={k}
-                  aria-pressed={active}
-                  onClick={() => setCat(k)}
-                  className={`tag min-h-9 cursor-pointer !px-3 transition-colors duration-200 ${active ? "tag-glow" : "hover:border-glow/60"}`}
-                >
-                  {k !== "all" && <span aria-hidden className="h-2 w-2 rounded-full" style={{ background: categories[k].dot }} />}
-                  {k === "all" ? "全部" : categories[k].label}
-                  {k !== "all" && <span className="font-mono text-[11px] text-dim">{counts[k]}</span>}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {days.map((d) => {
-        const rows = sessions.filter((s) => s.day === d.key);
-        const shown = rows.filter((s) => cat === "all" || s.category === cat);
-        return (
-          <div key={d.key} id={`panel-${d.key}`} role="tabpanel" aria-labelledby={`tab-${d.key}`} hidden={day !== d.key} className="mt-6">
-            <div className="card overflow-hidden">
-              <table className="schedule-table">
-                <caption className="sr-only">
-                  {d.full} 活動時間表
-                </caption>
-                <thead>
-                  <tr>
-                    <th scope="col" className="w-[5.75rem] pl-4 sm:w-40 sm:pl-5">
-                      時間
-                    </th>
-                    <th scope="col">活動</th>
-                    <th scope="col" className="hidden w-32 md:table-cell">
-                      類型
-                    </th>
-                    {!compact && (
-                      <th scope="col" className="w-12 pr-3 text-right sm:w-44 sm:pr-5">
-                        <span className="sr-only">操作</span>
-                      </th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((s) => {
-                    const c = categories[s.category];
-                    const visible = cat === "all" || s.category === cat;
+              </th>
+            </tr>
+          </thead>
+          {/* 兩天的資料都留在 DOM（利於 SEO），只切換顯示；切到哪天就重新掛載那天的 tbody，時間欄播放翻頁板動畫 */}
+          {days.map((d) => {
+            const rows = sessions.filter((s) => s.day === d.key);
+            const active = day === d.key;
+            return (
+              <tbody key={`${d.key}-${active}`} id={`panel-${d.key}`} hidden={!active}>
+                  {rows.map((s, i) => {
+                    // 切換日期時，時間以機械翻頁板方式翻到新的數字
+                    const flapIn = active && switched && !reduce;
                     return (
-                      <tr key={s.id} hidden={!visible} className={s.category === "film" ? "bg-shore/[0.07]" : ""}>
+                      <m.tr
+                        key={s.id}
+                        className={s.category === "film" ? "bg-shore/[0.07]" : ""}
+                        initial={flapIn ? { opacity: 0 } : false}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.18, delay: i * 0.035 }}
+                      >
                         <td className={`pl-4 font-mono text-sm tabular-nums sm:pl-5 ${s.category === "film" ? "font-bold text-shore" : "text-mist"}`}>
                           {/* 手機：開始／結束上下排，結束時間淡一階；平板以上同一行 */}
-                          <time dateTime={`${d.date}T${s.start}+08:00`}>{s.start}</time>
+                          <time dateTime={`${d.date}T${s.start}+08:00`}>
+                            <SplitFlap text={s.start} animate={flapIn} delay={i * 60} />
+                          </time>
                           <span className="hidden text-dim sm:inline"> – </span>
                           <time dateTime={`${d.date}T${s.end}+08:00`} className="block text-xs text-dim sm:inline sm:text-sm sm:text-mist">
-                            {s.end}
+                            <SplitFlap text={s.end} animate={flapIn} delay={i * 60 + 120} />
                           </time>
                         </td>
                         <th scope="row" className="font-normal">
                           <span className="flex items-start gap-2.5">
-                          <span aria-hidden className="mt-[0.55rem] h-2 w-2 shrink-0 rounded-full md:hidden" style={{ background: c.dot }} />
                           <span className="min-w-0">
                           <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                             {s.program ? (
@@ -138,14 +139,8 @@ export default function Schedule({ showFilters = true, compact = false }: { show
                           </span>
                           </span>
                         </th>
-                        <td className="hidden md:table-cell">
-                          <span className="tag">
-                            <span aria-hidden className="h-2 w-2 rounded-full" style={{ background: c.dot }} />
-                            {c.label}
-                          </span>
-                        </td>
                         {!compact && (
-                          <td className="pr-3 text-right sm:pr-5">
+                          <td className="w-12 pr-3 text-right sm:w-16 sm:pr-5">
                             {s.category !== "closing" && (
                               <span className="inline-flex items-center justify-end gap-2">
                                 <a
@@ -158,29 +153,22 @@ export default function Schedule({ showFilters = true, compact = false }: { show
                                 >
                                   <CalendarPlus aria-hidden size={17} />
                                 </a>
-                                {(s.category === "film" || s.category === "talk") && (
-                                  <LumaButton size="sm" icon={false} source={`schedule-${s.id}`} className="hidden sm:inline-flex">
-                                    提醒我
-                                  </LumaButton>
-                                )}
                               </span>
                             )}
                           </td>
                         )}
-                      </tr>
+                      </m.tr>
                     );
                   })}
-                </tbody>
-              </table>
-              {shown.length === 0 && <p className="px-5 py-8 text-center text-sm text-dim">這一天沒有符合的場次。</p>}
-            </div>
-          </div>
-        );
-      })}
+              </tbody>
+            );
+          })}
+        </table>
+      </div>
 
       <p className="mt-4 text-sm text-dim">
         標示「待定」的場次仍在安排中，確定後會同步更新本頁與 Luma 活動頁。
-        <a href="/calendar/all.ics" download className="ml-1 text-glow underline-offset-4 hover:underline">
+        <a href="/calendar/all.ics" download data-track="calendar_add" data-track-method="ics" data-track-item="all" className="ml-1 text-glow underline-offset-4 hover:underline">
           下載完整時間表（.ics）
         </a>
       </p>

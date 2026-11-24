@@ -7,7 +7,7 @@ import Labels from "@/components/play/Labels";
 
 export const metadata: Metadata = pageMeta({
   title: "貼標籤小遊戲｜生成你們的關係名片",
-  description: "興大國際星空電影節展區「佮」線上小遊戲：想一個人，為你們的關係貼上三張標籤，生成可分享的關係名片。",
+  description: "中興星空電影節展區「佮」線上小遊戲：想一個人，為你們的關係貼上三張標籤，生成可分享的關係名片。",
   path: "/interactive/labels",
 });
 

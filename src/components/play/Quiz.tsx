@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { track } from "@/lib/track";
 import { AnimatePresence, m } from "motion/react";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import { quiz, type QuizResultKey } from "@/lib/content";
@@ -37,6 +38,11 @@ export default function Quiz() {
     return { key, ...quiz.results[key] };
   })();
 
+  const resultKey = result?.key;
+  useEffect(() => {
+    if (resultKey) track("interactive_play", { game: "quiz", action: "complete", item: resultKey });
+  }, [resultKey]);
+
   return (
     <div className="card relative overflow-hidden">
       {/* 進度 */}
@@ -59,7 +65,7 @@ export default function Quiz() {
                 <p className="eyebrow">展區「傍」・心理測驗</p>
                 <h2 className="mt-4 font-serif text-[26px] font-bold sm:text-3xl md:text-4xl">{quiz.title}</h2>
                 <p className="mx-auto mt-4 max-w-md text-mist/90">{quiz.intro}</p>
-                <button type="button" onClick={() => (setStep(0), focusHead())} className="btn btn-primary mt-8 !px-8 !text-base">
+                <button type="button" onClick={() => (setStep(0), focusHead(), track("interactive_play", { game: "quiz", action: "start" }))} className="btn btn-primary mt-8 !px-8 !text-base">
                   開始測驗
                 </button>
                 <p className="mt-4 text-xs text-dim">共 {total} 題，約 1 分鐘</p>
@@ -126,6 +132,7 @@ export default function Quiz() {
                 </p>
                 <div className="mt-8 flex flex-wrap items-start gap-3">
                   <ShareCardButton
+                    game="quiz"
                     filename={`ripple-quiz-${result.key}.png`}
                     spec={{ kicker: "你是《美國女孩》裡的誰？", lines: [result.name, result.tag], sub: result.zone, accent: result.color }}
                   />

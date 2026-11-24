@@ -140,7 +140,7 @@ export async function renderCard(spec: CardSpec): Promise<Blob> {
   g.fillRect(W / 2 - 60, H - 330, 120, 2);
   g.fillStyle = "#EAF0F7";
   g.font = `700 44px ${serif}`;
-  g.fillText(`2027 興大國際星空電影節「${THEME}」`, W / 2, H - 260);
+  g.fillText(`2027 中興星空電影節「${THEME}」`, W / 2, H - 260);
   g.fillStyle = "#8B95A7";
   g.font = `400 34px ${sans}`;
   g.fillText("2027.03.19 – 03.20｜國立中興大學", W / 2, H - 200);

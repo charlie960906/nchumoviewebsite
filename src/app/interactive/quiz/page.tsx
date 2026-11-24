@@ -7,7 +7,7 @@ import Quiz from "@/components/play/Quiz";
 
 export const metadata: Metadata = pageMeta({
   title: "心理測驗｜你是《美國女孩》裡的誰？",
-  description: "興大國際星空電影節心理測驗《美國女孩》篇：六個關於家的問題，測出你最像芳儀、媽媽莉莉、爸爸還是妹妹芳安，並推薦適合你的現場展區。",
+  description: "中興星空電影節心理測驗《美國女孩》篇：六個關於家的問題，測出你最像芳儀、媽媽莉莉、爸爸還是妹妹芳安，並推薦適合你的現場展區。",
   path: "/interactive/quiz",
 });
 

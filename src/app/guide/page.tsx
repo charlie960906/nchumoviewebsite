@@ -11,7 +11,7 @@ import JsonLd from "@/components/JsonLd";
 
 export const metadata: Metadata = pageMeta({
   title: "現場指引｜地圖、交通、停車與無障礙",
-  description: "2027 興大國際星空電影節現場指引：國立中興大學（臺中市南區興大路 145 號）場地互動地圖、大眾運輸與停車資訊、無障礙服務、Water Bar 與 22 個市集攤位。",
+  description: "2027 中興星空電影節現場指引：國立中興大學（臺中市南區興大路 145 號）場地互動地圖、大眾運輸與停車資訊、無障礙服務、Water Bar 與 22 個市集攤位。",
   path: "/guide",
 });
 
@@ -26,7 +26,7 @@ const transport = [
   {
     icon: TrainFront,
     title: "火車／高鐵",
-    items: ["臺鐵：於臺中車站或大慶車站下車，轉乘公車或計程車。", "高鐵：於高鐵臺中站下車，轉乘臺鐵至大慶或臺中車站，或直接搭乘計程車。"],
+    items: ["臺鐵：於五權車站下車，步行或轉乘公車、計程車前往中興大學。", "高鐵：於高鐵臺中站下車，至新烏日站轉乘臺鐵至五權車站，或直接搭乘計程車。"],
   },
   {
     icon: Bike,
@@ -140,24 +140,6 @@ export default function GuidePage() {
             </article>
           ))}
         </div>
-      </section>
-
-      <section aria-labelledby="flow-h" className="container-x mt-24">
-        <SectionHeading id="flow-h" eyebrow="Suggested Route" title="建議參觀動線" />
-        <ol className="mt-8 grid gap-4 md:grid-cols-4">
-          {[
-            ["抵達", "不需報名或報到，直接入場；有問題可先到服務台詢問。"],
-            ["逛市集與展區", "先走左帳篷「泅」，再到右帳篷「涯」，順路逛市集。"],
-            ["草地表演與遊戲", "下午時段有快閃遊戲與表演演出，可以邊看邊補水。"],
-            ["星空放映", "18:30 前到放映區找位置，鋪好野餐墊等天黑。"],
-          ].map(([t, s], i) => (
-            <li key={t} className="card reveal p-5" style={d(i * 70)}>
-              <span className="font-mono text-3xl font-bold text-glow">{String(i + 1).padStart(2, "0")}</span>
-              <h3 className="mt-2 font-bold">{t}</h3>
-              <p className="mt-1 text-sm text-mist/85">{s}</p>
-            </li>
-          ))}
-        </ol>
       </section>
     </>
   );

@@ -97,38 +97,45 @@ export default function Footer() {
         </nav>
       </div>
 
-      {/* 主辦與執行單位 */}
+      {/* 指導與執行單位 */}
       <div className="border-t border-white/10">
-        <ul className="container-x flex flex-wrap items-center gap-x-12 gap-y-8 py-8">
-          {site.organizers.map((o) => {
-            const body = (
-              <>
-                <Image
-                  src={o.logo}
-                  alt=""
-                  width={o.logoW}
-                  height={o.logoH}
-                  className="h-10 w-auto max-w-[11rem] shrink-0 object-contain object-left"
-                />
-                <span className="grid">
-                  <span className="text-xs text-dim">{o.role}</span>
-                  <span className="text-sm text-mist transition-colors group-hover:text-glow">{o.name}</span>
-                </span>
-              </>
-            );
-            return (
-              <li key={o.name}>
-                {o.url ? (
-                  <a href={o.url} target="_blank" rel="noopener noreferrer" className="group flex items-center gap-4">
-                    {body}
-                  </a>
-                ) : (
-                  <div className="flex items-center gap-4">{body}</div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+        <div className="container-x flex flex-wrap gap-x-16 gap-y-8 py-8">
+          {[
+            { label: "指導單位", list: site.advisors },
+            { label: "執行單位", list: [site.producer] },
+          ].map((g) => (
+            <div key={g.label}>
+              <p className="text-xs tracking-widest text-dim">{g.label}</p>
+              <ul className="mt-3 flex flex-wrap items-center gap-x-8 gap-y-4">
+                {g.list.map((o) => {
+                  const body = (
+                    <>
+                      <Image
+                        src={o.logo}
+                        alt=""
+                        width={o.logoW}
+                        height={o.logoH}
+                        className="h-10 w-auto max-w-[11rem] shrink-0 object-contain object-left"
+                      />
+                      <span className="text-sm text-mist transition-colors group-hover:text-glow">{o.name}</span>
+                    </>
+                  );
+                  return (
+                    <li key={o.name}>
+                      {o.url ? (
+                        <a href={o.url} target="_blank" rel="noopener noreferrer" className="group flex items-center gap-3">
+                          {body}
+                        </a>
+                      ) : (
+                        <div className="flex items-center gap-3">{body}</div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="border-t border-white/10">
@@ -144,6 +151,10 @@ export default function Footer() {
             </span>
           </p>
           <div className="flex items-center gap-5">
+            {/* GA4 服務條款要求公開隱私權政策；本站的統計由 HYJdevelop 管理 */}
+            <a href="https://www.hyjdevelop.com/privacy" target="_blank" rel="noopener" className={linkClass}>
+              隱私權政策
+            </a>
             <Link href="/update" className={linkClass}>
               Update
             </Link>

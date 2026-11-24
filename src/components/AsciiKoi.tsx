@@ -369,6 +369,14 @@ export default function AsciiKoi({ className = "" }: { className?: string }) {
     if (!ctx || !octx) return;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // 告訴 <head> 的載入閘門：魚已經畫出第一格（Splash.tsx）
+    let announced = false;
+    const announce = () => {
+      if (announced) return;
+      announced = true;
+      (window as unknown as { __koiReady?: boolean }).__koiReady = true;
+      window.dispatchEvent(new Event("koi-ready"));
+    };
     let cell = 8;
     let cols = 0;
     let rows = 0;
@@ -928,6 +936,7 @@ export default function AsciiKoi({ className = "" }: { className?: string }) {
       for (let i = 0; i < 60; i++) step(1 / 30);
       ripples.length = 0;
       render(0);
+      announce();
       return () => ro.disconnect();
     }
 
@@ -939,6 +948,7 @@ export default function AsciiKoi({ className = "" }: { className?: string }) {
       last = now;
       step(dt);
       render(now / 1000);
+      announce();
       raf = requestAnimationFrame(loop);
     };
     const start = () => {
@@ -982,5 +992,5 @@ export default function AsciiKoi({ className = "" }: { className?: string }) {
     };
   }, []);
 
-  return <canvas ref={ref} aria-hidden className={`pointer-events-none block h-full w-full ${className}`} />;
+  return <canvas ref={ref} data-koi aria-hidden className={`pointer-events-none block h-full w-full ${className}`} />;
 }

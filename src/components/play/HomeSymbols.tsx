@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { track } from "@/lib/track";
 import { AnimatePresence, m } from "motion/react";
 import { RefreshCw } from "lucide-react";
 import { homeSymbols } from "@/lib/content";
@@ -24,6 +25,9 @@ export default function HomeSymbols() {
 
   const chosen = picked.map((id) => homeSymbols.find((s) => s.id === id)!);
   const complete = chosen.length === MAX;
+  useEffect(() => {
+    if (complete) track("interactive_play", { game: "home", action: "complete" });
+  }, [complete]);
   const sentence = complete
     ? `我的家，是${chosen
         .slice(0, 3)
@@ -73,6 +77,7 @@ export default function HomeSymbols() {
               <p className="prose-poem text-lg text-moon">{sentence}</p>
               <div className="mt-5 flex flex-wrap items-start justify-center gap-3">
                 <ShareCardButton
+                  game="home"
                   filename="ripple-home-crest.png"
                   spec={{
                     kicker: "拼湊家的符號",

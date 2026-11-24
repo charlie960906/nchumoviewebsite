@@ -4,23 +4,54 @@ import { THEME, THEME_CHAR } from "./theme";
  * 全站單一資料來源：電影節名稱、時間、地點、主辦與 Luma 設定。
  * 之後資訊有更動（例如講座確定、場地公布），只需要改這裡。
  */
+const nchu = {
+  role: "指導單位",
+  name: "國立中興大學",
+  nameEn: "National Chung Hsing University",
+  url: "https://www.nchu.edu.tw/",
+  logo: "/brand/nchu.png",
+  logoW: 854,
+  logoH: 201,
+};
+
+const oia = {
+  role: "指導單位",
+  name: "國立中興大學國際事務處",
+  nameEn: "Office of International Affairs, NCHU",
+  url: "https://www.oia.nchu.edu.tw/",
+  logo: "/brand/oia.png",
+  logoW: 900,
+  logoH: 185,
+};
+
+const io = {
+  role: "策劃執行",
+  name: "興意點 Intuitive Observer",
+  nameEn: "Intuitive Observer",
+  url: "",
+  logo: "/brand/intuitive-observer.png",
+  logoW: 251,
+  logoH: 235,
+};
+
 export const site = {
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://nchufilmfestival.ripple.hyjdevelop.com").replace(/\/$/, ""),
   year: 2027,
   themeChar: THEME_CHAR,
   themeEn: "Ripple",
-  name: "2027 興大國際星空電影節",
-  nameEn: "NCHU International Starlight Film Festival 2027",
-  shortName: "興大星空電影節",
+  name: "2027 中興星空電影節",
+  nameEn: "NCHU Starlight Film Festival 2027",
+  shortName: "中興星空電影節",
   get fullName() {
     return `${this.name}「${THEME}」`;
   },
   tagline: "願你在漂泊裡仍能晤見流光",
   description:
-    `2027 興大國際星空電影節「${THEME}」將於 2027 年 3 月 19 日（五）至 3 月 20 日（六）在國立中興大學登場。兩晚星空下的草地放映、市集展覽、現場演出與映後講座，免費入場、不需報名，當天直接到場即可。`,
+    `2027 中興星空電影節「${THEME}」將於 2027 年 3 月 19 日（五）至 3 月 20 日（六）在國立中興大學登場。兩晚星空下的草地放映、市集展覽、現場演出與映後講座，免費入場、不需報名，當天直接到場即可。`,
   keywords: [
     "興大電影節",
     "星空電影節",
+    "中興星空電影節",
     "興大國際星空電影節",
     `${THEME}`,
     "中興大學電影",
@@ -48,26 +79,12 @@ export const site = {
     eventId: "evt-p8d2JSATmaZcHdi",
     script: "https://embed.lu.ma/checkout-button.js",
   },
-  organizers: [
-    {
-      role: "主辦單位",
-      name: "國立中興大學國際事務處",
-      nameEn: "Office of International Affairs, NCHU",
-      url: "https://www.oia.nchu.edu.tw/",
-      logo: "/brand/oia.png",
-      logoW: 900,
-      logoH: 185,
-    },
-    {
-      role: "策劃執行",
-      name: "興意點 Intuitive Observer",
-      nameEn: "Intuitive Observer",
-      url: "",
-      logo: "/brand/intuitive-observer.png",
-      logoW: 251,
-      logoH: 235,
-    },
-  ],
+  /** 指導單位（關於頁、頁尾放在同一組顯示） */
+  advisors: [nchu, oia],
+  /** 執行單位 */
+  producer: io,
+  /** [0] 國際事務處（JSON-LD organizer）、[1] 執行單位；其他檔案依索引使用 */
+  organizers: [oia, io],
   contact: {
     email: "",
     instagram: "https://www.instagram.com/nchu_intuitive_observer/?hl=zh-tw",
@@ -95,7 +112,18 @@ export const nav: readonly NavItem[] = [
       { href: "/themes/gia", label: "涯 Giâ" },
     ],
   },
-  { href: "/program", label: "活動與市集" },
+  {
+    href: "/program",
+    label: "活動與市集",
+    children: [
+      { href: "/program", label: "活動總覽" },
+      { href: "/program/american-girl", label: "《美國女孩》放映" },
+      { href: "/program/american-girl-talk", label: "映後講座" },
+      { href: "/program/linda-linda-linda", label: "《琳達！琳達！》放映" },
+      { href: "/program/reading-club", label: "讀書會" },
+      { href: "/program/market-exhibition", label: "星空市集與概念展" },
+    ],
+  },
   { href: "/guide", label: "現場指引" },
   {
     href: "/about",

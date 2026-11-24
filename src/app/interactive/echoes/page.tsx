@@ -11,7 +11,7 @@ import JsonLd from "@/components/JsonLd";
 
 export const metadata: Metadata = pageMeta({
   title: "波紋的音像 Echoes of Home｜黑膠互動館",
-  description: "「波紋的音像」是興大國際星空電影節的線上互動體驗：每位工作人員選定一首歌與一篇故事，化為一張黑膠。旋轉圓環、抽出唱片，聆聽音樂並閱讀屬於某個人的情感波紋。",
+  description: "「波紋的音像」是中興星空電影節的線上互動體驗：每位工作人員選定一首歌與一篇故事，化為一張黑膠。旋轉圓環、抽出唱片，聆聽音樂並閱讀屬於某個人的情感波紋。",
   path: "/interactive/echoes",
 });
 

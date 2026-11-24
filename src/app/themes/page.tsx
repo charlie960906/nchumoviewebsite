@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/seo";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import Image from "next/image";
 import { THEME, THEME_CHAR } from "@/lib/theme";
 import { breadcrumbLd } from "@/lib/jsonld";
 import { zoneName, zonePath, zones } from "@/lib/zones";
 import PageHero from "@/components/PageHero";
 import SectionHeading from "@/components/SectionHeading";
-import LumaButton from "@/components/LumaButton";
 import JsonLd from "@/components/JsonLd";
 import StoryJourney from "@/components/StoryJourney";
 
@@ -17,7 +16,21 @@ export const metadata: Metadata = pageMeta({
   path: "/themes",
 });
 
-const d = (ms: number) => ({ "--d": `${ms}ms` }) as React.CSSProperties;
+/** 主視覺（Truth 版）設計論述 */
+const KV_POINTS = [
+  {
+    title: "雋刻流向",
+    body: "水面流動的紋理轉化為線條與軌跡，縫合於具體圖像與後設概念之間，層層擴散、若隱若現；自此水跳脫自然元素的限制，得以承載時間、運送生命。水流經、停留與相遇時會孕育移動的刻痕，是人類向外侵蝕，也向內堆砌的證明。",
+  },
+  {
+    title: "拼洄剪憶",
+    body: "打碎後，重新組構錯落的時空影像，找尋歸屬的時間線被鋪展開來；燈塔、街景、聚落、行走的人群與飛鳥彼此對談。剝裂後漸融，讓現實與記憶揉搓在一起；拾掇又再造，浮泛出土地與故鄉的曖昧輪廓，人類則伏地前行。",
+  },
+  {
+    title: "零彩主義",
+    body: "黑、白、灰隱晦地勾勒模糊情感，試圖熬煉人類原始的質地與層次；當色彩被刻意收斂，水的藍韻成為視線的停滯點，漫流的念想便從碎影中熠熠湧光。或許追逐的狀態難以提取過多的鮮明，人類總在無光也無彩的路上孤注一擲。",
+  },
+];
 
 export default function ThemesPage() {
   return (
@@ -53,91 +66,64 @@ export default function ThemesPage() {
             <p className="reveal mt-5 text-mist/90">
               因為觀者與創作者的情感交會，光影層疊出前行的路。「{THEME_CHAR}」象徵水滴墜落水面泛起微波——人類在異鄉與家鄉之間摸索方向、尋覓歸屬的流動歷程。
             </p>
-            <blockquote className="prose-poem reveal mt-6 border-l-2 border-glow/50 pl-5 text-lg text-moon">
-              願你在漂泊裡仍能晤見流光，在水紋最深層之處，緩慢形成抵達的眼角……以生命為定點，歪扭地繪出一圈圈沒有終點的尋途，落腳於一陣陣深淺互織的漣漪。
-            </blockquote>
+            <figure className="reveal mt-8 border-l-2 border-glow/50 pl-5">
+              <figcaption className="text-sm tracking-[0.2em] text-glow">漣之形 · 願你在漂泊裡仍能晤見流光</figcaption>
+              <blockquote className="prose-poem mt-4 space-y-5 text-lg text-moon">
+                <p>
+                  家鄉的熟悉將我們磨得平滑，瞥視藏在細縫裡的幼芽，
+                  <br />便會用盡全力往未知的光點滾動，
+                  <br />直到一切開始重塑、生長；
+                </p>
+                <p>
+                  來自異地的陌生卻又為我們刻出粗糙的紋樣，
+                  <br />潮濕的草、碎石與遠方的氣味會從身體之間流瀉，
+                  <br />雨落而日曬，念遠而歸家。
+                </p>
+                <p>
+                  從未記述的里程會將我們的足跡疊得厚重，
+                  <br />停留時發覺自己仍在尋找的路途上――。
+                </p>
+              </blockquote>
+            </figure>
           </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="kv-h" className="container-x mt-24 md:mt-28">
+        <SectionHeading id="kv-h" index={2} eyebrow="Key Visual" title="主視覺：設計論述" />
+        <div className="mt-8 grid items-start gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-14">
+          <figure className="reveal lg:sticky lg:top-28">
+            <Image
+              src="/photo/main-visual-truth.webp"
+              alt={`${THEME} 主視覺海報：灰白紙紋上以水平細線構成的「${THEME_CHAR}」字，下方是一圈圈水紋，右側一塊藍色漣漪；標示 2027 年 3 月 19 日至 20 日於中興大學行政後草舉行。`}
+              width={1132}
+              height={1270}
+              className="h-auto w-full rounded-2xl border border-white/10 shadow-2xl shadow-black/40"
+            />
+          </figure>
+          <ol className="space-y-8">
+            {KV_POINTS.map((p, i) => (
+              <li key={p.title} className="reveal" style={{ "--d": `${i * 120}ms` } as React.CSSProperties}>
+                <h3 className="font-serif text-2xl font-black tracking-wide text-moon">
+                  <span aria-hidden className="mr-2 text-glow">≋</span>
+                  {p.title}
+                </h3>
+                <p className="mt-3 leading-loose text-mist/90">{p.body}</p>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
       <section aria-labelledby="story-h" className="mt-24 md:mt-28">
         <div className="container-x">
-          <SectionHeading id="story-h" index={2} eyebrow="Three States" title="沉浸式三態故事線：固 → 液 → 氣" />
+          <SectionHeading id="story-h" index={3} eyebrow="Three States" title="沉浸式三態故事線：固 → 液 → 氣" />
           <p className="reveal mt-4 max-w-2xl text-mist/90">從一滴水「泱」開始，經過固、液、氣，最後落成「泅」與「涯」兩個展區。水有三種形態，歸屬也是。整個電影節——從網站到現場——都沿著這條線走。</p>
         </div>
         {/* 完整版：往下捲、鏡頭沿著水的旅程往右走（首頁 StatesScroll 為簡化版） */}
         <StoryJourney labelledBy="story-h" />
       </section>
 
-      <section aria-labelledby="zones-h" className="container-x mt-24 scroll-mt-24 md:mt-28" id="zones">
-        <SectionHeading id="zones-h" index={3} eyebrow="Two Zones" title="兩大展區" />
-        <p className="reveal mt-4 max-w-2xl text-mist/90">水滴落下的漣漪，在現場化成兩個展區。每個展區各有兩個空間，從「探索」走到「抵達」。選一個走進去看看。</p>
-        <ul className="mt-8 grid gap-5 md:grid-cols-2">
-          {zones.map((z, i) => (
-            <li key={z.slug} className="reveal" style={d(i * 100)}>
-              <Link
-                href={zonePath(z)}
-                className="card group relative flex h-full flex-col overflow-hidden p-6 transition-colors hover:border-[color:var(--zone)] md:p-10"
-                style={{ "--zone": `${z.color}99` } as React.CSSProperties}
-              >
-                {z.slug === "siu" ? (
-                  <span aria-hidden className="pointer-events-none absolute -bottom-28 -right-28 h-80 w-80">
-                    {[0, 56, 112].map((inset, k) => (
-                      <span key={inset} className="absolute rounded-full border" style={{ inset, borderColor: `${z.color}${["1f", "33", "4d"][k]}` }} />
-                    ))}
-                  </span>
-                ) : (
-                  <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-24">
-                    <span className="block h-px" style={{ background: `${z.color}4d` }} />
-                    <span className="mt-4 block h-px" style={{ background: `${z.color}26` }} />
-                  </span>
-                )}
-                <div className="flex items-end gap-5">
-                  <span aria-hidden className="font-serif text-[104px] font-black leading-[0.85] md:text-[148px]" style={{ color: z.color }}>
-                    {z.char}
-                  </span>
-                  <div className="pb-2">
-                    <p className="eyebrow" style={{ color: z.color }}>
-                      Zone · {z.roman}
-                    </p>
-                    <h3 className="mt-1 font-serif text-2xl font-bold">
-                      {zoneName(z)}｜{z.subtitle}
-                    </h3>
-                  </div>
-                </div>
-                <p className="mt-5 flex-1 text-mist/90">{z.intro}</p>
-                <p className="mt-5 flex flex-wrap items-center gap-2 text-sm text-dim">
-                  <span className="tag" style={{ borderColor: `${z.color}80`, color: z.color }}>
-                    {z.rooms[0].char} {z.rooms[0].phase}
-                  </span>
-                  <ArrowRight aria-hidden size={14} />
-                  <span className="tag" style={{ borderColor: `${z.color}80`, color: z.color }}>
-                    {z.rooms[1].char} {z.rooms[1].phase}
-                  </span>
-                </p>
-                <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-bold text-glow group-hover:underline">
-                  走進展區「{z.char}」 <ArrowRight aria-hidden size={15} />
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="container-x mt-20">
-        <div className="card reveal flex flex-wrap items-center justify-between gap-5 p-6 md:p-8">
-          <div>
-            <h2 className="font-serif text-2xl font-bold">親自走一趟展區</h2>
-            <p className="mt-1 text-sm text-dim">3/19（五）15:00、3/20（六）14:00 起開放，免費入場。</p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <LumaButton source="themes" />
-            <Link href="/guide" className="btn btn-ghost">
-              看場地地圖
-            </Link>
-          </div>
-        </div>
-      </section>
     </>
   );
 }

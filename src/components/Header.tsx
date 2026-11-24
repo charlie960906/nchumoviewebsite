@@ -206,7 +206,7 @@ export default function Header() {
         <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label={`${site.fullName} 首頁`}>
           <span className="leading-tight">
             <span className="block font-serif text-[15px] font-bold tracking-wider">{THEME}</span>
-            <span className="block text-[11px] text-dim">興大國際星空電影節</span>
+            <span className="block text-[11px] text-dim">中興星空電影節</span>
           </span>
         </Link>
 

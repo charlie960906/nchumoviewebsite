@@ -9,6 +9,8 @@ import { sessionEvent } from "@/lib/calendar";
 import { breadcrumbLd, programLd } from "@/lib/jsonld";
 import { site } from "@/lib/site";
 import PageHero from "@/components/PageHero";
+import FilmTicket from "@/components/FilmTicket";
+import FilmDetail from "@/components/FilmDetail";
 import LumaButton from "@/components/LumaButton";
 import AddToCalendar from "@/components/AddToCalendar";
 import JsonLd from "@/components/JsonLd";
@@ -34,6 +36,16 @@ export default async function ProgramDetail({ params }: Props) {
     { name: "活動與市集", path: "/program" },
     { name: p.title, path: `/program/${p.slug}` },
   ];
+  // 電影票背面的場次文字，例如「2027.03.19」「FRI」「18:30 – 20:30」
+  const s0 = ss[0];
+  const show = s0
+    ? {
+        date: dayOf(s0.day).date.replaceAll("-", "."),
+        weekday: ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][new Date(`${dayOf(s0.day).date}T12:00:00+08:00`).getUTCDay()],
+        time: `${s0.start} – ${s0.end}`,
+        start: s0.start,
+      }
+    : undefined;
   const others = programs.filter((x) => x.slug !== p.slug).slice(0, 3);
 
   return (
@@ -47,12 +59,21 @@ export default async function ProgramDetail({ params }: Props) {
             {p.titleEn && <span className="mt-2 block font-sans text-lg font-normal italic text-dim">{p.titleEn}</span>}
           </>
         }
-        summary={p.summary}
+        // 電影頁只留電影票，不顯示摘要與按鈕（摘要仍用於 meta description）
+        summary={p.film ? undefined : p.summary}
+        ticket={p.film ? <FilmTicket program={{ ...p, film: p.film }} show={show} /> : undefined}
       >
-        <LumaButton source={`program-${p.slug}`}>訂閱活動提醒</LumaButton>
-        {ss[0] && !p.tentative && <AddToCalendar event={sessionEvent(ss[0].id)!} icsId={ss[0].id} />}
+        {!p.film && (
+          <>
+            <LumaButton source={`program-${p.slug}`}>訂閱活動提醒</LumaButton>
+            {ss[0] && !p.tentative && <AddToCalendar event={sessionEvent(ss[0].id)!} icsId={ss[0].id} />}
+          </>
+        )}
       </PageHero>
 
+      {p.film ? (
+        <FilmDetail program={{ ...p, film: p.film }} session={ss[0]} />
+      ) : (
       <div className="container-x grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:gap-14">
         <article className="grid content-start gap-5">
           {p.tentative && (
@@ -149,6 +170,7 @@ export default async function ProgramDetail({ params }: Props) {
           </div>
         </aside>
       </div>
+      )}
 
       <section aria-labelledby="more-h" className="container-x mt-20">
         <h2 id="more-h" className="reveal font-serif text-2xl font-bold">

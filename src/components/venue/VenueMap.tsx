@@ -12,6 +12,7 @@ import {
   type Category, type MapEntry,
 } from "@/lib/venueMap";
 import { VenueScene } from "./VenueScene";
+import { track } from "@/lib/track";
 
 type Props = {
   onReady?: () => void;
@@ -251,6 +252,19 @@ export default function VenueMap({ onReady, onError, startExpanded = false }: Pr
     if (selected) s.focus(selected);
   }, [selected]);
 
+  // GA4：點選地點（清單、搜尋結果、3D 地圖都會經過 selected）
+  useEffect(() => {
+    if (selected) track("venue_search", { action: "select", item: selected, item_name: ENTRY_BY_ID.get(selected)?.title });
+  }, [selected]);
+
+  // GA4：搜尋字詞，停止輸入 1.2 秒後才記錄，避免每個字都送一次
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) return;
+    const t = setTimeout(() => track("venue_search", { action: "search", search_term: q, results: results.length }), 1200);
+    return () => clearTimeout(t);
+  }, [query, results.length]);
+
   // 面板遮住的區域 → 讓 3D 畫面中心往旁邊挪
   useEffect(() => {
     const s = sceneRef.current, panel = panelRef.current, root = rootRef.current;
@@ -272,6 +286,7 @@ export default function VenueMap({ onReady, onError, startExpanded = false }: Pr
 
   /* ───────── 2D／3D、全螢幕 ───────── */
   useEffect(() => sceneRef.current?.set2D(is2D), [is2D]);
+  useEffect(() => sceneRef.current?.setPageScroll(!expanded), [expanded, ready]);
 
   useEffect(() => {
     if (!locked) return;
@@ -469,7 +484,7 @@ export default function VenueMap({ onReady, onError, startExpanded = false }: Pr
           hint && !selected ? "opacity-100" : "opacity-0"
         }`}
       >
-        {touch ? "單指旋轉 · 雙指縮放 · 點一下查看" : "拖曳旋轉 · 右鍵平移 · 滾輪縮放"}
+        {touch ? (expanded ? "單指旋轉 · 雙指縮放 · 點一下查看" : "左右滑旋轉 · 雙指縮放 · 上下滑捲動頁面") : "拖曳旋轉 · 右鍵平移 · 滾輪縮放"}
       </p>
 
       {/* ───────── 資訊面板 ───────── */}
