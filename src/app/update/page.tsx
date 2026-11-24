@@ -14,6 +14,12 @@ export const metadata: Metadata = pageMeta({
 
 const updates = [
   {
+    date: "11/24 18:07",
+    version: "Beta2026.11.24.07",
+    summary:
+      "新增星空市集攤商介紹（卡片輪播與市集專頁，網址改為 /program/market）；活動與市集頁調整區塊順序；兩部電影改用官方劇情簡介，首頁放映卡片加上劇照；關於頁改版並新增 Instagram、Threads 追蹤連結；導覽列選單重新排序，頁尾導覽與導覽列同步；修正手機版電影票翻面與 FAQ 版面。",
+  },
+  {
     date: "11/24 11:49",
     version: "Beta2026.11.24.06",
     summary:
