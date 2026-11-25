@@ -91,7 +91,7 @@ export default function AboutPage() {
         <div className="card reveal flex flex-wrap items-center justify-between gap-5 p-6">
           <div>
             <h3 className="text-lg font-bold">團隊成員</h3>
-            <p className="mt-1 text-sm text-dim">認識讓這兩個夜晚發生的每一個人。</p>
+            <p className="mt-1 text-sm text-dim">認識讓這場電影節發生的每一個人。</p>
           </div>
           <Link href="/team" className="btn btn-ghost">
             看團隊成員 <ArrowRight aria-hidden size={16} />

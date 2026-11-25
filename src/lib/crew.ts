@@ -1,10 +1,10 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import { getStaff } from "@/lib/staff";
+import { accentOf, findSubmission } from "@/lib/echo-submissions";
 
 /**
  * 工作人員名單（正式）。依部門分組，顯示於 /team。
- * 與 staff.ts（「波紋的音像」黑膠資料）分開維護。
+ * 「波紋的音像」的黑膠繳交資料在 echo-submissions.ts，以成員姓名連動。
  *
  * - email：成員登入 Gravatar 的信箱。只在建置時於伺服器端雜湊成 SHA-256，
  *   不會出現在輸出的 HTML 或 JS 中。留空或該信箱沒有 Gravatar 時，顯示姓名縮寫方塊。
@@ -12,14 +12,14 @@ import { getStaff } from "@/lib/staff";
  * - role：職稱（選填，例如「部長」），顯示在姓名下方。
  * - team：部門底下的組別（選填，例如「宣傳組」）。同組成員會在部門內以小標題分組，
  *   沒有 team 的成員（例如部長）排在最前面。
- * - echo：對應 staff.ts 中「波紋的音像」黑膠的 id（選填）。填了之後，點開成員的詳細資料
- *   最下方會出現他的黑膠與歌名，點擊跳轉到 /interactive/echoes/{echo} 故事頁。
+ * - 「波紋的音像」黑膠：成員在 echo-submissions.ts 有繳交（member 填同一個姓名）就自動連動，
+ *   點開成員的詳細資料最下方會出現他的黑膠與歌名，點擊跳轉到 /interactive/echoes/{id} 故事頁。
  * - 「關於我」取自成員 Gravatar 個人檔案的 About Me：伺服器端不抓（避免 40 多個請求拖慢換頁），
  *   頁面顯示後由瀏覽器在閒置時／點開成員時向 Gravatar 讀取。
  *
  * ⚠ 這個檔案只能由 Server Component 匯入（"server-only" 會擋下誤用），避免信箱進入前端 bundle。
  */
-export type CrewMember = { name: string; nick?: string; role?: string; team?: string; email?: string; echo?: string };
+export type CrewMember = { name: string; nick?: string; role?: string; team?: string; email?: string };
 export type CrewGroup = { id: string; dept: string; en: string; desc: string; members: CrewMember[] };
 
 const m = (name: string, extra: Omit<CrewMember, "name"> = {}): CrewMember => ({ name, ...extra });
@@ -124,6 +124,15 @@ export const crew: CrewGroup[] = [
   },
 ];
 
+/** 依姓名查成員（含部門），給 staff.ts 合併黑膠資料用；不回傳 email */
+export function crewMember(name: string) {
+  for (const g of crew) {
+    const p = g.members.find((x) => x.name === name);
+    if (p) return { name: p.name, nick: p.nick, role: p.role, team: p.team, dept: g.dept };
+  }
+  return undefined;
+}
+
 /** Gravatar 頭像網址；d=blank 讓沒有 Gravatar 的信箱回傳透明圖，露出底下的縮寫方塊。 */
 export function gravatarUrl(email: string | undefined, size = 320): string | undefined {
   const e = email?.trim().toLowerCase();
@@ -152,7 +161,7 @@ export function getCrewBoard(): CrewBoardGroup[] {
   return crew.map(({ members, ...g }) => ({
       ...g,
       members: members.map((p, i): CrewCard => {
-          const s = p.echo ? getStaff(p.echo) : undefined;
+          const found = findSubmission(p.name);
           return {
             key: `${g.id}-${i}`,
             name: p.name,
@@ -161,12 +170,12 @@ export function getCrewBoard(): CrewBoardGroup[] {
             title: [g.dept, p.team, p.role].filter(Boolean).join(" · "),
             avatar: gravatarUrl(p.email),
             hash: p.email?.trim() ? emailHash(p.email) : undefined,
-            echo: s && {
-              id: s.id,
-              songTitle: s.songTitle,
-              songArtist: s.songArtist,
-              accentColor: s.accentColor,
-              vinylCover: s.vinylCover,
+            echo: found && {
+              id: found.sub.id,
+              songTitle: found.sub.songTitle,
+              songArtist: found.sub.songArtist,
+              accentColor: accentOf(found.sub, found.index),
+              vinylCover: found.sub.vinylCover,
             },
           };
         }),

@@ -6,6 +6,7 @@ import { m, useReducedMotion } from "motion/react";
 import { CalendarPlus, ChevronRight } from "lucide-react";
 import { days, sessions, type Session } from "@/lib/schedule";
 import { googleCalUrl, sessionEvent } from "@/lib/calendar";
+import { programHref } from "@/lib/programs";
 import SplitFlap from "./SplitFlap";
 import { useSlidingPill } from "@/lib/useSlidingPill";
 
@@ -100,7 +101,7 @@ export default function Schedule({ compact = false }: { compact?: boolean }) {
                           <span className="min-w-0">
                           <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                             {s.program ? (
-                              <Link href={`/program/${s.program}`} className="inline-flex items-center gap-0.5 font-medium hover:text-glow">
+                              <Link href={programHref(s.program)} className="inline-flex items-center gap-0.5 font-medium hover:text-glow">
                                 {s.title}
                                 <ChevronRight aria-hidden size={15} className="text-dim" />
                               </Link>

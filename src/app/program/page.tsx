@@ -1,23 +1,30 @@
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/seo";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { programs } from "@/lib/programs";
+import { comingSoonFilms, programs } from "@/lib/programs";
 import { breadcrumbLd, festivalLd } from "@/lib/jsonld";
-import { site } from "@/lib/site";
+import { dayOf, sessions } from "@/lib/schedule";
 import PageHero from "@/components/PageHero";
 import SectionHeading from "@/components/SectionHeading";
 import Schedule from "@/components/Schedule";
-import VendorCarousel from "@/components/VendorCarousel";
+import VendorWall from "@/components/VendorWall";
+import ProgramMarquee from "@/components/ProgramMarquee";
+import Echoes from "@/components/echoes/Echoes";
+import { staff } from "@/lib/staff";
 import LumaButton from "@/components/LumaButton";
 import AddToCalendar from "@/components/AddToCalendar";
 import JsonLd from "@/components/JsonLd";
 
 export const metadata: Metadata = pageMeta({
   title: "活動與市集｜活動時間表",
-  description: "2027 中興星空電影節完整日程：3/19（五）放映《美國女孩》並規劃阮鳳儀導演映後講座，3/20（六）放映《琳達！琳達！》，另有市集、展覽、表演與《反正你也不睡覺》讀書會。",
+  description: "2027 中興星空電影節完整日程：3/19（五）放映《美國女孩》並規劃阮鳳儀導演映後講座，3/20（六）第二部電影敬請期待（研擬中），另有市集、展覽、表演與《反正你也不睡覺》讀書會。",
   path: "/program",
 });
+
+/** 市集兩天的營業時間，例如「3/19（五）15:00–20:30・3/20（六）14:00–20:30」 */
+const marketTimes = sessions
+  .filter((s) => s.category === "market")
+  .map((s) => `${dayOf(s.day).label}（${dayOf(s.day).weekday}）${s.start}–${s.end}`)
+  .join("・");
 
 export default function ProgramPage() {
   return (
@@ -26,58 +33,59 @@ export default function ProgramPage() {
       <PageHero
         eyebrow="Program"
         title="活動與市集"
-        summary={`${site.name}為期兩天：3 月 19 日（五）15:00–22:00、3 月 20 日（六）14:00–23:00。
-每晚 18:30 於星空下放映一部電影，
-下午起有市集、展覽、快閃遊戲與現場演出。
-所有場次免費且不需報名，當天直接到場即可。`}
+        summary={`下午有市集、展覽、快閃遊戲與街頭藝人演出
+18:30 於星空下放映電影
+一起來逛逛吧!`}
       >
         <LumaButton source="program" />
         <AddToCalendar />
       </PageHero>
 
-      <section aria-labelledby="vendor-h" className="container-x">
-        <SectionHeading id="vendor-h" index={1} eyebrow="Market" title="市集攤商" />
+      <section id="market" aria-labelledby="vendor-h" className="container-x scroll-mt-24">
+        <SectionHeading
+          id="vendor-h"
+          index={1}
+          eyebrow="Market"
+          title={
+            <>
+              市集攤商
+              {/* 市集時間：讀時間表的市集場次，時間表改了這裡跟著變 */}
+              <span className="mt-1 block font-sans text-sm font-normal tracking-normal text-dim sm:ml-4 sm:mt-0 sm:inline">
+                {marketTimes}
+              </span>
+            </>
+          }
+        />
         <div className="reveal mt-8">
-          <VendorCarousel />
+          <VendorWall />
         </div>
       </section>
 
       <section aria-labelledby="list-h" className="container-x mt-24">
         <SectionHeading id="list-h" index={2} eyebrow="Highlights" title="節目介紹" />
-        <ul className="mt-8 grid gap-5 md:grid-cols-2">
-          {/* 市集已有上方「市集攤商」區塊，這裡不再列星空市集卡；單場頁 /program/market 仍保留（時間表與導覽列有連結） */}
-          {programs.filter((p) => p.slug !== "market").map((p, i) => (
-            <li key={p.slug} className="reveal" style={{ "--d": `${i * 70}ms` } as React.CSSProperties}>
-              <article className="card card-hover relative flex h-full flex-col p-6 md:p-7">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className={`tag ${p.kind === "film" ? "border-shore/50 bg-shore/10 text-shore" : "tag-glow"}`}>{p.kindLabel}</span>
-                  {p.tentative && <span className="tag tag-warn">時間待定</span>}
-                </div>
-                <h3 className="mt-4 font-serif text-2xl font-black">
-                  <Link href={`/program/${p.slug}`} className="after:absolute after:inset-0 hover:text-glow">
-                    {p.kind === "film" ? `《${p.title}》` : p.title}
-                  </Link>
-                </h3>
-                <p className="mt-3 flex-1 text-sm text-mist/90">{p.summary}</p>
-                <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                  {p.facts.slice(0, 4).map((f) => (
-                    <div key={f.label}>
-                      <dt className="text-xs text-dim">{f.label}</dt>
-                      <dd className="font-medium">{f.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-                <span className="mt-5 inline-flex items-center gap-1 text-sm font-bold text-glow">
-                  單場詳情 <ArrowRight aria-hidden size={15} />
-                </span>
-              </article>
-            </li>
-          ))}
-        </ul>
+        {/* 市集已有上方「市集攤商」區塊，這裡不列星空市集卡 */}
+        <ProgramMarquee programs={programs.filter((p) => p.slug !== "market")} placeholders={comingSoonFilms} />
+      </section>
+
+      {/* 波紋的音像：直接嵌入黑膠圓環互動（與 /interactive/echoes 同一個元件） */}
+      <section aria-labelledby="echoes-h" className="container-x mt-24">
+        <SectionHeading
+          id="echoes-h"
+          index={3}
+          eyebrow="Echoes of Home"
+          title="波紋的音像"
+          more={{ href: "/interactive/echoes", label: "全部黑膠" }}
+        />
+        <p className="reveal mt-4 max-w-2xl text-mist/90">
+          每位工作人員選了一首歌、寫了一篇關於家與漂泊的故事，化成一張黑膠。轉動圓環，抽出一張，聽見某個人的情感波紋。
+        </p>
+        <div className="mt-8">
+          <Echoes staff={staff} />
+        </div>
       </section>
 
       <section aria-labelledby="tt-h" className="container-x mt-24">
-        <SectionHeading id="tt-h" index={3} eyebrow="Timetable" title="日程總覽" />
+        <SectionHeading id="tt-h" index={4} eyebrow="Timetable" title="日程總覽" />
         <div className="reveal mt-8">
           <Schedule />
         </div>

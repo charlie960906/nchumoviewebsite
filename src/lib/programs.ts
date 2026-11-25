@@ -14,6 +14,8 @@ export type Program = {
   /** 對應時間表場次；空陣列代表時間待公布 */
   sessionIds: Session["id"][];
   tentative?: boolean;
+  /** 暫時下架：公開網址 404、不出現在任何列表；開發者可用 /program/<slug>/dev 預覽 */
+  hidden?: boolean;
   highlights?: string[];
   /** 電影票 Hero 用的片目資料（只有 kind: "film" 需要） */
   film?: {
@@ -26,6 +28,7 @@ export type Program = {
     /** 分級，例如「12+」；未確認就留空不顯示 */
     rating?: string;
     /** 劇照路徑（放在 public/photo/，建議 3:2）；未提供時顯示預留框 */
+    /** 劇照路徑（public 底下，可含中文；顯示時用 encodeURI 編碼，否則 priority 圖片的 Link preload header 含非 ASCII 字元會讓伺服器報錯） */
     still?: string;
     /** 放映格式與語言，例如「DCP / 華語、英語發音，繁體中文字幕」；未確認就留空 */
     format?: string;
@@ -38,7 +41,8 @@ export type Program = {
   };
 };
 
-export const programs: Program[] = [
+/** 所有節目（含暫時下架的）；對外列表請用下面的 programs */
+export const allPrograms: Program[] = [
   {
     slug: "american-girl",
     kind: "film",
@@ -108,6 +112,8 @@ export const programs: Program[] = [
   },
   {
     slug: "linda-linda-linda",
+    // 2026-11-25 未取得放映授權，暫時下架；新片討論中
+    hidden: true,
     kind: "film",
     kindLabel: "電影放映",
     title: "琳達！琳達！",
@@ -161,6 +167,7 @@ export const programs: Program[] = [
     ],
     facts: [
       { label: "形式", value: "小組讀書會" },
+      { label: "日期", value: "2027/3/18（四）" },
       { label: "時間", value: "待公布" },
       { label: "地點", value: "待公布" },
     ],
@@ -185,4 +192,30 @@ export const programs: Program[] = [
   },
 ];
 
-export const getProgram = (slug: string) => programs.find((p) => p.slug === slug);
+/** 對外顯示的節目（排除 hidden） */
+export const programs: Program[] = allPrograms.filter((p) => !p.hidden);
+
+/**
+ * 片單還沒確定的放映場次，只在節目跑馬燈顯示「敬請期待」卡（不可點、沒有獨立頁面、不進 sitemap／JSON-LD）。
+ * 新片確定後：在 allPrograms 新增該片並刪掉這裡對應的項目。
+ */
+export const comingSoonFilms: Program[] = [
+  {
+    slug: "film-0320-tbd",
+    kind: "film",
+    kindLabel: "電影放映",
+    title: "敬請期待",
+    titleEn: "Coming Soon",
+    summary: "3/20（六）放映的電影正在研擬中，確定後公布。",
+    body: [],
+    facts: [{ label: "片單", value: "正在研擬中" }],
+    sessionIds: ["d2-film"],
+    tentative: true,
+  },
+];
+
+/** 含 hidden 的節目，給 dev 預覽頁用；公開頁面拿到 hidden 要自己 notFound() */
+export const getProgram = (slug: string) => allPrograms.find((p) => p.slug === slug);
+
+/** 節目頁網址。星空市集沒有獨立頁面（攤商品牌牆在 /program 的「市集攤商」區塊），連到該區塊 */
+export const programHref = (slug: string) => (slug === "market" ? "/program#market" : `/program/${slug}`);

@@ -44,7 +44,7 @@ export const sessions: Session[] = [
   { id: "d2-show-2", day: "0320", start: "16:00", end: "17:30", title: "表演演出", category: "show" },
   { id: "d2-game-2", day: "0320", start: "17:30", end: "18:00", title: "快閃遊戲", category: "game" },
   { id: "d2-talk", day: "0320", start: "18:00", end: "18:30", title: "電影演講會", category: "talk", tentative: true, note: "內容與講者待定" },
-  { id: "d2-film", day: "0320", start: "18:30", end: "20:30", title: "電影放映《琳達！琳達！》", category: "film", program: "linda-linda-linda" },
+  { id: "d2-film", day: "0320", start: "18:30", end: "20:30", title: "電影放映《敬請期待》", category: "film", tentative: true, note: "片單正在研擬中" },
   { id: "d2-close", day: "0320", start: "20:30", end: "23:00", title: "活動結束收尾", category: "closing" },
 ];
 

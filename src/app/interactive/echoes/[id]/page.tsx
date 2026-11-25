@@ -3,7 +3,7 @@ import { pageMeta } from "@/lib/seo";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Disc3, ExternalLink } from "lucide-react";
-import { getStaff, staff } from "@/lib/staff";
+import { getStaff, spotifyTrackId, staff } from "@/lib/staff";
 import { breadcrumbLd, staffLd } from "@/lib/jsonld";
 import PageHero from "@/components/PageHero";
 import StoryBody from "@/components/echoes/StoryBody";
@@ -36,6 +36,8 @@ export default async function StoryPage({ params }: Props) {
   const i = staff.indexOf(s);
   const prev = staff[(i - 1 + staff.length) % staff.length];
   const next = staff[(i + 1) % staff.length];
+  const sp = spotifyTrackId(s);
+  const listenUrl = s.externalUrl ?? (sp ? `https://open.spotify.com/track/${sp}` : undefined);
   const crumbs = [
     { name: "線上互動館", path: "/interactive" },
     { name: "波紋的音像", path: "/interactive/echoes" },
@@ -76,10 +78,10 @@ export default async function StoryPage({ params }: Props) {
             </p>
             <p className="mt-2 text-lg font-bold">{s.songTitle}</p>
             <p className="text-sm text-dim">{s.songArtist}</p>
-            {s.externalUrl && (
-              <a href={s.externalUrl} target="_blank" rel="noopener" className="btn btn-ghost btn-sm mt-4">
+            {listenUrl && (
+              <a href={listenUrl} target="_blank" rel="noopener" className="btn btn-ghost btn-sm mt-4">
                 <ExternalLink aria-hidden size={14} />
-                聆聽完整歌曲
+                {s.externalUrl ? "聆聽完整歌曲" : "在 Spotify 聆聽"}
               </a>
             )}
           </div>

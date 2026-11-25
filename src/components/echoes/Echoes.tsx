@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, m } from "motion/react";
 import { ChevronLeft, ChevronRight, Disc3, ExternalLink, Gauge, Link2, Pause, Play, Undo2, Volume2 } from "lucide-react";
-import { staff as allStaff, STAFF_IS_SAMPLE } from "@/lib/staff";
+import type { Staff } from "@/lib/staff";
+import { spotifyTrackId } from "@/lib/echo-submissions";
 import { EchoAudio } from "./audio";
+import { fmtTime, spotifyTrackUrl, useSpotifyEmbed } from "./spotify";
 import { track } from "@/lib/track";
 import StoryBody from "./StoryBody";
 import type { SceneHandle } from "./VinylScene";
@@ -34,8 +36,8 @@ function webglOk() {
   }
 }
 
-export default function Echoes() {
-  const staff = allStaff;
+/** staff 由頁面（Server Component）傳入：黑膠資料會合併團隊名單，只能在伺服器端組好 */
+export default function Echoes({ staff }: { staff: Staff[] }) {
   const n = staff.length;
   const [focus, setFocus] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
@@ -88,7 +90,8 @@ export default function Echoes() {
       track("interactive_play", { game: "echoes", action: "open", item: staff[i].id });
       setPicked(i);
       setFocus(i);
-      void audio.current?.play(staff[i]).then((ok) => setPlaying(!!ok));
+      // 綁了 Spotify 的成員改由嵌入播放器播放（故事展開時載入），不播合成環境音
+      if (!spotifyTrackId(staff[i])) void audio.current?.play(staff[i]).then((ok) => setPlaying(!!ok));
       const open = () => {
         setPhase("open");
         requestAnimationFrame(() =>
@@ -151,6 +154,11 @@ export default function Echoes() {
 
   const cur = staff[focus];
   const sel = picked !== null ? staff[picked] : null;
+  const spId = sel ? spotifyTrackId(sel) : null;
+  // 故事展開才建立嵌入播放器；放回圓環時 trackId 變 null，播放器隨之銷毀
+  const sp = useSpotifyEmbed(phase === "open" ? spId : null, true);
+  const isPlaying = spId ? !sp.paused : playing;
+  const listenUrl = sel?.externalUrl ?? (spId ? spotifyTrackUrl(spId) : undefined);
 
   const share = async () => {
     if (!sel) return;
@@ -185,7 +193,7 @@ export default function Echoes() {
       >
         {simple === false && <VinylScene ref={scene} staff={staff} onFocus={setFocus} onPick={pull} onFallback={onFallback} />}
         {simple === true && (
-          <SimpleStage accent={cur.accentColor} name={cur.name} song={cur.songTitle} spinning={phase !== "ring" && playing} onPick={() => pull(focus)} idx={focus} />
+          <SimpleStage accent={cur.accentColor} name={cur.name} song={cur.songTitle} spinning={phase !== "ring" && isPlaying} onPick={() => pull(focus)} idx={focus} />
         )}
 
         {/* 中心聚焦指示 */}
@@ -271,18 +279,47 @@ export default function Echoes() {
                 <div className="flex flex-wrap items-center gap-4 border-b border-white/10 p-5 md:px-8" style={{ background: `linear-gradient(90deg, ${sel.accentColor}22, transparent)` }}>
                   <button
                     type="button"
-                    onClick={async () => setPlaying(!!(await audio.current?.toggle()))}
-                    aria-label={playing ? "暫停音樂" : "播放音樂"}
-                    className="grid h-12 w-12 shrink-0 place-items-center rounded-full text-night transition-transform duration-150 hover:scale-105 active:scale-95"
+                    onClick={async () => {
+                      if (spId) sp.toggle();
+                      else setPlaying(!!(await audio.current?.toggle()));
+                    }}
+                    disabled={!!spId && !sp.ready}
+                    aria-label={isPlaying ? "暫停音樂" : "播放音樂"}
+                    className="grid h-12 w-12 shrink-0 place-items-center rounded-full text-night transition-transform duration-150 hover:scale-105 active:scale-95 disabled:opacity-50"
                     style={{ background: sel.accentColor }}
                   >
-                    {playing ? <Pause aria-hidden fill="currentColor" size={20} /> : <Play aria-hidden fill="currentColor" size={20} className="ml-0.5" />}
+                    {spId && (!sp.ready || (sp.buffering && !sp.paused)) ? (
+                      <span aria-hidden className="ripple-spinner" />
+                    ) : isPlaying ? (
+                      <Pause aria-hidden fill="currentColor" size={20} />
+                    ) : (
+                      <Play aria-hidden fill="currentColor" size={20} className="ml-0.5" />
+                    )}
                   </button>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-bold">{sel.songTitle}</p>
                     <p className="truncate text-sm text-dim">{sel.songArtist}</p>
+                    {spId && (
+                      <div className="mt-1.5 flex items-center gap-2 font-mono text-[11px] text-dim">
+                        <span className="w-9 text-right">{fmtTime(sp.position)}</span>
+                        <input
+                          type="range"
+                          min={0}
+                          max={Math.max(1, sp.duration)}
+                          step={1000}
+                          value={Math.min(sp.position, sp.duration)}
+                          disabled={!sp.ready || !sp.duration}
+                          onChange={(e) => sp.seek(Number(e.target.value))}
+                          aria-label="播放進度"
+                          aria-valuetext={`${fmtTime(sp.position)} / ${fmtTime(sp.duration)}`}
+                          className="h-6 min-w-0 flex-1"
+                          style={{ accentColor: sel.accentColor }}
+                        />
+                        <span className="w-9">{fmtTime(sp.duration)}</span>
+                      </div>
+                    )}
                   </div>
-                  <span aria-hidden className={`flex h-5 items-end gap-[3px] ${playing ? "" : "opacity-30"}`}>
+                  <span aria-hidden className={`flex h-5 items-end gap-[3px] ${isPlaying ? "" : "opacity-30"}`}>
                     {[0, 1, 2, 3].map((i) => (
                       <span
                         key={i}
@@ -290,13 +327,14 @@ export default function Echoes() {
                         style={{
                           height: "100%",
                           background: sel.accentColor,
-                          animation: playing ? `breathe ${0.7 + i * 0.23}s ease-in-out ${i * 0.12}s infinite` : "none",
+                          animation: isPlaying ? `breathe ${0.7 + i * 0.23}s ease-in-out ${i * 0.12}s infinite` : "none",
                           transform: `scaleY(${0.4 + ((i * 37) % 5) / 8})`,
                         }}
                       />
                     ))}
                   </span>
-                  <label className="flex items-center gap-2 text-dim">
+                  {/* Spotify 嵌入播放器沒有音量 API，綁 Spotify 時不顯示音量滑桿 */}
+                  {!spId && <label className="flex items-center gap-2 text-dim">
                     <Volume2 aria-hidden size={18} />
                     <span className="sr-only">音量</span>
                     <input
@@ -312,15 +350,25 @@ export default function Echoes() {
                       }}
                       className="h-11 w-24 accent-[#8CC4EC]"
                     />
-                  </label>
-                  {sel.externalUrl && (
-                    <a href={sel.externalUrl} target="_blank" rel="noopener" className="btn btn-ghost btn-sm">
+                  </label>}
+                  {listenUrl && (
+                    <a href={listenUrl} target="_blank" rel="noopener" className="btn btn-ghost btn-sm">
                       <ExternalLink aria-hidden size={14} />
-                      完整歌曲
+                      {spId && !sel.externalUrl ? "在 Spotify 開啟" : "完整歌曲"}
                     </a>
                   )}
                 </div>
-                {!sel.audioUrl && (
+                {spId ? (
+                  <div className="border-b border-white/10 bg-white/[0.02] px-5 py-3 md:px-8">
+                    {/* Spotify 官方嵌入播放器（保留 Spotify 標誌）；上方的按鈕與進度條都是在控制它 */}
+                    <div ref={sp.hostRef} className="min-h-[80px] overflow-hidden rounded-xl" />
+                    <p className="mt-2 text-xs text-dim">
+                      {sp.failed
+                        ? "Spotify 播放器載入失敗，請改用「在 Spotify 開啟」收聽。"
+                        : "由 Spotify 提供播放。未登入 Spotify 時播放 30 秒試聽；在這個瀏覽器登入 Spotify 後可聽完整首。"}
+                    </p>
+                  </div>
+                ) : !sel.audioUrl && (
                   <p className="border-b border-white/10 bg-white/[0.02] px-5 py-2 text-xs text-dim md:px-8">
                     目前播放的是依這張黑膠即時合成的環境音（示範）。正式曲目確認授權後替換。
                   </p>
@@ -357,8 +405,8 @@ export default function Echoes() {
         </AnimatePresence>
       </div>
 
-      {STAFF_IS_SAMPLE && (
-        <p className="mt-6 text-center text-xs text-dim">※ 目前展示的暱稱、歌曲與故事為示範內容，正式資料收齊後更新。</p>
+      {staff.some((s) => s.sample) && (
+        <p className="mt-6 text-center text-xs text-dim">※ 部分黑膠為示範內容（暱稱、歌曲與故事皆為佔位），工作人員繳交後陸續替換。</p>
       )}
     </div>
   );

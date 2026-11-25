@@ -9,13 +9,13 @@ import JsonLd from "@/components/JsonLd";
 
 export const metadata: Metadata = pageMeta({
   title: "數位線上互動館｜波紋的音像、漂流詞、心理測驗",
-  description: "中興星空電影節線上互動館：在「波紋的音像」轉動黑膠圓環，抽出工作人員的歌與故事；抽一支漂流詞幸運籤；測驗你是《美國女孩》裡的誰；以及展區延伸的貼標籤與家的符號小遊戲。",
+  description: "中興星空電影節線上互動館：在「波紋的音像」轉動黑膠圓環，抽出工作人員的歌與故事；抽一支漂流詞幸運籤；測驗你是《美國女孩》中的哪個角色；以及展區延伸的貼標籤與家的符號小遊戲。",
   path: "/interactive",
 });
 
 const others = [
   { href: "/interactive/drift", icon: Sparkles, zone: "氣 Gas", t: "漂流詞幸運籤", s: "往水裡丟一顆石頭，抽一句今天的漂流詞，存成限時動態分享圖。" },
-  { href: "/interactive/quiz", icon: Clapperboard, zone: "展區「傍」", t: "心理測驗：你是電影中的誰？", s: "《美國女孩》篇。六題找到最像你的角色，以及適合你的展區。" },
+  { href: "/interactive/quiz", icon: Clapperboard, zone: "展區「傍」", t: "心理測驗：你是電影中的誰？", s: "《美國女孩》篇。5 題找到最像你的角色，以及適合你的展區。" },
   { href: "/interactive/labels", icon: Tags, zone: "展區「佮」", t: "貼標籤：關係名片", s: "為一段關係貼上三張標籤，生成屬於你們的關係名片。" },
   { href: "/interactive/home", icon: Home, zone: "展區「佗」", t: "拼湊家的符號", s: "從十二個符號裡挑四個，拼出你心裡「家」的樣子。" },
 ];

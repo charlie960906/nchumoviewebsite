@@ -1,13 +1,16 @@
+import { crewMember } from "@/lib/crew";
+import { accentOf, echoSubmissions } from "@/lib/echo-submissions";
+
 /**
- * 波紋的音像（Echoes of Home）— 工作人員黑膠資料。
+ * 波紋的音像（Echoes of Home）— 黑膠資料（由繳交資料庫 + 團隊名單組合而成）。
  *
- * ⚠ 目前為「示範資料」：暱稱、歌曲與故事皆為佔位內容，用來驗證互動與版面。
- * 收到第一批工作人員的歌曲／故事後，直接替換這個陣列即可（數量可增減，圓環會自動重排）。
+ * ★ 工作人員的歌與故事請填在 echo-submissions.ts，不要改這裡。
+ *   這裡把每筆繳交和 crew.ts 的團隊名單合併：名字、組別自動帶入。
+ * ★ 真實繳交少於 MIN_REAL 張時，圓環後面用下方 sampleStaff（示範黑膠）補滿，頁面會標示示範內容；
+ *   繳交夠多之後示範黑膠自動消失。
  *
- * - audioUrl：授權音檔或 30 秒預覽的網址；留空時以 Web Audio 即時合成一段環境音代替。
- * - externalUrl：歌曲的外部連結（Spotify／YouTube 等）。
- * - vinylCover：1:1、1024×1024 的封面圖路徑（放在 /public/vinyl/）；留空時以 accentColor 程序生成。
- * - storyContent：支援段落（空行分段）與 **粗體**，建議 300–800 字。
+ * ⚠ 這個檔案會匯入 crew.ts（server-only），只能在伺服器端使用；
+ *   前端元件請由頁面把 staff 當 props 傳入，型別用 `import type`。
  */
 export type Staff = {
   id: string;
@@ -19,6 +22,12 @@ export type Staff = {
   songArtist: string;
   audioUrl?: string;
   externalUrl?: string;
+  /**
+   * 綁定的 Spotify 曲目：直接貼 Spotify 的「分享 → 複製歌曲連結」
+   * （https://open.spotify.com/track/xxxx?si=…）或單純的 track ID 皆可。
+   * 用 spotifyTrackId() 取出 ID。
+   */
+  spotify?: string;
   storyTitle: string;
   storyContent: string;
   storyCover?: string;
@@ -26,11 +35,54 @@ export type Staff = {
   accentColor: string;
   /** 合成環境音用的音階（Hz）；有 audioUrl 時不使用 */
   tones: number[];
+  /** 對應 crew.ts 的成員姓名（示範黑膠沒有） */
+  member?: string;
+  /** 示範黑膠 */
+  sample?: boolean;
+  /** 故事還沒繳交，顯示的是預設文字 */
+  storyPending?: boolean;
 };
 
-export const STAFF_IS_SAMPLE = true;
+export { spotifyTrackId } from "@/lib/echo-submissions";
 
-export const staff: Staff[] = [
+/** 真實繳交少於這個數量時，用示範黑膠補滿圓環 */
+const MIN_REAL = 5;
+
+/** 沒有合成音階時，依配色輪流使用的預設音階 */
+const TONES = [
+  [196, 246.94, 293.66, 392],
+  [174.61, 220, 261.63, 349.23],
+  [146.83, 185, 220, 293.66],
+  [164.81, 207.65, 246.94, 329.63],
+  [130.81, 164.81, 196, 261.63],
+];
+
+const realStaff: Staff[] = echoSubmissions.map((sub, i) => {
+  const c = crewMember(sub.member);
+  if (!c) console.warn(`[echo-submissions] 找不到成員「${sub.member}」，請確認與 crew.ts 的姓名一致`);
+  const pending = !sub.storyContent?.trim();
+  return {
+    id: sub.id,
+    member: sub.member,
+    name: sub.nickname ?? c?.nick ?? sub.member,
+    role: c ? [c.team ?? c.dept, c.role].filter(Boolean).join("・") : "工作人員",
+    bio: sub.bio ?? "",
+    songTitle: sub.songTitle,
+    songArtist: sub.songArtist,
+    spotify: sub.spotify,
+    audioUrl: sub.audioUrl,
+    externalUrl: sub.externalUrl,
+    storyTitle: sub.storyTitle?.trim() || `〈${sub.songTitle}〉`,
+    storyContent: pending ? "這張黑膠的故事還在寫，先聽聽這首歌。" : sub.storyContent!,
+    storyPending: pending,
+    storyCover: sub.storyCover,
+    vinylCover: sub.vinylCover,
+    accentColor: accentOf(sub, i),
+    tones: TONES[i % TONES.length],
+  };
+});
+
+const sampleStaff: Staff[] = [
   {
     id: "tide",
     name: "阿汐",
@@ -136,5 +188,12 @@ export const staff: Staff[] = [
     tones: [185, 233.08, 277.18, 369.99],
   },
 ];
+
+export const staff: Staff[] = [
+  ...realStaff,
+  ...(realStaff.length < MIN_REAL ? sampleStaff.map((s) => ({ ...s, sample: true })) : []),
+];
+
+export const STAFF_IS_SAMPLE = staff.some((s) => s.sample);
 
 export const getStaff = (id: string) => staff.find((s) => s.id === id);

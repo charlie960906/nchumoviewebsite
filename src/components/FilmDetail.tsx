@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Play } from "lucide-react";
+import { Play, Sparkles } from "lucide-react";
 import type { Program } from "@/lib/programs";
 import { dayOf, type Session } from "@/lib/schedule";
 
@@ -23,11 +23,12 @@ export default function FilmDetail({
 
   return (
     <div className="container-x grid gap-12 md:gap-14">
-      {/* 場次 + 得獎（沒有得獎資料時改放延伸看點） */}
-      <section aria-label="場次與得獎" className="reveal grid gap-8 border-b border-white/10 pb-10 md:grid-cols-[auto_minmax(0,1fr)] md:items-center md:gap-14">
-        <div>
+      {/* 場次 + 得獎（沒有得獎資料時改放延伸看點）。得獎一行一項、不換行。
+          lg 以上左右並排：得獎在左、場次在右並靠右（lg 時日期字縮小才放得下）；lg 以下上下排、場次在上（md 起靠右） */}
+      <section aria-label="場次與得獎" className="reveal grid gap-6 border-b border-white/10 pb-10 md:gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-12 xl:gap-14">
+        <div className="md:text-right lg:order-2 lg:border-l lg:border-white/10 lg:pl-12 xl:pl-14">
           {session ? (
-            <p className="flex items-center gap-3 whitespace-nowrap font-mono text-[22px] tracking-[0.08em] text-moon sm:text-[28px] md:text-4xl md:tracking-[0.12em]">
+            <p className="flex items-center gap-3 whitespace-nowrap font-mono md:justify-end text-[22px] tracking-[0.08em] text-moon sm:text-[28px] md:text-4xl md:tracking-[0.12em] lg:text-[30px] lg:tracking-[0.1em] xl:text-4xl xl:tracking-[0.12em]">
               <Play aria-hidden className="size-5 shrink-0 fill-current sm:size-6 md:size-7" />
               <span>
                 {mm}/{dd} {weekday} {session.start}
@@ -41,9 +42,9 @@ export default function FilmDetail({
         </div>
 
         {f.awards?.length ? (
-          <ul className="grid gap-x-10 gap-y-2.5 text-[15px] tracking-[0.06em] sm:grid-cols-2 md:border-l md:border-white/10 md:pl-14">
+          <ul className="grid gap-y-2.5 text-[min(13px,3.4vw)] tracking-normal sm:text-[15px] sm:tracking-[0.06em] lg:order-1">
             {f.awards.map((a) => (
-              <li key={`${a.year}-${a.title}`} className="flex gap-3">
+              <li key={`${a.year}-${a.title}`} className="flex gap-2 whitespace-nowrap sm:gap-3">
                 <span className="shrink-0 font-mono text-glow">{a.year}</span>
                 <span className="text-mist/90">{a.title}</span>
               </li>
@@ -51,7 +52,7 @@ export default function FilmDetail({
           </ul>
         ) : (
           p.highlights && (
-            <div className="md:border-l md:border-white/10 md:pl-14">
+            <div className="lg:order-1">
               <h2 className="eyebrow">延伸看點</h2>
               <ul className="mt-3 flex flex-wrap gap-2">
                 {p.highlights.map((h) => (
@@ -97,14 +98,16 @@ export default function FilmDetail({
             </Link>
           )}
 
-          <div className="card reveal p-6" style={{ "--d": "80ms" } as React.CSSProperties}>
-            <h2 className="eyebrow">如何參加</h2>
-            <ol className="mt-4 grid list-decimal gap-2 pl-5 text-sm text-mist/90 marker:font-mono marker:text-glow">
-              <li>不需報名，活動當天直接到場即可</li>
-              <li>草地席地而坐，建議攜帶野餐墊與薄外套</li>
-              <li>想收到提醒？點右上「訂閱活動提醒」在 Luma 留下 Email</li>
-            </ol>
-          </div>
+          {p.slug === "american-girl" && (
+            <Link href="/interactive/quiz" className="card card-hover reveal block p-5" style={{ "--d": "40ms" } as React.CSSProperties}>
+              <span className="eyebrow inline-flex items-center gap-1.5">
+                <Sparkles aria-hidden size={14} />
+                心理測驗
+              </span>
+              <span className="mt-2 block font-bold">你是《美國女孩》中的哪個角色？→</span>
+              <span className="mt-1 block text-sm text-mist/80">5 個關於愛與歸屬的問題，約 1 分鐘</span>
+            </Link>
+          )}
         </aside>
       </section>
     </div>

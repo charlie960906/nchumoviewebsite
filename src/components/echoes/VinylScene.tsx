@@ -224,7 +224,14 @@ export default function VinylScene({ ref, staff, onFocus, onPick, onFallback }: 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 100);
 
-    const R = Math.max(2.6, 1.22 / Math.sin(Math.PI / n));
+    // 摩天輪：圓環立在鏡頭正前方（XY 平面），圓心在舞台下方，只露出頂端一段弧。
+    // 正中央是聚焦的唱片，左右相鄰兩張的中心剛好落在舞台邊緣（各露出一半）。
+    // R 與 top 由 layout() 依舞台寬高計算。
+    let R = 6;
+    let top = 0.4;
+    // 相鄰兩張至少的水平間距（避免窄螢幕上互相重疊）
+    const MIN_GAP = 2.5;
+    const sinStep = Math.sin(Math.min(step, Math.PI / 2));
     const ring = new THREE.Group();
     scene.add(ring);
 
@@ -293,10 +300,8 @@ export default function VinylScene({ ref, staff, onFocus, onPick, onFallback }: 
 
       const tilt = new THREE.Group();
       tilt.add(glow, disc, sheen);
+      // 位置在 tick() 中每格依旋轉角度計算（車廂永遠保持正立，不跟著輪子轉）
       const holder = new THREE.Group();
-      const th = i * step;
-      holder.position.set(Math.sin(th) * R, 0, Math.cos(th) * R);
-      holder.rotation.y = th;
       holder.add(tilt);
       ring.add(holder);
       return { holder, tilt, disc, faceMat, sheenMat, glowMat, color };
@@ -389,12 +394,16 @@ export default function VinylScene({ ref, staff, onFocus, onPick, onFallback }: 
       const aspect = w / h;
       camera.aspect = aspect;
       const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-      // 橫向：看見整個圓環；直向：至少看見前方三張
-      const need = aspect > 1.15 ? (2 * R + 2.8) / (2 * t * aspect) : R + 3.4 / (2 * t * aspect);
-      // 前方唱片高度不超過舞台的一半左右，並把圓環往上移，讓出下方控制列
-      const dist = THREE.MathUtils.clamp(need, R + 7, R + 18);
-      camera.position.set(0, dist * 0.16, dist);
-      camera.lookAt(0, -0.95, R * 0.35);
+      // 可視半高約 2.3（正中央唱片佔舞台高度四成多）；窄螢幕則以最小間距撐開寬度
+      const halfW = Math.max(2.3 * aspect, MIN_GAP);
+      const halfH = halfW / aspect;
+      const dist = halfH / t;
+      // 相鄰唱片中心 = R·sin(step) = 舞台半寬 → 左右各露出一半
+      R = halfW / sinStep;
+      // 聚焦唱片略高於舞台中線，讓出下方控制列
+      top = halfH * 0.2;
+      camera.position.set(0, 0, dist);
+      camera.lookAt(0, 0, 0);
       camera.updateProjectionMatrix();
     };
     layout();
@@ -434,7 +443,8 @@ export default function VinylScene({ ref, staff, onFocus, onPick, onFallback }: 
       }
       if (pulled >= 0) return;
       const now = performance.now();
-      const k = (step * 2.4) / Math.max(320, host.clientWidth);
+      // 拖過半個舞台寬 ≈ 轉一格（手指拖到哪，唱片就跟到哪）
+      const k = (step * 2) / Math.max(320, host.clientWidth);
       const dr = -dx * k;
       rot += dr;
       goto = null;
@@ -527,7 +537,6 @@ export default function VinylScene({ ref, staff, onFocus, onPick, onFallback }: 
           if (Math.abs(goto - rot) < 0.0005) rot = goto;
         }
       }
-      ring.rotation.y = -rot;
 
       const f = (((Math.round(rot / step) % n) + n) % n) | 0;
       if (f !== focus) {
@@ -564,7 +573,13 @@ export default function VinylScene({ ref, staff, onFocus, onPick, onFallback }: 
       for (let i = 0; i < n; i++) {
         const it = items[i];
         const delta = i * step - rot;
-        const front = Math.pow((Math.cos(delta) + 1) / 2, 2.2); // 1 = 正前方
+        // 摩天輪位置：delta > 0 在右下方，轉到頂端成為聚焦，再往左下方落下
+        it.holder.position.set(Math.sin(delta) * R, top - R + Math.cos(delta) * R, 0);
+        const wrapped = THREE.MathUtils.euclideanModulo(delta + Math.PI, Math.PI * 2) - Math.PI;
+        const front = Math.exp(-1.5 * (wrapped / step) ** 2); // 1 = 頂端正中央，相鄰一格約 0.22
+        // 兩側的唱片微微朝內轉，增加立體感
+        it.holder.rotation.y = -THREE.MathUtils.clamp(wrapped / step, -1.5, 1.5) * 0.28;
+        it.holder.visible = Math.abs(wrapped) < step * 2.2;
         const isPulled = i === pulled;
 
         // 待機：自轉 + 輕微漂浮

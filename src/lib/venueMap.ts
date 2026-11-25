@@ -50,7 +50,7 @@ export const STALLS: Stall[] = [
 
 export const SCREENINGS = [
   { time: "3/19 18:30 – 20:30", name: "美國女孩" },
-  { time: "3/20 18:30 – 20:30", name: "琳達！琳達！" },
+  { time: "3/20 18:30 – 20:30", name: "敬請期待（片單研擬中）" },
 ];
 
 export const PERFORMANCES = [

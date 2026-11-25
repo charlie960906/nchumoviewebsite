@@ -1,7 +1,7 @@
 import { abs, site } from "./site";
 import { THEME } from "./theme";
 import { faqs } from "./content";
-import { programs } from "./programs";
+import { programHref, programs } from "./programs";
 import { days, sessions } from "./schedule";
 import { zoneName, zonePath, zones } from "./zones";
 
@@ -33,7 +33,7 @@ export function llmsTxt() {
     "## 主要頁面",
     `- [首頁](${abs("/")})：活動總覽、放映片單、時間表與常見問題`,
     `- [活動與市集](${abs("/program")})：兩天完整時間表`,
-    ...programs.map((p) => `- [${p.kind === "film" ? `《${p.title}》星空放映` : p.title}](${abs(`/program/${p.slug}`)})：${p.summary}`),
+    ...programs.map((p) => `- [${p.kind === "film" ? `《${p.title}》星空放映` : p.title}](${abs(programHref(p.slug))})：${p.summary}`),
     `- [策展理念](${abs("/themes")})：主題「${THEME}」與兩大展區`,
     ...zones.map((z) => `- [展區「${zoneName(z)}」](${abs(zonePath(z))})：${z.summary}`),
     `- [現場指引](${abs("/guide")})：場地地圖、交通、停車與無障礙`,
@@ -67,7 +67,7 @@ export function llmsFullTxt() {
   }
   lines.push("", "## 節目介紹");
   for (const p of programs) {
-    lines.push("", `### ${p.kind === "film" ? `《${p.title}》` : p.title}`, `網址：${abs(`/program/${p.slug}`)}`, "", p.summary, "");
+    lines.push("", `### ${p.kind === "film" ? `《${p.title}》` : p.title}`, `網址：${abs(programHref(p.slug))}`, "", p.summary, "");
     lines.push(...p.body.map((b) => b), "");
     lines.push(...p.facts.map((f) => `- ${f.label}：${f.value}`));
   }

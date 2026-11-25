@@ -1,14 +1,13 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Bus, Car, Clapperboard, MapPin, TrainFront } from "lucide-react";
 import { site } from "@/lib/site";
 import { THEME, THEME_CHAR } from "@/lib/theme";
-import { programs } from "@/lib/programs";
+import { comingSoonFilms, programs } from "@/lib/programs";
 import { faqLd, festivalLd } from "@/lib/jsonld";
 import Countdown from "@/components/Countdown";
 import LumaButton from "@/components/LumaButton";
 import AddToCalendar from "@/components/AddToCalendar";
-import Schedule from "@/components/Schedule";
+import ProgramMarquee from "@/components/ProgramMarquee";
 import MapEmbed from "@/components/MapEmbed";
 import Faq from "@/components/Faq";
 import MerchPicker from "@/components/MerchPicker";
@@ -20,7 +19,6 @@ import StatesScroll from "@/components/StatesScroll";
 const d = (ms: number) => ({ "--d": `${ms}ms` }) as React.CSSProperties;
 
 export default function Home() {
-  const films = programs.filter((p) => p.kind === "film");
 
   return (
     <>
@@ -98,67 +96,16 @@ export default function Home() {
       {/* ───────── 固 → 液 → 氣（捲動敘事） ───────── */}
       <StatesScroll />
 
-      {/* ───────── 放映片單 ───────── */}
+      {/* ───────── 所有活動（跑馬燈） ───────── */}
       <section aria-labelledby="films-h" className="container-x mt-20 md:mt-28 lg:mt-32">
-        <SectionHeading id="films-h" index={3} eyebrow="Screenings" title="星空下的兩個夜晚" more={{ href: "/program", label: "全部節目" }} />
-        <div className="mt-8 grid gap-5 md:grid-cols-2">
-          {films.map((p, i) => (
-            <article key={p.slug} className="card card-hover reveal group/card relative flex flex-col overflow-hidden p-6 md:p-8" style={d(i * 90)}>
-              <p className="relative flex flex-wrap items-center justify-between gap-2 font-mono text-[13px] sm:text-sm">
-                <span className="tracking-[0.2em] text-glow">
-                  NIGHT {i + 1}
-                </span>
-                <span className="text-shore">
-                  {p.facts[1].value}　{p.facts[2].value}
-                </span>
-              </p>
-              <div className="relative mt-5 aspect-[3/2] w-full overflow-hidden rounded-sm bg-[#1d2a3a]">
-                {p.film?.still ? (
-                  <Image
-                    src={p.film.still}
-                    alt={`《${p.title}》劇照`}
-                    fill
-                    sizes="(min-width: 768px) 45vw, 100vw"
-                    className="object-cover transition-transform duration-500 group-hover/card:scale-[1.03]"
-                  />
-                ) : (
-                  <span className="absolute inset-0 grid place-items-center font-mono text-xs tracking-[0.3em] text-white/40">STILL · COMING SOON</span>
-                )}
-              </div>
-              <div className="relative mt-5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-white/10 pb-4">
-                <h3 className="font-serif text-[28px] font-black sm:text-[34px]">
-                  <Link href={`/program/${p.slug}`} className="after:absolute after:inset-0 hover:text-glow">
-                    《{p.title}》
-                  </Link>
-                </h3>
-                <p className="font-mono text-xs text-dim sm:text-[13px]">{p.titleEn}</p>
-              </div>
-              <p className="relative mt-3 flex-1 text-sm text-dim">導演 {p.facts[0].value}</p>
-              <div className="relative z-10 mt-6 flex flex-wrap items-center gap-3">
-                <Link
-                  href={`/program/${p.slug}`}
-                  className="group inline-flex min-h-11 items-center gap-1.5 border-b-2 border-glow font-bold text-glow hover:border-moon hover:text-moon"
-                >
-                  了解更多
-                  <ArrowRight aria-hidden size={17} className="transition-transform duration-200 group-hover:translate-x-1" />
-                </Link>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* ───────── 時間表 ───────── */}
-      <section id="schedule" aria-labelledby="schedule-h" className="container-x mt-20 md:mt-28 lg:mt-32">
-        <SectionHeading id="schedule-h" index={4} eyebrow="Timetable" title="活動時間表" />
-        <div className="reveal mt-8">
-          <Schedule />
-        </div>
+        <SectionHeading id="films-h" index={3} eyebrow="Programs" title="星空下的每一場相遇" more={{ href: "/program", label: "全部節目" }} />
+        {/* 所有活動依時間先後排成跑馬燈（市集、講座、放映、讀書會…） */}
+        <ProgramMarquee programs={programs} placeholders={comingSoonFilms} reflection />
       </section>
 
       {/* ───────── 前導短片 ───────── */}
       <section aria-labelledby="trailer-h" className="container-x mt-20 md:mt-28 lg:mt-32">
-        <SectionHeading id="trailer-h" index={5} eyebrow="Trailer" title="前導短片" />
+        <SectionHeading id="trailer-h" index={4} eyebrow="Trailer" title="前導短片" />
         <div className="card reveal relative mt-8 aspect-video overflow-hidden">
           {site.trailerUrl ? (
             <iframe
@@ -186,7 +133,7 @@ export default function Home() {
 
       {/* ───────── 地圖與交通 ───────── */}
       <section aria-labelledby="map-h" className="container-x mt-20 md:mt-28 lg:mt-32">
-        <SectionHeading id="map-h" index={6} eyebrow="Venue" title="地圖與交通指引" more={{ href: "/guide", label: "完整現場指引" }} />
+        <SectionHeading id="map-h" index={5} eyebrow="Venue" title="地圖與交通指引" more={{ href: "/guide", label: "完整現場指引" }} />
         <div className="mt-8 grid gap-5 lg:grid-cols-[1.6fr_1fr]">
           <div className="reveal">
             <MapEmbed />
@@ -244,7 +191,7 @@ export default function Home() {
 
       {/* ───────── FAQ ───────── */}
       <section aria-labelledby="faq-h" className="container-x mt-20 md:mt-28 lg:mt-32">
-        <SectionHeading id="faq-h" index={7} eyebrow="FAQ" title="常見問題" />
+        <SectionHeading id="faq-h" index={6} eyebrow="FAQ" title="常見問題" />
         <div className="mt-8 grid gap-10 lg:grid-cols-[1.6fr_1fr] lg:gap-12">
           <Faq />
           <MerchPicker />

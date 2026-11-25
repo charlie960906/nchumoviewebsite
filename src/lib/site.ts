@@ -112,20 +112,8 @@ export const nav: readonly NavItem[] = [
       { href: "/themes/gia", label: "涯 Giâ" },
     ],
   },
-  {
-    href: "/program",
-    label: "活動與市集",
-    children: [
-      { href: "/program", label: "活動總覽" },
-      // 概念展已放在「展區介紹」，這裡只列市集
-      { href: "/program/market", label: "星空市集" },
-      { href: "/program/american-girl-talk", label: "映後講座" },
-      { href: "/program/american-girl", label: "《美國女孩》" },
-      { href: "/program/linda-linda-linda", label: "《琳達！琳達！》" },
-      // 讀書會的書名，選單直接用書名
-      { href: "/program/reading-club", label: "《反正你也不睡覺》" },
-    ],
-  },
+  // 直接連到 /program，不展開下拉；各活動的連結改由頁尾 programLinks 提供
+  { href: "/program", label: "活動與市集" },
   { href: "/guide", label: "現場指引" },
   {
     href: "/about",
@@ -139,6 +127,18 @@ export const nav: readonly NavItem[] = [
 
 export type NavGroup = { title: string; titleEn: string; links: readonly NavLink[] };
 
+/** 頁尾「活動與市集」欄的連結（上方導覽列這一項不展開，所以清單放在這裡）。 */
+const programLinks: readonly NavLink[] = [
+  { href: "/program", label: "活動與市集" },
+  // 概念展已放在「展區介紹」，這裡只列市集
+  { href: "/program#market", label: "星空市集" },
+  { href: "/program/american-girl-talk", label: "映後講座" },
+  { href: "/program/american-girl", label: "《美國女孩》" },
+  // 《琳達！琳達！》未取得授權暫時下架（2026-11-25），新片確定後補上
+  // 讀書會的書名，選單直接用書名
+  { href: "/program/reading-club", label: "《反正你也不睡覺》" },
+];
+
 /** 取上方導覽列某一項的下拉選單，讓頁尾跟導覽列保持同步（導覽列改順序或改名，頁尾跟著變）。 */
 function navChildren(href: string): readonly NavLink[] {
   return nav.find((n) => n.href === href)?.children ?? [];
@@ -147,7 +147,7 @@ function navChildren(href: string): readonly NavLink[] {
 /** 頁尾網頁導覽：依主題分組，另外收進導覽列沒有直接入口的頁面（線上互動館、更新紀錄）。 */
 export const footerNav: readonly NavGroup[] = [
   { title: "展區介紹", titleEn: "Exhibitions", links: navChildren("/themes") },
-  { title: "活動與市集", titleEn: "Program", links: navChildren("/program") },
+  { title: "活動與市集", titleEn: "Program", links: programLinks },
   {
     title: "參觀資訊",
     titleEn: "Visit",

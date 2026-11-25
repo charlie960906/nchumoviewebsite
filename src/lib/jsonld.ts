@@ -1,7 +1,7 @@
 import { abs, site } from "./site";
 import { faqs } from "./content";
 import { iso, sessions, type Session } from "./schedule";
-import type { Program } from "./programs";
+import { programHref, type Program } from "./programs";
 import type { Staff } from "./staff";
 
 const place = {
@@ -128,7 +128,7 @@ export function programLd(p: Program) {
       "@type": "WebPage",
       name: p.title,
       description: p.summary,
-      url: abs(`/program/${p.slug}`),
+      url: abs(programHref(p.slug)),
       isPartOf: { "@id": abs("/#festival") },
     };
   }
@@ -142,7 +142,7 @@ export function programLd(p: Program) {
     eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     isAccessibleForFree: true,
-    url: abs(`/program/${p.slug}`),
+    url: abs(programHref(p.slug)),
     image: [abs("/opengraph-image")],
     location: place,
     organizer,

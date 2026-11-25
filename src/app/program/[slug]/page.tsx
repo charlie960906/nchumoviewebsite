@@ -1,212 +1,26 @@
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/seo";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MessageCircleQuestion } from "lucide-react";
 import { getProgram, programs } from "@/lib/programs";
-import { dayOf, sessions } from "@/lib/schedule";
-import { sessionEvent } from "@/lib/calendar";
-import { breadcrumbLd, programLd } from "@/lib/jsonld";
-import { site } from "@/lib/site";
-import PageHero from "@/components/PageHero";
-import FilmTicket from "@/components/FilmTicket";
-import FilmDetail from "@/components/FilmDetail";
-import LumaButton from "@/components/LumaButton";
-import AddToCalendar from "@/components/AddToCalendar";
-import JsonLd from "@/components/JsonLd";
-import VendorCard from "@/components/VendorCard";
-import { vendors, vendorsAreSample } from "@/lib/vendors";
+import ProgramPage from "@/components/ProgramPage";
 
 type Props = { params: Promise<{ slug: string }> };
 
 export const dynamicParams = false;
+// programs 已排除 hidden（暫時下架）的節目，所以下架節目的公開網址會是 404
 export const generateStaticParams = () => programs.map((p) => ({ slug: p.slug }));
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = getProgram((await params).slug);
-  if (!p) return {};
+  if (!p || p.hidden) return {};
+  // 星空市集已無獨立頁面，這個網址只留轉址，不讓搜尋引擎收錄
+  if (p.kind === "market") return { title: p.title, robots: { index: false, follow: true }, alternates: { canonical: "/program" } };
   const title = p.kind === "film" ? `《${p.title}》星空放映` : p.title;
   return pageMeta({ title, description: p.summary, path: `/program/${p.slug}` });
 }
 
 export default async function ProgramDetail({ params }: Props) {
   const p = getProgram((await params).slug);
-  if (!p) notFound();
-  const ss = sessions.filter((s) => p.sessionIds.includes(s.id));
-  const title = p.kind === "film" ? `《${p.title}》` : p.title;
-  const crumbs = [
-    { name: "活動與市集", path: "/program" },
-    { name: p.title, path: `/program/${p.slug}` },
-  ];
-  // 電影票背面的場次文字，例如「2027.03.19」「FRI」「18:30 – 20:30」
-  const s0 = ss[0];
-  const show = s0
-    ? {
-        date: dayOf(s0.day).date.replaceAll("-", "."),
-        weekday: ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][new Date(`${dayOf(s0.day).date}T12:00:00+08:00`).getUTCDay()],
-        time: `${s0.start} – ${s0.end}`,
-        start: s0.start,
-      }
-    : undefined;
-  const others = programs.filter((x) => x.slug !== p.slug).slice(0, 3);
-
-  return (
-    <>
-      <JsonLd data={[programLd(p), breadcrumbLd(crumbs)]} />
-      <PageHero
-        eyebrow={p.kindLabel}
-        title={
-          <>
-            {title}
-            {p.titleEn && <span className="mt-2 block font-sans text-lg font-normal italic text-dim">{p.titleEn}</span>}
-          </>
-        }
-        // 電影頁只留電影票，不顯示摘要與按鈕（摘要仍用於 meta description）
-        summary={p.film ? undefined : p.summary}
-        ticket={p.film ? <FilmTicket program={{ ...p, film: p.film }} show={show} /> : undefined}
-      >
-        {!p.film && (
-          <>
-            <LumaButton source={`program-${p.slug}`}>訂閱活動提醒</LumaButton>
-            {ss[0] && !p.tentative && <AddToCalendar event={sessionEvent(ss[0].id)!} icsId={ss[0].id} />}
-          </>
-        )}
-      </PageHero>
-
-      {p.film ? (
-        <FilmDetail program={{ ...p, film: p.film }} session={ss[0]} />
-      ) : p.kind === "market" ? (
-        // 星空市集頁：內容只放全部攤商卡片
-        <section aria-labelledby="vendors-h" className="container-x">
-          <h2 id="vendors-h" className="reveal font-mono text-sm text-dim">
-            <span className="text-moon">{String(vendors.length).padStart(2, "0")}</span> 攤
-            {vendorsAreSample && <span className="tag tag-warn ml-3 align-middle">示意資料</span>}
-          </h2>
-          <ul className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {vendors.map((v, i) => (
-              <li key={v.booth} className="reveal" style={{ "--d": `${(i % 3) * 60}ms` } as React.CSSProperties}>
-                <VendorCard vendor={v} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : (
-      <div className="container-x grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:gap-14">
-        <article className="grid content-start gap-5">
-          {p.tentative && (
-            <p role="note" className="card reveal !border-warn/40 p-4 text-sm text-amber-200">
-              <strong>場次資訊待定。</strong>確定後會同步更新本頁、時間表與 Luma 活動頁；訂閱 Luma 活動提醒者將收到 Email 通知。
-            </p>
-          )}
-          {p.body.map((t, i) => (
-            <p key={i} className="reveal text-[17px] text-mist/90" style={{ "--d": `${i * 60}ms` } as React.CSSProperties}>
-              {t}
-            </p>
-          ))}
-
-          {p.highlights && (
-            <section aria-labelledby="hl-h" className="reveal mt-4">
-              <h2 id="hl-h" className="text-xl font-bold">
-                延伸看點
-              </h2>
-              <ul className="mt-3 flex flex-wrap gap-2">
-                {p.highlights.map((h) => (
-                  <li key={h} className="tag tag-glow !py-1">
-                    {h}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {p.slug === "american-girl-talk" && (
-            <section aria-labelledby="qa-h" className="card reveal mt-4 p-6">
-              <MessageCircleQuestion aria-hidden className="text-glow" />
-              <h2 id="qa-h" className="mt-3 text-xl font-bold">
-                QA 事前提問
-              </h2>
-              <p className="mt-2 text-sm text-mist/90">想問阮鳳儀導演什麼？事先留下問題，現場將優先挑選回應。</p>
-              {site.qaFormUrl ? (
-                <a href={site.qaFormUrl} target="_blank" rel="noopener" className="btn btn-ghost mt-4">
-                  前往提問表單
-                </a>
-              ) : (
-                <p className="tag tag-warn mt-4">提問表單即將開放</p>
-              )}
-            </section>
-          )}
-
-          {p.slug === "american-girl" && (
-            <p className="reveal">
-              <Link href="/program/american-girl-talk" className="font-bold text-glow hover:underline">
-                → 阮鳳儀導演映後講座與 QA 提問
-              </Link>
-            </p>
-          )}
-        </article>
-
-        <aside className="grid content-start gap-5">
-          <div className="card reveal p-6">
-            <h2 className="eyebrow">場次資訊</h2>
-            <dl className="mt-4 grid gap-3">
-              {p.facts.map((f) => (
-                <div key={f.label} className="flex justify-between gap-4 border-b border-white/10 pb-3 last:border-0 last:pb-0">
-                  <dt className="shrink-0 text-sm text-dim">{f.label}</dt>
-                  <dd className="text-right font-medium">{f.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-
-          {ss.length > 0 && (
-            <div className="card reveal p-6" style={{ "--d": "80ms" } as React.CSSProperties}>
-              <h2 className="eyebrow">時間表場次</h2>
-              <ul className="mt-4 grid gap-3">
-                {ss.map((s) => (
-                  <li key={s.id}>
-                    <span className="block font-mono text-sm text-glow">
-                      {dayOf(s.day).label}（{dayOf(s.day).weekday}）{s.start}–{s.end}
-                    </span>
-                    <span className="text-sm">
-                      {s.title}
-                      {s.tentative && <span className="tag tag-warn ml-2">待定</span>}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <div className="card reveal p-6" style={{ "--d": "140ms" } as React.CSSProperties}>
-            <h2 className="eyebrow">如何參加</h2>
-            <ol className="mt-4 grid list-decimal gap-2 pl-5 text-sm text-mist/90 marker:font-mono marker:text-glow">
-              <li>不需報名，活動當天直接到場即可</li>
-              <li>想收到提醒？點「訂閱活動提醒」在 Luma 留下 Email</li>
-              <li>活動前會收到 Email 提醒與最新消息</li>
-            </ol>
-          </div>
-        </aside>
-      </div>
-      )}
-
-      <section aria-labelledby="more-h" className="container-x mt-20">
-        <h2 id="more-h" className="reveal font-serif text-2xl font-bold">
-          其他節目
-        </h2>
-        <ul className="mt-6 grid gap-4 md:grid-cols-3">
-          {others.map((o) => (
-            <li key={o.slug} className="reveal">
-              <Link href={`/program/${o.slug}`} className="card card-hover block h-full p-5">
-                <span className="tag">{o.kindLabel}</span>
-                <span className="mt-3 block font-bold">{o.kind === "film" ? `《${o.title}》` : o.title}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-        <Link href="/program" className="mt-8 inline-flex items-center gap-1.5 text-sm font-bold text-glow hover:underline">
-          <ArrowLeft aria-hidden size={15} /> 回日程總覽
-        </Link>
-      </section>
-    </>
-  );
+  if (!p || p.hidden) notFound();
+  return <ProgramPage p={p} />;
 }

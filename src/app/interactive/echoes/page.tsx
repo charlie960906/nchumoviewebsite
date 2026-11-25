@@ -44,7 +44,7 @@ export default function EchoesPage() {
       />
 
       <section aria-label="黑膠圓環互動" className="container-x">
-        <Echoes />
+        <Echoes staff={staff} />
       </section>
 
       {/* 全部故事的文字索引：確保內容不只存在於 WebGL，鍵盤與螢幕閱讀器使用者也能直接進入 */}

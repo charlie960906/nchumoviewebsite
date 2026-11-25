@@ -25,7 +25,7 @@ export default function Footer() {
     <footer className="relative mt-24 overflow-hidden border-t border-white/10 bg-night">
       <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-glow/60 to-transparent" />
 
-      <div className="container-x grid gap-12 py-14 md:py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] lg:gap-16">
+      <div className="container-x grid gap-10 py-12 md:gap-12 md:py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] lg:gap-16">
         {/* 品牌與活動資訊 */}
         <section aria-labelledby="footer-brand">
           <h2 id="footer-brand" className="font-serif text-[44px] font-black leading-none md:text-[56px]">
@@ -80,15 +80,16 @@ export default function Footer() {
         </section>
 
         {/* 網頁導覽 */}
-        <nav aria-label="網頁導覽" className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-[1fr_1.5fr_1fr_1fr]">
+        <nav aria-label="網頁導覽" className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-[1fr_1.5fr_1fr_1fr] sm:gap-y-10">
           {footerNav.map((g) => (
             <div key={g.title}>
               <p className="eyebrow mb-1">{g.titleEn}</p>
-              <h3 className="mb-4 text-sm font-semibold text-moon">{g.title}</h3>
-              <ul className="grid gap-2.5 text-sm">
+              <h3 className="mb-2 text-sm font-semibold text-moon sm:mb-3">{g.title}</h3>
+              <ul className="grid text-sm sm:gap-1">
                 {g.links.map((l) => (
                   <li key={l.href}>
-                    <Link href={l.href} className={linkClass}>
+                    {/* 上下留 py 讓手機點擊範圍至少約 36px，不改變字的視覺間距 */}
+                    <Link href={l.href} className={`inline-block py-1.5 sm:py-1 ${linkClass}`}>
                       {l.label}
                     </Link>
                   </li>
@@ -101,15 +102,17 @@ export default function Footer() {
 
       {/* 指導與執行單位 */}
       <div className="border-t border-white/10">
-        <div className="container-x flex flex-wrap gap-x-16 gap-y-8 py-8">
+        <div className="container-x flex flex-wrap gap-x-16 gap-y-6 py-7 sm:gap-y-8 sm:py-8">
           {[
             { label: "指導單位", list: site.advisors },
             { label: "執行單位", list: [site.producer] },
           ].map((g) => (
             <div key={g.label}>
               <p className="text-xs tracking-widest text-dim">{g.label}</p>
-              <ul className="mt-3 flex flex-wrap items-center gap-x-8 gap-y-4">
+              <ul className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-4 sm:gap-x-8">
                 {g.list.map((o) => {
+                  // 橫式 logo 本身已印有單位名稱：手機只放 logo（名稱留給螢幕閱讀器），平板以上再並列文字
+                  const wordmark = o.logoW / o.logoH > 2;
                   const body = (
                     <>
                       <Image
@@ -117,9 +120,13 @@ export default function Footer() {
                         alt=""
                         width={o.logoW}
                         height={o.logoH}
-                        className="h-10 w-auto max-w-[11rem] shrink-0 object-contain object-left"
+                        className="h-9 w-auto max-w-[11rem] shrink-0 object-contain object-left sm:h-10"
                       />
-                      <span className="text-sm text-mist transition-colors group-hover:text-glow">{o.name}</span>
+                      <span
+                        className={`text-sm text-mist transition-colors group-hover:text-glow ${wordmark ? "sr-only sm:not-sr-only" : ""}`}
+                      >
+                        {o.name}
+                      </span>
                     </>
                   );
                   return (

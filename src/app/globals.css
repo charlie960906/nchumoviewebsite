@@ -507,27 +507,50 @@ html.no-splash #splash { display: none; }
   .ticket-fit { max-width: min(64rem, calc((100svh - 15rem) * 2.3)); }
 }
 
-/* 攤商輪播（VendorCarousel.tsx）：細捲軸，維持可滑動提示但不搶戲 */
-.vendor-track { scrollbar-width: thin; scrollbar-color: rgb(140 196 236 / 0.35) transparent; scroll-padding-inline: 0; }
-.vendor-track::-webkit-scrollbar { height: 6px; }
-.vendor-track::-webkit-scrollbar-thumb { background: rgb(140 196 236 / 0.35); border-radius: 999px; }
-.vendor-arrow {
-  position: absolute;
-  top: calc(50% - 0.5rem);
-  z-index: 2;
-  display: grid;
-  place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 999px;
-  border: 1px solid rgb(140 196 236 / 0.4);
-  background: rgb(3 28 36 / 0.85);
-  color: var(--color-moon);
-  backdrop-filter: blur(6px);
-  transform: translateY(-50%);
-  cursor: pointer;
-  transition: opacity 200ms ease, background-color 180ms ease, border-color 180ms ease, transform 180ms var(--ease-ripple);
+/* 節目跑馬燈（ProgramMarquee + MarqueeTrack）：清單渲染兩份，由 JS 逐格位移、可拖拉，移滿一半無縫接回 */
+.program-marquee {
+  container-type: inline-size; /* 卡片寬用 cqw，以可視區寬為基準（一排四張 = 25cqw） */
+  overflow: hidden;
+  cursor: grab;
+  touch-action: pan-y; /* 手機上下捲頁照常，左右交給拖拉 */
+  user-select: none;
+  --fade: 12%;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 var(--fade), #000 calc(100% - var(--fade)), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 var(--fade), #000 calc(100% - var(--fade)), transparent);
 }
-.vendor-arrow:hover { background: rgb(140 196 236 / 0.18); border-color: var(--color-glow); transform: translateY(-50%) scale(1.06); }
-.vendor-arrow:focus-visible { outline: 2px solid var(--color-glow); outline-offset: 2px; }
-.vendor-arrow:disabled { opacity: 0; pointer-events: none; }
+.program-marquee.is-dragging { cursor: grabbing; }
+.program-marquee.is-dragging a { pointer-events: none; }
+.program-marquee img { -webkit-user-drag: none; }
+/* 寬版一排四張：最外側兩張落在淡出區，中間兩張完整顯示 */
+@media (min-width: 1024px) { .program-marquee { --fade: 25%; } }
+.program-marquee-track {
+  display: flex;
+  width: max-content;
+  padding-block: 4px; /* 卡片 hover 上浮時不被裁切 */
+  will-change: transform;
+}
+.program-marquee-track > li { display: flex; }
+.program-marquee-track > li > * { width: 100%; }
+/* 跑馬燈水面倒影（MarqueeTrack reflection）：翻轉的卡片只露出上段（即原卡片底部），越往下越淡，並套 SVG 波紋濾鏡 */
+.marquee-reflection {
+  position: relative;
+  height: clamp(170px, 24cqw, 280px); /* 約卡片的六成，倒影能映到劇照 */
+  margin-top: 6px;
+  overflow: hidden;
+  pointer-events: none;
+  border-top: 1px solid rgb(140 196 236 / 0.18); /* 水面線 */
+  -webkit-mask-image: linear-gradient(180deg, rgb(0 0 0 / 0.6), rgb(0 0 0 / 0.28) 50%, transparent);
+  mask-image: linear-gradient(180deg, rgb(0 0 0 / 0.6), rgb(0 0 0 / 0.28) 50%, transparent);
+}
+.marquee-reflection-flip {
+  /* 以頂端為軸上下翻轉，再往下推一整個高度，讓原卡片的底部貼著水面線 */
+  transform: translateY(100%) scaleY(-1);
+  transform-origin: top;
+  position: absolute;
+  inset: 0 0 auto 0;
+  filter: url(#marquee-ripple) blur(0.6px);
+}
+.marquee-reflection-flip .program-marquee-track { padding-block: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .marquee-reflection-flip { filter: blur(1px); }
+}

@@ -29,7 +29,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     page("/interactive/quiz", 0.5, "monthly"),
     page("/interactive/labels", 0.4, "monthly"),
     page("/interactive/home", 0.4, "monthly"),
-    ...programs.map((p) => page(`/program/${p.slug}`, 0.8)),
+    ...programs.filter((p) => p.slug !== "market").map((p) => page(`/program/${p.slug}`, 0.8)),
     ...staff.map((s) => page(`/interactive/echoes/${s.id}`, 0.5, "monthly")),
   ];
 }

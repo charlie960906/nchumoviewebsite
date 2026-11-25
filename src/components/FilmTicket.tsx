@@ -272,6 +272,8 @@ export default function FilmTicket({
               ? "translate(260px, 140px) rotate(22deg)"
               : "translate(40px, 260px) rotate(12deg)",
         opacity: 0,
+        // 飛走後只是透明，手機上會正好蓋在「查看票根／再拿一張票」按鈕上；不讓它接收點擊，否則點按鈕會變成點票面而翻面
+        pointerEvents: "none",
         transition: `transform ${FLY_MS}ms cubic-bezier(.5,0,.75,0), opacity ${FLY_MS}ms ease-in`,
       };
     const p = facing ? pull : 0;
@@ -291,7 +293,7 @@ export default function FilmTicket({
     onPointerUp: onStubUp,
     onPointerCancel: onStubUp,
   };
-  const hideStyle: React.CSSProperties = gone ? { opacity: 0, transition: `opacity ${FLY_MS}ms` } : {};
+  const hideStyle: React.CSSProperties = gone ? { opacity: 0, pointerEvents: "none", transition: `opacity ${FLY_MS}ms` } : {};
 
   const qrLink = (cls = "") => (
     <a
@@ -382,7 +384,7 @@ export default function FilmTicket({
               <div className="ticket-main flex items-center justify-center bg-[#f2f2f0] p-6 sm:p-8 md:p-10 short:p-7">
                 <div className="relative aspect-[3/2] w-full overflow-hidden bg-[#1d2a3a]">
                   {f.still ? (
-                    <Image src={f.still} alt={`《${program.title}》劇照`} fill sizes="(min-width: 768px) 60vw, 100vw" className="pointer-events-none object-cover" priority draggable={false} />
+                    <Image src={encodeURI(f.still)} alt={`《${program.title}》劇照`} fill sizes="(min-width: 768px) 60vw, 100vw" className="pointer-events-none object-cover" priority draggable={false} />
                   ) : (
                     <span className="absolute inset-0 grid place-items-center font-mono text-xs tracking-[0.3em] text-white/40">STILL · COMING SOON</span>
                   )}

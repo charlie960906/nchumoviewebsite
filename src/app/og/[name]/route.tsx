@@ -27,7 +27,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ name: s
   }
   if (kind === "quiz" && id in quiz.results) {
     const r = quiz.results[id as QuizResultKey];
-    return ogImage({ kicker: "你是《美國女孩》裡的誰？", lines: [r.name, r.tag], accent: r.color });
+    return ogImage({ kicker: "你是《美國女孩》中的哪個角色？", lines: [`${r.name} ${r.en}`, r.tag], accent: r.color });
   }
   if (kind === "vinyl") {
     const s = getStaff(id);

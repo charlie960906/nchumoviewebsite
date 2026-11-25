@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { track } from "@/lib/track";
 import { AnimatePresence, m } from "motion/react";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft, Check, Copy, RefreshCw } from "lucide-react";
 import { quiz, type QuizResultKey } from "@/lib/content";
 import LumaButton from "@/components/LumaButton";
 import SuccessRipple from "@/components/SuccessRipple";
 import ShareCardButton from "./ShareCardButton";
+import { site } from "@/lib/site";
 
 const order: QuizResultKey[] = ["fen", "lily", "dad", "ann"];
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -35,8 +36,26 @@ export default function Quiz() {
     answers.forEach((k) => (score[k] = (score[k] ?? 0) + 1));
     // 同分時以最後一次選擇較接近者為準，確保結果穩定
     const key = [...order].sort((a, b) => (score[b] ?? 0) - (score[a] ?? 0) || answers.lastIndexOf(b) - answers.lastIndexOf(a))[0];
-    return { key, ...quiz.results[key] };
+    return { key, rate: Math.round(((score[key] ?? 0) / total) * 100), ...quiz.results[key] };
   })();
+
+  const [copied, setCopied] = useState<"idle" | "done" | "error">("idle");
+  const copyShare = async () => {
+    if (!result) return;
+    const url = `${site.url}/interactive/quiz`;
+    const text = `我在《美國女孩》角色測驗中是「${result.name}（${result.en}）」！
+${result.tag}
+你是哪個角色？一起測驗：${url}
+#美國女孩 #中興國際星空電影節`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied("done");
+      track("interactive_play", { game: "quiz", action: "copy_text", item: result.key });
+    } catch {
+      setCopied("error");
+    }
+    setTimeout(() => setCopied("idle"), 2000);
+  };
 
   const resultKey = result?.key;
   useEffect(() => {
@@ -117,13 +136,34 @@ export default function Quiz() {
                 <p className="eyebrow" style={{ color: result.color }}>
                   你的結果
                 </p>
-                <h2 ref={headRef} tabIndex={-1} className="mt-2 font-serif text-4xl font-bold outline-none md:text-5xl">
-                  {result.name}
-                </h2>
-                <p className="mt-2 text-lg" style={{ color: result.color }}>
-                  {result.tag}
+                <div className="mt-2 flex items-center gap-4">
+                  <span aria-hidden className="grid size-14 shrink-0 place-items-center rounded-2xl border border-white/15 bg-white/[0.04] text-3xl md:size-16 md:text-4xl">
+                    {result.emoji}
+                  </span>
+                  <div>
+                    <h2 ref={headRef} tabIndex={-1} className="font-serif text-4xl font-bold outline-none md:text-5xl">
+                      {result.name}
+                      <span className="ml-2 font-sans text-lg font-normal italic text-dim md:text-xl">{result.en}</span>
+                    </h2>
+                    <p className="mt-1 font-mono text-sm" style={{ color: result.color }}>
+                      角色契合度 {result.rate}%
+                    </p>
+                  </div>
+                </div>
+                <p className="mt-4 text-lg" style={{ color: result.color }}>
+                  「{result.tag}」
                 </p>
-                <p className="mt-5 max-w-xl text-mist/90">{result.desc}</p>
+                <p className="mt-4 max-w-xl text-mist/90">{result.desc}</p>
+                <ul className="mt-4 flex flex-wrap gap-2" aria-label="角色特質">
+                  {result.pills.map((pill) => (
+                    <li key={pill} className="tag !py-1">
+                      {pill}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-5 max-w-xl border-l-2 py-1 pl-4 text-moon" style={{ borderColor: result.color }}>
+                  {result.message}
+                </p>
                 <p className="mt-5 inline-flex rounded-xl border border-white/15 bg-white/[0.03] px-4 py-2 text-sm">
                   <span className="mr-2 text-dim">現場推薦</span>
                   <Link href="/themes" className="font-bold text-glow hover:underline">
@@ -134,12 +174,16 @@ export default function Quiz() {
                   <ShareCardButton
                     game="quiz"
                     filename={`ripple-quiz-${result.key}.png`}
-                    spec={{ kicker: "你是《美國女孩》裡的誰？", lines: [result.name, result.tag], sub: result.zone, accent: result.color }}
+                    spec={{ kicker: "你是《美國女孩》中的哪個角色？", emoji: [result.emoji], lines: [`${result.name} ${result.en}`, result.tag], sub: result.zone, accent: result.color }}
                   />
+                  <button type="button" onClick={copyShare} className="btn btn-ghost" aria-live="polite">
+                    {copied === "done" ? <Check aria-hidden size={17} /> : <Copy aria-hidden size={17} />}
+                    {copied === "done" ? "已複製" : copied === "error" ? "複製失敗，請截圖分享" : "複製分享文字"}
+                  </button>
                   <LumaButton variant="ghost" source="quiz">
                     提醒我看《美國女孩》
                   </LumaButton>
-                  <button type="button" onClick={() => (setAnswers([]), setStep(-1))} className="btn btn-ghost">
+                  <button type="button" onClick={() => (setAnswers([]), setStep(0), focusHead())} className="btn btn-ghost">
                     <RefreshCw aria-hidden size={17} />
                     重測
                   </button>
