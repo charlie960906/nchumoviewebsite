@@ -8,14 +8,13 @@ import MarqueeTrack from "./MarqueeTrack";
 const KIND_EN: Record<Program["kind"], string> = {
   film: "SCREENING",
   talk: "TALK",
-  reading: "READING",
   market: "MARKET",
 };
 
 const sessionsOf = (p: Program) =>
   p.sessionIds.map((id) => sessions.find((s) => s.id === id)).filter((s): s is Session => !!s);
 
-/** facts 裡的「日期」欄（如 2027/3/18（四）），給不在時間表上的活動（如讀書會）用 */
+/** facts 裡的「日期」欄（如 2027/3/18（四）），給不在時間表上的活動用 */
 const factDate = (p: Program) => {
   const m = p.facts.find((f) => f.label.includes("日期"))?.value.match(/(\d{1,2})\/(\d{1,2})（(.)）/);
   return m ? { key: m[1].padStart(2, "0") + m[2].padStart(2, "0"), label: `${m[1]}/${m[2]}（${m[3]}）` } : undefined;

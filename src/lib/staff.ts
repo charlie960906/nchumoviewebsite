@@ -65,7 +65,7 @@ const realStaff: Staff[] = echoSubmissions.map((sub, i) => {
     id: sub.id,
     member: sub.member,
     name: sub.nickname ?? c?.nick ?? sub.member,
-    role: c ? [c.team ?? c.dept, c.role].filter(Boolean).join("・") : "工作人員",
+    role: c ? [c.team, c.role].filter(Boolean).join("・") : "工作人員",
     bio: sub.bio ?? "",
     songTitle: sub.songTitle,
     songArtist: sub.songArtist,

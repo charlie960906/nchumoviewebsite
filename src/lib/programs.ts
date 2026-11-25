@@ -3,7 +3,7 @@ import { THEME } from "./theme";
 
 export type Program = {
   slug: string;
-  kind: "film" | "talk" | "reading" | "market";
+  kind: "film" | "talk" | "market";
   kindLabel: string;
   title: string;
   titleEn?: string;
@@ -153,26 +153,6 @@ export const allPrograms: Program[] = [
       code: "NCHUSFF27-LL",
     },
     highlights: ["展區「泅」親情與友情", "現場表演演出"],
-  },
-  {
-    slug: "reading-club",
-    kind: "reading",
-    kindLabel: "讀書會",
-    title: "《反正你也不睡覺》讀書會",
-    summary:
-      "《反正你也不睡覺》讀書會是電影節的延伸活動，邀請參與者在放映之外，用文字繼續聊漂泊、失眠與歸屬。場次時間與參加方式將於確定後公布。",
-    body: [
-      "有些話適合在電影散場後說，有些則需要一本書的時間。讀書會將以小組形式進行，不需事先讀完全書。",
-      "場次時間、地點與帶領人確認後，會更新於本頁並同步至 Luma 活動頁。",
-    ],
-    facts: [
-      { label: "形式", value: "小組讀書會" },
-      { label: "日期", value: "2027/3/18（四）" },
-      { label: "時間", value: "待公布" },
-      { label: "地點", value: "待公布" },
-    ],
-    sessionIds: [],
-    tentative: true,
   },
   {
     slug: "market",

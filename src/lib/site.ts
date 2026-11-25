@@ -100,57 +100,38 @@ export const site = {
 export type NavLink = { href: string; label: string };
 export type NavItem = NavLink & { children?: readonly NavLink[] };
 
-/** 上方導覽列。有 children 的項目會顯示為下拉選單，href 用來判斷目前所在頁面。 */
-export const nav: readonly NavItem[] = [
-  { href: "/", label: "首頁" },
+export type NavGroup = { title: string; titleEn: string; href: string; links: readonly NavLink[] };
+
+/**
+ * 網頁導覽分組：頁尾四欄與上方導覽列的下拉選單共用這一份，兩邊內容永遠一致。
+ * href 是該組的代表頁，用來判斷導覽列哪一項是目前所在位置。
+ */
+export const footerNav: readonly NavGroup[] = [
   {
+    title: "展區介紹",
+    titleEn: "Exhibitions",
     href: "/themes",
-    label: "展區介紹",
-    children: [
+    links: [
       { href: "/themes", label: "策展理念" },
       { href: "/themes/siu", label: "泅 Siû" },
       { href: "/themes/gia", label: "涯 Giâ" },
     ],
   },
-  // 直接連到 /program，不展開下拉；各活動的連結改由頁尾 programLinks 提供
-  { href: "/program", label: "活動與市集" },
-  { href: "/guide", label: "現場指引" },
   {
-    href: "/about",
-    label: "關於",
-    children: [
-      { href: "/team", label: "團隊成員" },
-      { href: "/about", label: "關於電影節" },
+    title: "活動與市集",
+    titleEn: "Program",
+    href: "/program",
+    links: [
+      { href: "/program", label: "活動與市集" },
+      { href: "/program/american-girl-talk", label: "映後講座" },
+      { href: "/program/american-girl", label: "《美國女孩》" },
+      // 《琳達！琳達！》未取得授權暫時下架（2026-11-25），新片確定後補上
     ],
   },
-];
-
-export type NavGroup = { title: string; titleEn: string; links: readonly NavLink[] };
-
-/** 頁尾「活動與市集」欄的連結（上方導覽列這一項不展開，所以清單放在這裡）。 */
-const programLinks: readonly NavLink[] = [
-  { href: "/program", label: "活動與市集" },
-  // 概念展已放在「展區介紹」，這裡只列市集
-  { href: "/program#market", label: "星空市集" },
-  { href: "/program/american-girl-talk", label: "映後講座" },
-  { href: "/program/american-girl", label: "《美國女孩》" },
-  // 《琳達！琳達！》未取得授權暫時下架（2026-11-25），新片確定後補上
-  // 讀書會的書名，選單直接用書名
-  { href: "/program/reading-club", label: "《反正你也不睡覺》" },
-];
-
-/** 取上方導覽列某一項的下拉選單，讓頁尾跟導覽列保持同步（導覽列改順序或改名，頁尾跟著變）。 */
-function navChildren(href: string): readonly NavLink[] {
-  return nav.find((n) => n.href === href)?.children ?? [];
-}
-
-/** 頁尾網頁導覽：依主題分組，另外收進導覽列沒有直接入口的頁面（線上互動館、更新紀錄）。 */
-export const footerNav: readonly NavGroup[] = [
-  { title: "展區介紹", titleEn: "Exhibitions", links: navChildren("/themes") },
-  { title: "活動與市集", titleEn: "Program", links: programLinks },
   {
     title: "參觀資訊",
     titleEn: "Visit",
+    href: "/guide",
     links: [
       { href: "/guide", label: "現場指引" },
       { href: "/interactive", label: "線上互動館" },
@@ -159,12 +140,30 @@ export const footerNav: readonly NavGroup[] = [
   {
     title: "關於",
     titleEn: "About",
+    href: "/about",
     links: [
       { href: "/about", label: "關於電影節" },
       { href: "/team", label: "團隊成員" },
       { href: "/update", label: "網站更新紀錄" },
     ],
   },
+];
+
+/** 只放在頁尾、不出現在上方導覽列的頁面 */
+const footerOnly = new Set(["/update"]);
+/** 在上方導覽列的下拉選單中排到該組最前面的頁面（頁尾維持原順序） */
+const navFirst = new Set(["/team"]);
+
+/** 上方導覽列：首頁 + 頁尾各組（每組顯示為下拉選單，內容與頁尾相同，但排除 footerOnly、navFirst 排最前）。 */
+export const nav: readonly NavItem[] = [
+  { href: "/", label: "首頁" },
+  ...footerNav.map((g) => ({
+    href: g.href,
+    label: g.title,
+    children: g.links
+      .filter((l) => !footerOnly.has(l.href))
+      .sort((a, b) => Number(navFirst.has(b.href)) - Number(navFirst.has(a.href))),
+  })),
 ];
 
 export function abs(path = "/") {

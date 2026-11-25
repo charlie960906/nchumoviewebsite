@@ -8,7 +8,7 @@ import TeamAnchorBar from "@/components/TeamAnchorBar";
 
 const CLOSE_MS = 280;
 
-/** 團隊名單：部門分組的頭像牆，點擊頭像開啟成員詳細資料（桌機左側抽屜、手機底部面板）。 */
+/** 團隊名單：依組別分區的頭像牆，點擊頭像開啟成員詳細資料（桌機左側抽屜、手機底部面板）。 */
 export default function CrewBoard({ groups }: { groups: CrewBoardGroup[] }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
@@ -90,34 +90,24 @@ export default function CrewBoard({ groups }: { groups: CrewBoardGroup[] }) {
             </h2>
             <p className="mt-3 max-w-2xl whitespace-pre-line text-[15px] leading-relaxed text-mist/80 md:text-base">{g.desc}</p>
           </div>
-          {splitTeams(g.members).map((block) => (
-            <div key={block.team ?? "_"} className={block.team ? "mt-12" : ""}>
-              {block.team && (
-                <h3 className="reveal flex items-baseline gap-3 border-b border-white/10 pb-3 font-serif text-2xl font-bold tracking-wide text-moon">
-                  {block.team}
-                  <span className="font-sans text-xs font-normal tracking-widest text-dim">{block.members.length} 人</span>
-                </h3>
-              )}
-              <ul className="mt-8 grid grid-cols-3 gap-x-3 gap-y-7 sm:gap-x-4 md:grid-cols-4 md:gap-x-6 lg:grid-cols-5 xl:grid-cols-6">
-                {block.members.map((p, i) => (
-                  <li key={p.key} className="reveal" style={{ "--d": `${(i % 6) * 60}ms` } as React.CSSProperties}>
-                    <button
-                      type="button"
-                      aria-haspopup="dialog"
-                      onClick={(e) => open(p, e.currentTarget)}
-                      onPointerEnter={() => refreshAbout(p)}
-                      onFocus={() => refreshAbout(p)}
-                      className="group flex w-full flex-col items-center rounded-xl text-center outline-none focus-visible:ring-2 focus-visible:ring-glow focus-visible:ring-offset-4 focus-visible:ring-offset-night"
-                    >
-                      <Avatar p={p} className="w-full max-w-40 transition-[transform,border-color] duration-300 group-hover:-translate-y-1 group-hover:border-glow/45" />
-                      <span className="mt-2.5 text-[15px] font-bold tracking-wide text-moon sm:mt-3 sm:text-[17px]">{p.name}</span>
-                      {p.sub && <span className="mt-0.5 text-sm text-dim">{p.sub}</span>}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <ul className="mt-8 grid grid-cols-3 gap-x-3 gap-y-7 sm:gap-x-4 md:grid-cols-4 md:gap-x-6 lg:grid-cols-5 xl:grid-cols-6">
+            {g.members.map((p, i) => (
+              <li key={p.key} className="reveal" style={{ "--d": `${(i % 6) * 60}ms` } as React.CSSProperties}>
+                <button
+                  type="button"
+                  aria-haspopup="dialog"
+                  onClick={(e) => open(p, e.currentTarget)}
+                  onPointerEnter={() => refreshAbout(p)}
+                  onFocus={() => refreshAbout(p)}
+                  className="group flex w-full flex-col items-center rounded-xl text-center outline-none focus-visible:ring-2 focus-visible:ring-glow focus-visible:ring-offset-4 focus-visible:ring-offset-night"
+                >
+                  <Avatar p={p} className="w-full max-w-40 transition-[transform,border-color] duration-300 group-hover:-translate-y-1 group-hover:border-glow/45" />
+                  <span className="mt-2.5 text-[15px] font-bold tracking-wide text-moon sm:mt-3 sm:text-[17px]">{p.name}</span>
+                  {p.sub && <span className="mt-0.5 text-sm text-dim">{p.sub}</span>}
+                </button>
+              </li>
+            ))}
+          </ul>
         </section>
       ))}
 
@@ -156,17 +146,6 @@ export default function CrewBoard({ groups }: { groups: CrewBoardGroup[] }) {
 }
 
 type Profile = { about?: string; location?: string };
-
-/** 依組別分段：沒有組別的成員（例如部長）在最前，其餘依第一次出現的順序。 */
-function splitTeams(members: CrewCard[]) {
-  const blocks: { team?: string; members: CrewCard[] }[] = [];
-  for (const p of members) {
-    let b = blocks.find((x) => x.team === p.team);
-    if (!b) blocks.push((b = { team: p.team, members: [] }));
-    b.members.push(p);
-  }
-  return blocks.sort((a, b) => Number(!!a.team) - Number(!!b.team));
-}
 
 function Avatar({ p, className = "", eager }: { p: CrewCard; className?: string; eager?: boolean }) {
   return (
@@ -229,7 +208,8 @@ function Detail({
           {p.name}
         </h2>
         <p className="mt-1.5 text-[15px] text-glow">{p.title}</p>
-        {p.sub && p.sub !== p.title && <p className="text-sm text-dim">{p.sub}</p>}
+        {p.duty && <p className="mt-1 text-sm text-mist">{p.duty}</p>}
+        {p.nick && <p className="text-sm text-dim">{p.nick}</p>}
         {location && (
           <p className="mt-2 flex items-center gap-1.5 text-sm text-mist/80">
             <MapPin aria-hidden size={15} className="shrink-0 text-glow/80" />

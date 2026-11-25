@@ -99,7 +99,7 @@ export default function Home() {
       {/* ───────── 所有活動（跑馬燈） ───────── */}
       <section aria-labelledby="films-h" className="container-x mt-20 md:mt-28 lg:mt-32">
         <SectionHeading id="films-h" index={3} eyebrow="Programs" title="星空下的每一場相遇" more={{ href: "/program", label: "全部節目" }} />
-        {/* 所有活動依時間先後排成跑馬燈（市集、講座、放映、讀書會…） */}
+        {/* 所有活動依時間先後排成跑馬燈（市集、講座、放映…） */}
         <ProgramMarquee programs={programs} placeholders={comingSoonFilms} reflection />
       </section>
 

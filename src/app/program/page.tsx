@@ -16,7 +16,7 @@ import JsonLd from "@/components/JsonLd";
 
 export const metadata: Metadata = pageMeta({
   title: "活動與市集｜活動時間表",
-  description: "2027 中興星空電影節完整日程：3/19（五）放映《美國女孩》並規劃阮鳳儀導演映後講座，3/20（六）第二部電影敬請期待（研擬中），另有市集、展覽、表演與《反正你也不睡覺》讀書會。",
+  description: "2027 中興星空電影節完整日程：3/19（五）放映《美國女孩》並規劃阮鳳儀導演映後講座，3/20（六）第二部電影敬請期待（研擬中），另有市集、展覽與表演。",
   path: "/program",
 });
 
